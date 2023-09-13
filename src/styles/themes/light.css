@@ -1,0 +1,14 @@
+[data-mode="light"] {
+  --color-primary: theme(colors.primary);
+  --color-secondary: theme(colors.secondary);
+  --color-background: theme(colors.white);
+  --color-text: theme(colors.black);
+  --color-subtext: #a6a6a6;
+  --color-border: #dedede;
+  --color-hover: #f3f3f3;
+
+  /* components */
+  --window-content-background: theme(colors.white);
+
+  --sideBar-background-color: #f2f2f2;
+}

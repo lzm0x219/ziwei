@@ -1,0 +1,6 @@
+@import "./var.css";
+@import "./base.css";
+
+/* 主题 */
+@import "./themes/light.css";
+@import "./themes/dark.css";

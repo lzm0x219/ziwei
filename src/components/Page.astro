@@ -1,0 +1,22 @@
+---
+import PageHead from "@/components/PageHead.astro";
+import type { Props as PageHeadProps } from "@/components/PageHead.astro";
+import Window from "@/components/Window.astro";
+import SideBar from "@/components/SideBar.astro";
+
+type Props = PageHeadProps;
+
+const { title, description, image } = Astro.props;
+---
+
+<html lang="zh-Hans" data-mode="light">
+  <head>
+    <PageHead title={title} description={description} image={image} />
+  </head>
+  <body>
+    <Window>
+      <SideBar />
+      <slot />
+    </Window>
+  </body>
+</html>

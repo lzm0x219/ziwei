@@ -1,0 +1,7 @@
+:root {
+  --window-width: 90vw;
+  --window-height: 90vh;
+  --window-content-width: calc(100% - var(--sidebar-width));
+
+  --sidebar-width: 300px;
+}

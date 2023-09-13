@@ -1,0 +1,40 @@
+---
+import { createBEM } from "@/shared/css";
+
+const b = createBEM("side-bar__header");
+
+type Props = {
+  title: string;
+  desc: string;
+};
+
+const { title, desc } = Astro.props;
+---
+
+<header class={b()}>
+  <div>
+    <h1 class={b("title")}>{title}</h1>
+    <span class={b("desc")}>{desc}</span>
+  </div>
+  <div class={b("logo")}>
+    <slot name="logo" />
+  </div>
+</header>
+
+<style>
+  .side-bar__header {
+    @apply flex items-center justify-between;
+
+    &__title {
+      @apply text-[20px] font-bold;
+    }
+
+    &__desc {
+      @apply text-[12px] text-black/70;
+    }
+
+    &__logo {
+      @apply mr-4 h-[44px] w-[44px] rounded-full shadow-lg;
+    }
+  }
+</style>

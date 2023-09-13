@@ -1,0 +1,35 @@
+---
+import { createBEM } from "@/shared/css";
+import SideBarHeader from "@/components/SideBarHeader.astro";
+import IconLogo from "@/components/Icon/IconLogo.astro";
+
+const b = createBEM("side-bar");
+---
+
+<aside class={b()}>
+  <SideBarHeader title="象数观止" desc="最专业的北派紫微斗数排盘工具">
+    <IconLogo slot="logo" />
+  </SideBarHeader>
+</aside>
+
+<style>
+  .side-bar {
+    @apply flex h-full w-[--sidebar-width] flex-col space-y-[20px] bg-[--color-primary] p-[20px];
+
+    &__toolbar {
+      @apply flex space-x-[10px];
+    }
+
+    &__nav {
+      @apply flex-1 space-y-[10px] overflow-y-auto overscroll-x-none;
+    }
+
+    &__footer {
+      @apply mt-[20px] flex;
+
+      &__actions {
+        @apply flex flex-1 space-x-[10px];
+      }
+    }
+  }
+</style>

@@ -1,0 +1,4 @@
+html,
+body {
+  @apply bg-[--color-background] text-[14px] text-[--color-text];
+}
