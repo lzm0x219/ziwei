@@ -16,13 +16,13 @@
     "package.json": "sort-package-json"
   },
   "dependencies": {
-    "astro": "3.0.13",
     "pixi.js": "7.2.4"
   },
   "devDependencies": {
     "@astrojs/partytown": "2.0.0",
     "@astrojs/prefetch": "0.4.0",
     "@astrojs/tailwind": "5.0.0",
+    "astro": "3.0.13",
     "husky": "8.0.3",
     "lint-staged": "14.0.1",
     "prettier": "3.0.3",
