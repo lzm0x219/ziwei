@@ -20,6 +20,8 @@
     "pixi.js": "7.2.4"
   },
   "devDependencies": {
+    "@astrojs/partytown": "2.0.0",
+    "@astrojs/prefetch": "0.4.0",
     "@astrojs/tailwind": "5.0.0",
     "husky": "8.0.3",
     "lint-staged": "14.0.1",
