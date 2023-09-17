@@ -1,0 +1,43 @@
+.sidebar {
+  @apply flex h-full w-[--sidebar-width] flex-col space-y-[20px] bg-[--sidebar-background-color] p-[20px];
+
+  &__header {
+    @apply flex items-center justify-between;
+
+    &__title {
+      @apply text-[20px] font-bold;
+    }
+
+    &__desc {
+      @apply text-[12px] text-black/70;
+    }
+
+    &__logo {
+      @apply mr-4 h-[44px] w-[44px];
+    }
+  }
+
+  &__toolbar {
+    @apply flex space-x-[10px];
+
+    &__action {
+      @apply flex flex-1 items-center justify-center rounded-[10px] bg-black/5 p-3 transition-all;
+
+      &:hover {
+        @apply bg-black/10;
+      }
+    }
+  }
+
+  &__nav {
+    @apply flex-1 space-y-[10px] overflow-y-auto overscroll-x-none;
+  }
+
+  &__footer {
+    @apply flex;
+
+    &__actions {
+      @apply flex flex-1 space-x-[20px];
+    }
+  }
+}

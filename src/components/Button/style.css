@@ -1,0 +1,49 @@
+/* 基础样式 */
+.button {
+  @apply flex items-center justify-center transition-all duration-300 ease-in-out;
+
+  /* 禁用 */
+  &--disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  /* 颜色 */
+  &--default {
+    @apply bg-white text-black hover:bg-[--color-hover];
+  }
+
+  &--primary {
+    @apply bg-primary text-white hover:bg-primary/70;
+  }
+
+  &--danger {
+    @apply bg-red-600 text-white hover:bg-red-600/70;
+  }
+
+  /* 大小 */
+
+  &--xs {
+    @apply rounded-[6px] px-[8px] py-[4px] text-xs;
+  }
+
+  &--sm {
+    @apply rounded-[6px] px-[8px] py-[4px] text-sm;
+  }
+
+  &--md {
+    @apply rounded-[6px] px-[10px] py-[6px] text-sm;
+  }
+
+  &--xl {
+    @apply rounded-[6px] px-[12px] py-[8px] text-sm;
+  }
+
+  &--lg {
+    @apply rounded-[6px] px-[14px] py-[10px] text-sm;
+  }
+
+  /* 阴影 */
+  &--shadow {
+    @apply shadow;
+  }
+}

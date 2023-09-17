@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="600" height="600"
+  viewBox="0 0 600 600" fill="none">
+  <g opacity="1" transform="translate(0 0)  rotate(0)">
+    <g id="undefined" filter="url(#filter_0)">
+      <rect fill="#FFFFFF" opacity="0" transform="translate(0 0)  rotate(0)" x="0" y="0" width="600" height="600" />
+    </g>
+    <mask id="bg-mask-0" fill="white">
+      <use transform="translate(0 0)  rotate(0)" xlink:href="#path_0"></use>
+    </mask>
+    <g mask="url(#bg-mask-0)">
+      <path id="圆形 1" fill-rule="evenodd" style="fill:#FFFFFF" opacity="1"
+        d="M300 0C134.31 0 0 134.31 0 300C0 465.69 134.31 600 300 600C465.69 600 600 465.69 600 300C600 134.31 465.69 0 300 0Z">
+      </path>
+      <path id="圆形 1" fill-rule="evenodd" style="fill:#000000" opacity="1"
+        d="M414.81 577.16C451.2 562.09 484.27 539.99 512.13 512.13C539.99 484.27 562.09 451.2 577.16 414.81C592.24 378.41 600 339.4 600 300C600 260.6 592.24 221.59 577.16 185.19C562.09 148.8 539.99 115.73 512.13 87.87C484.27 60.01 451.2 37.91 414.81 22.84C378.41 7.76 339.4 0 300 0L300 300L300 600C339.4 600 378.41 592.24 414.81 577.16Z">
+      </path>
+      <path id="圆形 2" fill-rule="evenodd" style="fill:#000000" opacity="1"
+        d="M300 300C217.16 300 150 367.16 150 450C150 532.84 217.16 600 300 600C382.84 600 450 532.84 450 450C450 367.16 382.84 300 300 300Z">
+      </path>
+      <path id="圆形 3" fill-rule="evenodd" style="fill:#FFFFFF" opacity="1"
+        d="M300 400C272.39 400 250 422.39 250 450C250 477.61 272.39 500 300 500C327.61 500 350 477.61 350 450C350 422.39 327.61 400 300 400Z">
+      </path>
+      <path id="圆形 2" fill-rule="evenodd" style="fill:#FFFFFF" opacity="1"
+        d="M300 0C217.16 0 150 67.16 150 150C150 232.84 217.16 300 300 300C382.84 300 450 232.84 450 150C450 67.16 382.84 0 300 0Z">
+      </path>
+      <path id="圆形 3" fill-rule="evenodd" style="fill:#000000" opacity="1"
+        d="M300 100C272.39 100 250 122.39 250 150C250 177.61 272.39 200 300 200C327.61 200 350 177.61 350 150C350 122.39 327.61 100 300 100Z">
+      </path>
+    </g>
+  </g>
+  <defs>
+    <filter id="filter_0" x="-509" y="-377" width="608" height="612" filterUnits="userSpaceOnUse"
+      color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="feFloodId" />
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+        result="hardAlpha" />
+
+      <feOffset dx="0" dy="2" />
+      <feComposite in2="hardAlpha" operator="out" />
+      <feGaussianBlur stdDeviation="2" />
+      <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0" />
+      <feBlend mode="normal" in2="filter_feFlood" result="filter_feFlood_1" />
+      <feBlend mode="normal" in="SourceGraphic" in2="filter_0" result="shape" />
+    </filter>
+    <rect id="path_0" x="0" y="0" width="600" height="600" />
+  </defs>
+</svg>

@@ -1,0 +1,9 @@
+html,
+body,
+#root {
+  @apply h-full;
+}
+
+#root {
+  @apply flex items-center justify-center bg-[--window-background-color] text-[14px] text-[--color-text];
+}

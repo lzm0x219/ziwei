@@ -1,0 +1,38 @@
+.card {
+  @apply relative cursor-pointer rounded-[10px] border-[2px] border-solid border-transparent bg-[--color-background] px-[14px] py-[10px] transition-all duration-300 ease-in-out;
+
+  &:hover {
+    @apply bg-[--color-hover];
+
+    & > .card__close {
+      @apply -translate-x-[4px] opacity-50;
+      &:hover {
+        @apply opacity-100;
+      }
+    }
+  }
+
+  &.selected {
+    @apply border-[--color-primary];
+  }
+
+  &__title {
+    @apply block w-[calc(100%-15px)] truncate text-[14px] font-bold;
+  }
+
+  &__content {
+    @apply mt-[8px] flex justify-between text-[12px] text-[--color-subtext];
+
+    &__desc {
+      @apply truncate;
+    }
+
+    &__other {
+      @apply truncate;
+    }
+  }
+
+  &__close {
+    @apply absolute right-[4px] top-[4px] cursor-pointer opacity-0 transition-all duration-300 ease-in-out;
+  }
+}

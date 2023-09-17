@@ -1,0 +1,54 @@
+{
+  "name": "insight",
+  "version": "0.0.0-development",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "bunx tsc && bunx vite build",
+    "dev": "bunx vite",
+    "prepare": "bunx husky install",
+    "preview": "bunx vite preview"
+  },
+  "lint-staged": {
+    "*.{js,cjs,ts,tsx}": [
+      "eslint",
+      "prettier --write"
+    ],
+    "*.{md,html,css,yml}": "prettier --write",
+    "!(*pnpm-lock).yaml": "prettier --write",
+    "package.json": "sort-package-json"
+  },
+  "dependencies": {
+    "clsx": "2.0.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-router-dom": "6.16.0"
+  },
+  "devDependencies": {
+    "@total-typescript/ts-reset": "0.5.1",
+    "@types/react": "18.2.21",
+    "@types/react-dom": "18.2.7",
+    "@typescript-eslint/eslint-plugin": "6.7.0",
+    "@typescript-eslint/parser": "6.7.0",
+    "@vitejs/plugin-react-swc": "3.3.2",
+    "autoprefixer": "10.4.15",
+    "eslint": "8.49.0",
+    "eslint-plugin-react": "7.33.2",
+    "eslint-plugin-react-hooks": "4.6.0",
+    "eslint-plugin-react-refresh": "0.4.3",
+    "husky": "8.0.3",
+    "lightningcss": "1.21.8",
+    "lint-staged": "14.0.1",
+    "postcss": "8.4.29",
+    "prettier": "3.0.3",
+    "prettier-plugin-packagejson": "2.4.5",
+    "prettier-plugin-tailwindcss": "0.5.4",
+    "sort-package-json": "2.5.1",
+    "tailwindcss": "3.3.3",
+    "typescript": "5.2.2",
+    "vite": "4.4.9",
+    "vite-plugin-mkcert": "1.16.0",
+    "vite-plugin-svgr": "3.2.0",
+    "vite-tsconfig-paths": "4.2.1"
+  }
+}

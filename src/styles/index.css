@@ -1,0 +1,10 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@import "./var.css";
+@import "./base.css";
+
+/* 主题 */
+@import "./themes/light.css";
+@import "./themes/dark.css";

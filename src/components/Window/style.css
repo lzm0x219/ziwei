@@ -1,0 +1,7 @@
+.window {
+  @apply flex h-[--window-height] min-h-[480px] w-[--window-width] min-w-[600px] max-w-[1200px] overflow-hidden rounded-2xl border border-[--color-border] bg-[--window-background-color] shadow-s1;
+
+  &__content {
+    @apply flex h-full w-[--window-content-width] flex-col;
+  }
+}
