@@ -1,0 +1,21 @@
+---
+type Props = {
+  name: IconName;
+  class?: string;
+};
+
+type IconName =
+  | "Add"
+  | "Delete"
+  | "Dragon"
+  | "Github"
+  | "Logo"
+  | "Mask"
+  | "Setting";
+
+const { name, ...rest } = Astro.props;
+
+const { default: Component } = await import(`./Icons/Icon${name}.astro`);
+---
+
+<Component {...rest} />

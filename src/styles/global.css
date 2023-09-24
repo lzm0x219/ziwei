@@ -1,0 +1,36 @@
+/* Reset */
+html,
+body {
+  @apply flex h-full items-center justify-center bg-[--color-background] text-[14px] text-[--color-text];
+}
+
+/* Var */
+:root {
+  --window-width: 90vw;
+  --window-height: 90vh;
+  --window-content-width: calc(100% - var(--sidebar-width));
+  --window-background-color: theme(colors.white);
+
+  --sidebar-width: 300px;
+  --sidebar-background-color: var(--color-primary);
+}
+
+/* Theme */
+[data-mode="light"] {
+  --color-primary: theme(colors.primary);
+  --color-secondary: theme(colors.secondary);
+  --color-background: theme(colors.white);
+  --color-text: theme(colors.black);
+  --color-subtext: #a6a6a6;
+  --color-border: #dedede;
+}
+
+[data-mode="dark"] {
+  --color-primary: theme(colors.primary);
+  --color-secondary: theme(colors.secondary);
+  --color-background: #121212;
+  --color-text: theme(colors.white);
+  --color-border: hsla(0, 0%, 100%, 0.192);
+  --color-subtext: #a6a6a6;
+  --color-hover: #323232;
+}

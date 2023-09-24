@@ -1,0 +1,37 @@
+{
+  "name": "insight",
+  "version": "0.0.0-development",
+  "type": "module",
+  "scripts": {
+    "astro": "bun --bun astro",
+    "build": "astro build",
+    "dev": "astro dev",
+    "prepare": "is-ci || husky install",
+    "preview": "astro preview",
+    "start": "astro dev"
+  },
+  "lint-staged": {
+    "*.{js,cjs,ts,tsx,md,html,css,astro,yml}": "prettier --write",
+    "!(*pnpm-lock).yaml": "prettier --write",
+    "package.json": "sort-package-json"
+  },
+  "devDependencies": {
+    "@astrojs/partytown": "2.0.0",
+    "@astrojs/prefetch": "0.4.0",
+    "@astrojs/tailwind": "5.0.0",
+    "@total-typescript/ts-reset": "0.5.1",
+    "astro": "3.1.2",
+    "husky": "8.0.3",
+    "is-ci": "3.0.1",
+    "lightningcss": "1.22.0",
+    "lint-staged": "14.0.1",
+    "prettier": "3.0.3",
+    "prettier-plugin-astro": "0.12.0",
+    "prettier-plugin-packagejson": "2.4.5",
+    "prettier-plugin-tailwindcss": "0.5.4",
+    "sort-package-json": "2.5.1",
+    "tailwindcss": "3.3.3",
+    "typescript": "5.2.2",
+    "vite-plugin-mkcert": "1.16.0"
+  }
+}
