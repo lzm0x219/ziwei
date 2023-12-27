@@ -16,7 +16,7 @@
     "package.json": "sort-package-json"
   },
   "devDependencies": {
-    "@astrojs/partytown": "2.0.0",
+    "@astrojs/partytown": "2.0.3",
     "@astrojs/prefetch": "0.4.0",
     "@astrojs/tailwind": "5.0.0",
     "@total-typescript/ts-reset": "0.5.1",
