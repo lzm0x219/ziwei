@@ -87,7 +87,7 @@
     "@rstest/core": "0.5.1",
     "@rstest/coverage-istanbul": "0.0.3",
     "husky": "9.1.7",
-    "lint-staged": "16.2.3",
+    "lint-staged": "16.2.5",
     "rspress": "1.45.8",
     "sort-package-json": "3.4.0",
     "typescript": "5.9.3"
