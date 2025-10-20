@@ -75,7 +75,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.4",
     "@microsoft/api-extractor": "7.53.1",
-    "@rslib/core": "0.15.0",
+    "@rslib/core": "0.15.1",
     "@rstest/core": "0.5.1",
     "@rstest/coverage-istanbul": "0.0.3",
     "husky": "9.1.7",
