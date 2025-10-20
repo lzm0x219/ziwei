@@ -1,0 +1,88 @@
+{
+  "name": "ziwei.js",
+  "version": "0.1.0-alpha.0",
+  "description": "专业级北派紫微斗数排盘工具库",
+  "keywords": [
+    "紫微斗数",
+    "Ziwei",
+    "Ziwei-Doushu",
+    "命理学",
+    "命盘",
+    "排盘",
+    "北派紫微斗数",
+    "紫微星盘",
+    "八字命理",
+    "工具库",
+    "JavaScript",
+    "TypeScript",
+    "占星",
+    "占卜",
+    "星盘工具",
+    "命理工具",
+    "天干地支",
+    "五行",
+    "四化飞星",
+    "专业紫微",
+    "ziwei.js",
+    "Ziwei.js",
+    "紫微斗数工具",
+    "命理排盘",
+    "命理算法",
+    "紫微算法",
+    "现代命理",
+    "Chinese astrology",
+    "astrology",
+    "fengshui",
+    "ziwei-doushu-library",
+    "ziwei-doushu-calculator"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "lzm0x219",
+    "email": "lzm0x219@gmail.com"
+  },
+  "type": "module",
+  "exports": {
+    "import": "./dist/index.js",
+    "require": "./dist/index.cjs"
+  },
+  "main": "./dist/index.js",
+  "jsdelivr": "dist/ziweijs.min.js",
+  "unpkg": "dist/ziweijs.min.js",
+  "module": "./dist/index.js",
+  "browser": "dist/ziweijs.min.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "test": "rstest",
+    "build": "rslib build",
+    "build:watch": "rslib build --watch",
+    "docs:build": "rspress build",
+    "docs:dev": "rspress dev",
+    "docs:preview": "rspress preview",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+      "biome format --write --no-errors-on-unmatched"
+    ],
+    "*": [
+      "biome check --no-errors-on-unmatched --files-ignore-unknown=true"
+    ]
+  },
+  "dependencies": {
+    "tyme4ts": "1.3.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.2.6",
+    "@microsoft/api-extractor": "7.53.1",
+    "@rslib/core": "0.15.1",
+    "@rstest/core": "0.5.1",
+    "@rstest/coverage-istanbul": "0.0.3",
+    "husky": "9.1.7",
+    "lint-staged": "16.2.3",
+    "rspress": "1.45.6",
+    "sort-package-json": "3.4.0",
+    "typescript": "5.9.2"
+  },
+  "packageManager": "pnpm@10.18.2+sha512.9fb969fa749b3ade6035e0f109f0b8a60b5d08a1a87fdf72e337da90dcc93336e2280ca4e44f2358a649b83c17959e9993e777c2080879f3801e6f0d999ad3dd"
+}
