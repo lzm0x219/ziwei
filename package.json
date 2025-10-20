@@ -36,6 +36,14 @@
     "ziwei-doushu-library",
     "ziwei-doushu-calculator"
   ],
+  "homepage": "https://github.com/0x219/ziwei#readme",
+  "bugs": {
+    "url": "https://github.com/0x219/ziwei/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0x219/ziwei.git"
+  },
   "license": "MIT",
   "author": {
     "name": "lzm0x219",
@@ -53,13 +61,13 @@
   "browser": "dist/ziweijs.min.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "test": "rstest",
     "build": "rslib build",
     "build:watch": "rslib build --watch",
     "docs:build": "rspress build",
     "docs:dev": "rspress dev",
     "docs:preview": "rspress preview",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "rstest"
   },
   "lint-staged": {
     "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
