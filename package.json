@@ -84,7 +84,7 @@
     "@biomejs/biome": "2.2.6",
     "@microsoft/api-extractor": "7.53.1",
     "@rslib/core": "0.15.1",
-    "@rstest/core": "0.5.3",
+    "@rstest/core": "0.5.4",
     "@rstest/coverage-istanbul": "0.0.3",
     "husky": "9.1.7",
     "lint-staged": "16.2.5",
