@@ -73,28 +73,28 @@ describe("calculateStarIndex()", () => {
 describe("getMinorStarIndices()", () => {
   test("应该正确计算左辅、右弼、文昌、文曲的索引 - 月索引为 3，时索引为 5", () => {
     expect(getMinorStarIndices(3, 5)).toEqual({
-      zuofuIndex: 7,
-      youbiIndex: 7,
-      wenchangIndex: 5,
-      wenquIndex: 9,
+      zuofuIndex: 5,
+      youbiIndex: 5,
+      wenchangIndex: 3,
+      wenquIndex: 7,
     });
   });
 
   test("应该正确处理负索引 - 月索引为 0，时索引为 10", () => {
     expect(getMinorStarIndices(0, 10)).toEqual({
-      zuofuIndex: 4,
-      youbiIndex: 10,
-      wenchangIndex: 0,
-      wenquIndex: 2,
+      zuofuIndex: 2,
+      youbiIndex: 8,
+      wenchangIndex: 10,
+      wenquIndex: 0,
     });
   });
 
   test("应该正确处理月索引和时索引相等的情况", () => {
     expect(getMinorStarIndices(5, 5)).toEqual({
-      zuofuIndex: 9,
-      youbiIndex: 5,
-      wenchangIndex: 5,
-      wenquIndex: 9,
+      zuofuIndex: 7,
+      youbiIndex: 3,
+      wenchangIndex: 3,
+      wenquIndex: 7,
     });
   });
 });

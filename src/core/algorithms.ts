@@ -142,8 +142,8 @@ export interface MinorStarIndices {
  */
 export function getMinorStarIndices(monthIndex: number, hourIndex: number): MinorStarIndices {
   // 获取地支索引（辰和戌的索引）
-  const chenIndex = _branchKeys.indexOf(Branch.CHEN); // 辰宫的索引
-  const xuIndex = _branchKeys.indexOf(Branch.XU); // 戌宫的索引
+  const chenIndex = _branchKeys.indexOf(Branch.CHEN) - 2; // 辰宫的索引
+  const xuIndex = _branchKeys.indexOf(Branch.XU) - 2; // 戌宫的索引
 
   // 根据月份和时辰计算左辅、右弼、文昌、文曲的目标宫位索引
   return {
@@ -194,7 +194,7 @@ export function calculateMajorStars({
   _majorStars.forEach(({ starKey, startIndex, direction, galaxy }, index) => {
     if (starKey) {
       // 动态计算目标宫位索引
-      const targetIndex = $index(startIndex + direction * index);
+      const targetIndex = $index(startIndex + direction * (index - (index >= 9 ? 9 : 0)));
 
       // 创建星曜对象
       const star = createStar({
