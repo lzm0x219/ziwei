@@ -60,6 +60,9 @@
   "module": "./dist/index.js",
   "browser": "dist/ziweijs.min.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
   "scripts": {
     "build": "rslib build",
     "build:watch": "rslib build --watch",
