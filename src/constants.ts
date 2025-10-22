@@ -6,7 +6,7 @@ import {
   Palace,
   Star,
   Stem,
-  type Transformation,
+  Transformation,
   Zodiac,
 } from "./enums";
 import i18n from "./i18n";
@@ -192,7 +192,7 @@ export const _stemStarTransformations: Record<StemKey, StarKey[]> = {
 };
 
 // 四化 key 数组
-export const _transformationKeys = Object.keys(_stemStarTransformations) as Transformation[];
+export const _transformationKeys = Object.keys(Transformation) as Transformation[];
 
 export const _hourKeys = Object.keys(Branch) as HourKey[];
 
