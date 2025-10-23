@@ -184,7 +184,7 @@ export const _stemStarTransformations: Record<StemKey, StarKey[]> = {
   [Stem.BING]: [Star.TIAN_TONG, Star.TIAN_JI, Star.WEN_CHANG, Star.LIAN_ZHEN],
   [Stem.DING]: [Star.TAI_YIN, Star.TIAN_TONG, Star.TIAN_JI, Star.JU_MEN],
   [Stem.WU]: [Star.TAN_LANG, Star.TAI_YIN, Star.YOU_BI, Star.TIAN_JI],
-  [Stem.JI]: [Star.WU_QU, Star.TAN_LANG, Star.TIAN_LIANG, Star.WU_QU],
+  [Stem.JI]: [Star.WU_QU, Star.TAN_LANG, Star.TIAN_LIANG, Star.WEN_QU],
   [Stem.GENG]: [Star.TAI_YANG, Star.WU_QU, Star.TAI_YIN, Star.TIAN_TONG],
   [Stem.XIN]: [Star.JU_MEN, Star.TAI_YANG, Star.WU_QU, Star.WEN_CHANG],
   [Stem.REN]: [Star.TIAN_LIANG, Star.ZI_WEI, Star.ZUO_FU, Star.WU_QU],
