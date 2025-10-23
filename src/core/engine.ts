@@ -117,7 +117,9 @@ export function calculateAstrolabe({
       key: currentPalaceKey,
       name: currentPalaceName,
       stem: stem.stemName,
+      stemKey: stem.stemKey,
       branch: branch.branchName,
+      branchKey: branch.branchKey,
       isLaiYin: isLaiYin(birthYearStemKey, stem.stemKey, branch.branchKey),
       // 安十四主星
       majorStars: mapStarsWithSelfTransformation({

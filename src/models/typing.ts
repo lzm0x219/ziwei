@@ -1,6 +1,7 @@
 import type { HourRange } from "../constants";
 import type { Galaxy, SelfTransformation } from "../enums";
 import type {
+  BranchKey,
   BranchName,
   FiveElementNumName,
   HourName,
@@ -9,6 +10,7 @@ import type {
   StarAbbrName,
   StarKey,
   StarName,
+  StemKey,
   StemName,
   TransformationKey,
   TransformationName,
@@ -35,8 +37,12 @@ export interface PalaceProps {
   isLaiYin: boolean;
   /** 宫位天干 */
   stem: StemName;
+  /** 宫位天干 Key */
+  stemKey: StemKey;
   /** 宫位地支 */
   branch: BranchName;
+  /** 宫位地支 Key */
+  branchKey: BranchKey;
   /** 主星 */
   majorStars: Star[];
   /** 辅星 */
