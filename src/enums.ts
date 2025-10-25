@@ -51,22 +51,6 @@ export enum Branch {
   HAI = "HAI",
 }
 
-export enum Hour {
-  WAN_ZI = "WAN_ZI",
-  CHOU = "CHOU",
-  YIN = "YIN",
-  MAO = "MAO",
-  CHEN = "CHEN",
-  SI = "SI",
-  WU = "WU",
-  WEI = "WEI",
-  SHEN = "SHEN",
-  YOU = "YOU",
-  XU = "XU",
-  HAI = "HAI",
-  ZAO_ZI = "ZAO_ZI",
-}
-
 export enum Palace {
   MING = "MING",
   XIONG_DI = "XIONG_DI",
