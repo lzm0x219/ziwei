@@ -1,3 +1,4 @@
+import { version } from "../../package.json";
 import {
   _genderMap,
   _hourKeys,
@@ -153,7 +154,7 @@ export function calculateAstrolabe({
     palaces,
     majorPeriodDirection,
     _copyright: `copyright © 2025 lzm0x219 (https://github.com/lzm0x219/ziwei)`,
-    _version: "0.0.0",
+    _version: version,
   });
 
   return astrolabe;
