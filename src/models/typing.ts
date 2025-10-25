@@ -52,7 +52,10 @@ export interface PalaceProps {
 }
 
 export interface Palace extends PalaceProps {
-  //
+  /**
+   * 获取当前宫位飞宫四化的四个星辰Key数组，下标分别对 [禄，权，科，忌]
+   */
+  $starKeysByFlying(): StarKey[];
 }
 
 /**
