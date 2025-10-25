@@ -224,4 +224,4 @@ export const _zodiacMaps = _branchKeys.reduce<Record<BranchKey, ZodiacKey>>(
   {} as Record<BranchKey, ZodiacKey>,
 );
 
-export const _minorStars = [Star.ZUO_FU, Star.YOU_BI, Star.WEN_CHANG, Star.WEN_QU] as const;
+export const _minorStars = [Star.ZUO_FU, Star.YOU_BI, Star.WEN_CHANG, Star.WEN_QU];
