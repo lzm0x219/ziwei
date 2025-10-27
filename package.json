@@ -88,7 +88,7 @@
     "@microsoft/api-extractor": "7.53.3",
     "@rslib/core": "0.16.1",
     "@rstest/core": "0.5.4",
-    "@rstest/coverage-istanbul": "0.0.3",
+    "@rstest/coverage-istanbul": "0.0.4",
     "husky": "9.1.7",
     "lint-staged": "16.2.6",
     "rspress": "1.45.8",
