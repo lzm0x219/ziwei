@@ -36,13 +36,13 @@
     "ziwei-doushu-library",
     "ziwei-doushu-calculator"
   ],
-  "homepage": "https://github.com/0x219/ziwei#readme",
+  "homepage": "https://github.com/lzm0x219/ziwei#readme",
   "bugs": {
-    "url": "https://github.com/0x219/ziwei/issues"
+    "url": "https://github.com/lzm0x219/ziwei/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/0x219/ziwei.git"
+    "url": "git+https://github.com/lzm0x219/ziwei.git"
   },
   "license": "MIT",
   "author": {
