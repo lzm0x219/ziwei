@@ -1,4 +1,4 @@
-import { LunarHour, SolarTime } from "tyme4ts";
+import { LunarHour } from "tyme4ts";
 import { getGlobalConfigs } from "./configs";
 import { calculateAstrolabe } from "./core/engine";
 import type { GenderKey } from "./locales/typing";
@@ -6,14 +6,15 @@ import {
   calculateAstrolabeDate,
   calculateAstrolabeDateBySolar,
   calculateHourByIndex,
+  calculateLunisolarDateBySolar,
 } from "./tools/date";
 
 export interface SolarParams {
-  // 姓名
+  /** 姓名 */
   name: string;
-  // 性别 Key
+  /** 性别 Key */
   gender: GenderKey;
-  // 出生日期
+  /** 出生日期 */
   date: Date;
   // 出生地经度
   // longitude?: number;
@@ -38,15 +39,7 @@ export function bySolar(params: SolarParams) {
   //     currentSolarDate = trueSolarTime;
   //   }
   // }
-  const solarTime = SolarTime.fromYmdHms(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-    date.getHours(),
-    date.getMinutes(),
-    date.getSeconds(),
-  );
-  const lunarHour = solarTime.getLunarHour();
+  const lunarHour = calculateLunisolarDateBySolar(date);
   // 转阴历 - 通过阴历计算排盘数据：出生年干、年支、月数、日数、时数索引
   const { stemKey, branchKey, monthIndex, day, hourIndex } = calculateAstrolabeDateBySolar({
     date: lunarHour,
@@ -59,9 +52,10 @@ export function bySolar(params: SolarParams) {
     monthIndex,
     day,
     hourIndex,
+    birthYear: lunarHour.getYear(),
     birthYearStemKey: stemKey,
     birthYearBranchKey: branchKey,
-    solarDate: solarTime.toString(),
+    solarDate: date.toString(),
     solarDateByTrue: undefined,
     lunisolarDate: lunarHour.toString(),
     sexagenaryCycleDate: lunarHour.getSixtyCycleHour().toString(),
@@ -69,11 +63,11 @@ export function bySolar(params: SolarParams) {
 }
 
 export interface LunisolarParams {
-  // 姓名
+  /** 姓名 */
   name: string;
-  // 性别 Key
+  /** 性别 Key */
   gender: GenderKey;
-  // 出生日期 YYYY-m-d-hourIndex
+  /** 出生日期 YYYY-m-d-hourIndex  */
   date: string;
 }
 
@@ -93,6 +87,7 @@ export function byLunisolar({ name, gender, date }: LunisolarParams) {
     monthIndex,
     day,
     hourIndex,
+    birthYear: lunarHour.getYear(),
     birthYearStemKey: stemKey,
     birthYearBranchKey: branchKey,
     solarDate: solarTime.toString(),

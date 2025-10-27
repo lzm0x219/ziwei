@@ -35,6 +35,11 @@ export type PalaceNameZhCN = (typeof ZH_CN.palace.name)[PalaceKey];
 export type PalaceNameZhHant = (typeof ZH_HANT.palace.name)[PalaceKey];
 export type PalaceName = PalaceNameZhCN | PalaceNameZhHant;
 
+// Horoscope
+export type PalaceHoroscopeNameZhCN = (typeof ZH_CN.palace.horoscope)[PalaceKey];
+export type PalaceHoroscopeNameZhHant = (typeof ZH_HANT.palace.horoscope)[PalaceKey];
+export type PalaceHoroscopeName = PalaceHoroscopeNameZhCN | PalaceHoroscopeNameZhHant;
+
 // stem
 export type StemKey = Stem;
 export type StemNameZhCN = (typeof ZH_CN.stem)[StemKey];

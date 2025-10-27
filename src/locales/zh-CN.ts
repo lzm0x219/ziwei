@@ -84,6 +84,20 @@ export default {
       [Palace.FU_DE]: "福德",
       [Palace.FU_MU]: "父母",
     },
+    horoscope: {
+      [Palace.MING]: "大命",
+      [Palace.FU_QI]: "大夫",
+      [Palace.XIONG_DI]: "大兄",
+      [Palace.ZI_NV]: "大子",
+      [Palace.CAI_BO]: "大财",
+      [Palace.JI_E]: "大疾",
+      [Palace.QIAN_YI]: "大迁",
+      [Palace.JIAO_YOU]: "大友",
+      [Palace.GUAN_LU]: "大官",
+      [Palace.TIAN_ZHAI]: "大田",
+      [Palace.FU_DE]: "大福",
+      [Palace.FU_MU]: "大父",
+    },
     type: {
       LaiYin: "来因",
     },
@@ -143,4 +157,6 @@ export default {
     [FiveElementNum.EARTH]: "土五局",
     [FiveElementNum.FIRE]: "火六局",
   },
+  year: "年",
+  age: "岁",
 } as const;

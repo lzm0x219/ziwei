@@ -1,4 +1,4 @@
-import { LunarHour } from "tyme4ts";
+import { LunarHour, SolarTime } from "tyme4ts";
 import type { GlobalConfigs } from "../configs";
 import { _branchKeys, _stemKeys } from "../constants";
 import { getHourIndex } from "../core/algorithms";
@@ -114,6 +114,7 @@ export interface LunisolarDateParams {
 export interface FixedLunarDate {
   stemKey: StemKey;
   branchKey: BranchKey;
+  year: number; // 修正后的农历年
   monthIndex: number; // 修正后的农历月索引（从 0 开始）
   day: number; // 修正后的农历日
   hourIndex: number; // 修正后的时辰索引（0-11 表示正常时辰，12 表示晚子时）
@@ -135,6 +136,7 @@ export interface FixedLunarDate {
  * @returns {FixedLunarDate} 返回修正后的农历日期信息
  * @property {StemKey} stemKey - 修正后的天干键值
  * @property {BranchKey} branchKey - 修正后的地支键值
+ * @property {number} year - 修正后的农历年
  * @property {number} monthIndex - 修正后的农历月索引（从 0 开始）
  * @property {number} day - 修正后的农历日
  * @property {number} hourIndex - 修正后的时辰索引（0-11 表示正常时辰，12 表示晚子时）
@@ -154,17 +156,37 @@ export function calculateAstrolabeDateBySolar({
   // 计算修正后的时辰索引（0-11 为正常时辰，12 为晚子时）
   const hourIndex = getHourIndex(targetLunarHour.getHour());
 
+  const year = targetLunarYear.getYear();
+
   // 根据修正后的农历年份，获取对应的天干地支索引
-  const [stemIndex, branchIndex] = getStemAndBranchByYear(targetLunarYear.getYear());
+  const [stemIndex, branchIndex] = getStemAndBranchByYear(year);
 
   // 返回修正后的农历日期信息
   return {
     stemKey: _stemKeys[stemIndex], // 天干键值
     branchKey: _branchKeys[branchIndex], // 地支键值
+    year, // 修正后的农历年
     monthIndex: targetLunarMonth.getMonth() - 1, // 修正后的农历月索引（从 0 开始）
     day: targetLunarDay.getDay(), // 修正后的农历日
     hourIndex: $index(hourIndex), // 修正后的时辰索引
   };
+}
+
+/**
+ * 根据公历日期计算对应的阴阳合历日期对象。
+ * @param date
+ * @returns
+ */
+export function calculateLunisolarDateBySolar(date: Date) {
+  const solarTime = SolarTime.fromYmdHms(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    date.getHours(),
+    date.getMinutes(),
+    date.getSeconds(),
+  );
+  return solarTime.getLunarHour();
 }
 
 /**

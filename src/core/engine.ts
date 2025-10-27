@@ -10,11 +10,13 @@ import {
 import i18n from "../i18n";
 import type {
   BranchKey,
+  BranchName,
   GenderKey,
   GenderName,
   HourName,
   PalaceName,
   StemKey,
+  StemName,
 } from "../locales/typing";
 import { createAstrolabe } from "../models/astrolabe";
 import { createPalace } from "../models/palace";
@@ -39,10 +41,12 @@ export interface CalculateAstrolabeParams {
   gender: GenderKey;
   // 出生月数索引
   monthIndex: number;
-  // 出生日数
+  /** 出生日数 */
   day: number;
-  // 出生时辰的索引
+  /** 出生时辰的索引 */
   hourIndex: number;
+  // 出生年份
+  birthYear: number;
   // 出生年干 Key
   birthYearStemKey: StemKey;
   // 出生年支 Key
@@ -66,6 +70,7 @@ export function calculateAstrolabe({
   monthIndex,
   day,
   hourIndex,
+  birthYear,
   birthYearStemKey,
   birthYearBranchKey,
   solarDate,
@@ -143,14 +148,20 @@ export function calculateAstrolabe({
   const astrolabe = createAstrolabe({
     name,
     gender: i18n.$t(`gender.${gender}`) as GenderName,
+    birthYearStem: i18n.$t(`stem.${birthYearStemKey}`) as StemName,
+    birthYearStemKey,
+    birthYearBranch: i18n.$t(`branch.${birthYearBranchKey}`) as BranchName,
+    birthYearBranchKey,
     solarDate,
     solarDateByTrue,
+    lunisolarYear: birthYear,
     lunisolarDate,
     sexagenaryCycleDate,
     hour: i18n.$t(`hour.${_hourKeys[hourIndex]}`) as HourName,
     hourRange: _hourRanges[hourIndex],
     zodiac: _zodiacMaps[birthYearBranchKey],
-    fiveElementNum: fiveElementNumName,
+    fiveElementNum: fiveElementNumValue,
+    fiveElementName: fiveElementNumName,
     palaces,
     majorPeriodDirection,
     _copyright: `copyright © 2025 lzm0x219 (https://github.com/lzm0x219/ziwei)`,

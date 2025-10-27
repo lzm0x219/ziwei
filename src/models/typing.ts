@@ -1,5 +1,5 @@
 import type { HourRange } from "../constants";
-import type { Galaxy, SelfTransformation } from "../enums";
+import type { FiveElementNumValue, Galaxy, SelfTransformation } from "../enums";
 import type {
   BranchKey,
   BranchName,
@@ -101,10 +101,20 @@ export interface AstrolabeProps {
   name: string;
   /** 性别 */
   gender: string;
+  /** 出生年份天干 */
+  birthYearStem: StemName;
+  /** 出生年份天干 Key */
+  birthYearStemKey: StemKey;
+  /** 出生年份地支 */
+  birthYearBranch: BranchName;
+  /** 出生年份地支 Key */
+  birthYearBranchKey: BranchKey;
   /** 阳历日期 */
   solarDate?: string;
   /** 阳历日期之真太阳时 */
   solarDateByTrue?: string;
+  /** 阴历年份 */
+  lunisolarYear: number;
   /** 阴阳合历日期 */
   lunisolarDate?: string;
   /** 干支日期 */
@@ -116,7 +126,9 @@ export interface AstrolabeProps {
   /** 生肖 */
   zodiac: string;
   /** 五行局 */
-  fiveElementNum: FiveElementNumName;
+  fiveElementName: FiveElementNumName;
+  /** 五行局数 */
+  fiveElementNum: FiveElementNumValue;
   /** 十二宫数据 */
   palaces: Palace[];
   // 大运的顺逆
@@ -128,6 +140,13 @@ export interface AstrolabeProps {
 }
 
 export interface Astrolabe extends AstrolabeProps {
+  /**
+   * 获取运限数据
+   *
+   * @param index 以地支寅为起始的宫位索引（0-11）
+   * @returns 运限数据
+   */
+  horoscope(index?: number): any;
   /**
    * 通过星辰名称获取当前星辰的实例
    * @param name 星辰名称
