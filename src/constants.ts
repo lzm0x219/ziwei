@@ -23,12 +23,18 @@ import type {
 } from "./locales/typing";
 import type { Star as StarModel } from "./models/typing";
 
-// 十天干 Key 数组
+/** 现支持的国际化语言 */
+export const _languages = ["zh-CN", "zh-Hant"] as const;
+
+export type Language = (typeof _languages)[number];
+
+/** 十天干 Key 数组 */
 export const _stemKeys = Object.keys(Stem) as StemKey[];
 
-// 十二地支 Key 数组
+/** 十二地支 Key 数组 */
 export const _branchKeys = Object.keys(Branch) as BranchKey[];
 
+/** 十二生肖 Key 数组 */
 export const _zodiacKeys = Object.keys(Zodiac) as ZodiacKey[];
 
 export const _genderMap = {

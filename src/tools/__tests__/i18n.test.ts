@@ -1,17 +1,16 @@
 import { describe, expect, rstest, test } from "@rstest/core";
-import { Language } from "../../enums";
 import { createI18n } from "../i18n";
 
 // 模拟语言包
 const mockResources = {
-  [Language.ZH_CN]: {
+  "zh-CN": {
     greeting: {
       welcome: "欢迎",
     },
     farewell: "再见",
     error: {},
   } as const,
-  [Language.ZH_HANT]: {
+  "zh-Hant": {
     greeting: {
       welcome: "歡迎",
     },
@@ -22,7 +21,7 @@ const mockResources = {
 
 describe("createI18n()", () => {
   const i18n = createI18n({
-    lang: Language.ZH_CN,
+    lang: "zh-CN",
     // @ts-expect-error
     resources: mockResources,
   });
@@ -57,7 +56,7 @@ describe("createI18n()", () => {
 
   // 测试场景 6：切换语言后正确获取翻译值
   test("切换语言后正确获取翻译值 (zh-Hant)", () => {
-    i18n.setCurrentLanguage(Language.ZH_HANT);
+    i18n.setCurrentLanguage("zh-Hant");
     expect(i18n.$t("greeting.welcome")).toBe("歡迎");
     expect(i18n.$t("farewell")).toBe("再見");
   });
@@ -69,10 +68,10 @@ describe("createI18n()", () => {
 
   // 测试场景 8：获取当前的语言环境
   test("正确获取当前的语言环境", () => {
-    i18n.setCurrentLanguage(Language.ZH_HANT);
-    expect(i18n.getCurrentLanguage()).toBe(Language.ZH_HANT);
-    i18n.setCurrentLanguage(Language.ZH_CN);
-    expect(i18n.getCurrentLanguage()).toBe(Language.ZH_CN);
+    i18n.setCurrentLanguage("zh-Hant");
+    expect(i18n.getCurrentLanguage()).toBe("zh-Hant");
+    i18n.setCurrentLanguage("zh-CN");
+    expect(i18n.getCurrentLanguage()).toBe("zh-CN");
   });
 
   // 测试场景 9：应该在语言变化时触发回调函数
@@ -82,10 +81,10 @@ describe("createI18n()", () => {
     });
     i18n.onLanguageChange(mockCallback);
 
-    i18n.setCurrentLanguage(Language.ZH_HANT);
+    i18n.setCurrentLanguage("zh-Hant");
 
     expect(mockCallback).toHaveBeenCalledTimes(1);
-    expect(mockCallback).toHaveBeenCalledWith(Language.ZH_HANT);
+    expect(mockCallback).toHaveBeenCalledWith("zh-Hant");
   });
 
   // 测试场景 10：应该在语言变化时支持多个回调函数的触发
@@ -95,9 +94,9 @@ describe("createI18n()", () => {
     i18n.onLanguageChange(fn1);
     i18n.onLanguageChange(fn2);
 
-    i18n.setCurrentLanguage(Language.ZH_HANT);
+    i18n.setCurrentLanguage("zh-Hant");
 
-    expect(fn1).toHaveBeenCalledWith(Language.ZH_HANT);
-    expect(fn2).toHaveBeenCalledWith(Language.ZH_HANT);
+    expect(fn1).toHaveBeenCalledWith("zh-Hant");
+    expect(fn2).toHaveBeenCalledWith("zh-Hant");
   });
 });

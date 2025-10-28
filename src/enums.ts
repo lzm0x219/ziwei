@@ -1,8 +1,3 @@
-export enum Language {
-  ZH_CN = "ZH_CN",
-  ZH_HANT = "ZH_HANT",
-}
-
 export enum Gender {
   MALE = "MALE",
   FEMALE = "FEMALE",

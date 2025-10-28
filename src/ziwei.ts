@@ -1,6 +1,8 @@
 import { LunarHour } from "tyme4ts";
 import { getGlobalConfigs } from "./configs";
+import type { Language } from "./constants";
 import { calculateAstrolabe } from "./core/engine";
+import i18n from "./i18n";
 import type { GenderKey } from "./locales/typing";
 import {
   calculateAstrolabeDate,
@@ -16,6 +18,8 @@ export interface SolarParams {
   gender: GenderKey;
   /** 出生日期 */
   date: Date;
+  /** 语言 */
+  language?: Language;
   // 出生地经度
   // longitude?: number;
   // 出生时区
@@ -28,7 +32,10 @@ export interface SolarParams {
  * 通过阳历获取紫微斗数命盘信息
  */
 export function bySolar(params: SolarParams) {
-  const { name, gender, date } = params;
+  const { name, gender, date, language } = params;
+
+  language && i18n.setCurrentLanguage(language);
+
   const globalConfigs = getGlobalConfigs();
   // let currentSolarDate: Date = date;
   // // 若有出生经度，计算真太阳时
@@ -69,12 +76,15 @@ export interface LunisolarParams {
   gender: GenderKey;
   /** 出生日期 YYYY-m-d-hourIndex  */
   date: string;
+  /** 语言 */
+  language?: Language;
 }
 
 /**
  * 通过农历获取紫微斗数命盘信息
  */
-export function byLunisolar({ name, gender, date }: LunisolarParams) {
+export function byLunisolar({ name, gender, date, language }: LunisolarParams) {
+  language && i18n.setCurrentLanguage(language);
   const [year, month, days, currentHourIndex] = date.split("-").map(Number);
   const [hour, minute, second] = calculateHourByIndex(currentHourIndex);
   const lunarHour = LunarHour.fromYmdHms(year, month, days, hour, minute, second);
