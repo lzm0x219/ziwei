@@ -2,7 +2,6 @@ import {
   Branch,
   FiveElementNum,
   Galaxy,
-  Gender,
   Palace,
   Star,
   Stem,
@@ -37,9 +36,14 @@ export const _branchKeys = Object.keys(Branch) as BranchKey[];
 /** 十二生肖 Key 数组 */
 export const _zodiacKeys = Object.keys(Zodiac) as ZodiacKey[];
 
-export const _genderMap = {
-  [Gender.FEMALE]: 0,
-  [Gender.MALE]: 1,
+/** 性别 */
+export const _genders = ["male", "female"] as const;
+
+export type Gender = (typeof _genders)[number];
+
+export const _genderMap: Record<Gender, number> = {
+  female: 0,
+  male: 1,
 };
 
 type MonthlyStemsAndBranch = [

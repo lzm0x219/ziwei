@@ -1,13 +1,5 @@
-import type {
-  Branch,
-  FiveElementNum,
-  Gender,
-  Palace,
-  Star,
-  Stem,
-  Transformation,
-  Zodiac,
-} from "../enums";
+import type { Gender } from "../constants";
+import type { Branch, FiveElementNum, Palace, Star, Stem, Transformation, Zodiac } from "../enums";
 import type ZH_CN from "./zh-CN";
 import type ZH_HANT from "./zh-Hant";
 

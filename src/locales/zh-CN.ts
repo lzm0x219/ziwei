@@ -1,19 +1,10 @@
-import {
-  Branch,
-  FiveElementNum,
-  Gender,
-  Palace,
-  Star,
-  Stem,
-  Transformation,
-  Zodiac,
-} from "../enums";
+import { Branch, FiveElementNum, Palace, Star, Stem, Transformation, Zodiac } from "../enums";
 
 export default {
   name: "匿名",
   gender: {
-    [Gender.MALE]: "男",
-    [Gender.FEMALE]: "女",
+    male: "男",
+    female: "女",
   },
   zodiac: {
     [Zodiac.RAT]: "鼠",

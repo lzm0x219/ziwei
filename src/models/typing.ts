@@ -5,6 +5,7 @@ import type {
   BranchName,
   FiveElementNumName,
   HourName,
+  PalaceHoroscopeName,
   PalaceKey,
   PalaceName,
   StarAbbrName,
@@ -19,36 +20,41 @@ import type {
 /**
  * 宫位
  * @property
+ * - index 宫位索引
+ * - key 宫位Key
  * - name 宫位名称
  * - isLaiYin 是否来因宫
  * - stem 宫位天干
+ * - stemKey 宫位天干Key
  * - branch 宫位地支
+ * - branchKey 宫位地支Key
  * - majorStars 主星
  * - minorStars 辅星
+ * - horoscopeRanges 大限间隔
  */
 export interface PalaceProps {
-  /** 宫位索引 */
+  /** 宫位索引，从0到11的数字 */
   index: number;
-  /** 宫位Key */
+  /** 宫位Key，用于唯一标识宫位 */
   key: PalaceKey;
-  /** 宫位名称 */
+  /** 宫位名称，如命宫、财帛宫等 */
   name: PalaceName;
-  /** 是否来因宫 */
+  /** 是否来因宫，标识此宫是否为来因宫 */
   isLaiYin: boolean;
-  /** 宫位天干 */
+  /** 宫位天干，如甲、乙、丙等 */
   stem: StemName;
-  /** 宫位天干 Key */
+  /** 宫位天干Key，天干的唯一标识符 */
   stemKey: StemKey;
-  /** 宫位地支 */
+  /** 宫位地支，如子、丑、寅等 */
   branch: BranchName;
-  /** 宫位地支 Key */
+  /** 宫位地支Key，地支的唯一标识符 */
   branchKey: BranchKey;
-  /** 主星 */
+  /** 主星，宫位中的主要星耀数组 */
   majorStars: Star[];
-  /** 辅星 */
+  /** 辅星，宫位中的次要星耀数组 */
   minorStars: Star[];
-  /** 大限间隔 */
-  majorPeriodRanges: [number, number];
+  /** 大限间隔，表示大限的起止年龄范围 */
+  horoscopeRanges: [number, number];
 }
 
 export interface Palace extends PalaceProps {
@@ -61,24 +67,28 @@ export interface Palace extends PalaceProps {
 /**
  * 星辰
  * @property
+ * - key 星辰唯一标识
  * - name 星辰名字
+ * - abbrName 星辰缩写名
  * - type 星辰类型
- * - scope 作用范围
- * - transformation 四化
+ * - galaxy 星辰所属星系
+ * - YT 生年四化
+ * - ST 自化
  */
 export interface StarProps {
+  /** 星辰唯一标识符 */
   key: StarKey;
-  /** 星耀名字 */
+  /** 星耀名字，如紫微、天机等 */
   name: StarName;
-  /** 星耀缩写 */
+  /** 星耀缩写，用于简短显示 */
   abbrName: StarAbbrName;
   /** 星辰类型（主星 | 辅星） */
   type: StarType;
-  /** 星辰所属星系 */
+  /** 星辰所属星系，如紫微垣、天市垣等，可选属性 */
   galaxy?: Galaxy;
   /** 生年四化，若未产生生年四化则此字段为 `undefined` */
   YT?: StarTransformation;
-  /** 自化，若未产生自化则此字段为 `undefined` */
+  /** 自化，若未产生自化则此字段为 `undefined`，记录不同自化类型对应的变化 */
   ST?: Partial<Record<SelfTransformation, StarTransformation>>;
 }
 
@@ -131,8 +141,10 @@ export interface AstrolabeProps {
   fiveElementNum: FiveElementNumValue;
   /** 十二宫数据 */
   palaces: Palace[];
-  // 大运的顺逆
-  majorPeriodDirection: 1 | -1;
+  /** 运限数据 */
+  horoscope: Horoscope;
+  /** 大限流向，1为顺行，-1为逆行 */
+  horoscopeDirection: 1 | -1;
   /** 版权 */
   _copyright: string;
   /** 版本 */
@@ -146,23 +158,21 @@ export interface Astrolabe extends AstrolabeProps {
    * @param index 以地支寅为起始的宫位索引（0-11）
    * @returns 运限数据
    */
-  horoscope(index?: number): any;
-  /**
-   * 通过星辰名称获取当前星辰的实例
-   * @param name 星辰名称
-   * @returns 星耀实例
-   */
-  // star(name: StarName): Star;
-  /**
-   * 通过宫位名称获取宫位实例
-   * @param name 宫位名称
-   * @returns 宫位实例
-   */
-  // palace(name: PalaceName): Palace;
-  /**
-   * 通过地支名称获取宫位实例
-   * @param branch 地支名称
-   * @returns 宫位实例
-   */
-  // branch(branch: BranchName): Palace;
+  getHoroscope(index?: number): Horoscope;
+}
+
+export interface HoroscopeProps {
+  index: number;
+  palaces: HoroscopePalace[];
+}
+
+export interface Horoscope extends HoroscopeProps {
+  //
+}
+
+export interface HoroscopePalace {
+  palaceName: PalaceHoroscopeName;
+  age: number;
+  yearly: number;
+  yearlyText: string;
 }

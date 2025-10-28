@@ -25,6 +25,7 @@ import { $oppositeIndex } from "../tools/math";
 import {
   calculateCurrentPalaceIndex,
   calculateFiveElementNum,
+  calculateHoroscope,
   calculateMainPalaceIndex,
   calculateMajorPeriodRanges,
   calculateMajorStars,
@@ -103,12 +104,12 @@ export function calculateAstrolabe({
     birthYearStemKey,
   });
 
-  const majorPeriodDirection =
+  const horoscopeDirection =
     _genderMap[gender] === (_stemKeys.indexOf(birthYearStemKey) + 1) % 2 ? 1 : -1;
 
-  const majorPeriodRanges = calculateMajorPeriodRanges(
+  const horoscopeRanges = calculateMajorPeriodRanges(
     mainPalaceIndex,
-    majorPeriodDirection,
+    horoscopeDirection,
     fiveElementNumValue,
   );
 
@@ -140,10 +141,12 @@ export function calculateAstrolabe({
         oppositeStemKey: oppositeStem.stemKey,
       }),
       // 步大限
-      majorPeriodRanges: majorPeriodRanges[index],
+      horoscopeRanges: horoscopeRanges[index],
     });
     return palace;
   });
+
+  const horoscope = calculateHoroscope(palaces, birthYear);
 
   const astrolabe = createAstrolabe({
     name,
@@ -163,7 +166,8 @@ export function calculateAstrolabe({
     fiveElementNum: fiveElementNumValue,
     fiveElementName: fiveElementNumName,
     palaces,
-    majorPeriodDirection,
+    horoscope,
+    horoscopeDirection,
     _copyright: `copyright © 2025 lzm0x219 (https://github.com/lzm0x219/ziwei)`,
     _version: version,
   });

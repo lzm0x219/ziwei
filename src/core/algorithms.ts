@@ -1,6 +1,8 @@
+import { getGlobalConfigs } from "../configs";
 import {
   _branchKeys,
   _fiveElementKeys,
+  _palaceKeys,
   _stemKeys,
   _stemStarTransformations,
   _transformationKeys,
@@ -14,14 +16,17 @@ import i18n from "../i18n";
 import type {
   BranchKey,
   FiveElementNumName,
+  PalaceHoroscopeName,
   StarAbbrName,
   StarKey,
   StarName,
   StemKey,
   TransformationName,
 } from "../locales/typing";
+import { createHoroscope } from "../models/horoscope";
 import { createStar } from "../models/star";
-import type { Star, StarTransformation } from "../models/typing";
+import type { HoroscopePalace, Palace, Star, StarTransformation } from "../models/typing";
+import { calculateAstrolabeDateBySolar, calculateLunisolarDateBySolar } from "../tools/date";
 import { $index, $relativeIndex } from "../tools/math";
 
 /**
@@ -329,16 +334,16 @@ export function calculateFiveElementNum(stemKey: StemKey, branchKey: BranchKey) 
 // 起大限
 export function calculateMajorPeriodRanges(
   mainIndex: number,
-  majorPeriodDirection: 1 | -1,
+  horoscopeDirection: 1 | -1,
   fiveElementNumValue: FiveElementNumValue,
 ) {
-  const majorPeriodRanges = [];
+  const horoscopeRanges = [];
   for (let i = 0; i < 12; i++) {
-    const idx = majorPeriodDirection === 1 ? $index(mainIndex + i) : $index(mainIndex - i);
+    const idx = horoscopeDirection === 1 ? $index(mainIndex + i) : $index(mainIndex - i);
     const start = fiveElementNumValue + 10 * i;
-    majorPeriodRanges[idx] = [start, start + 9] as [number, number];
+    horoscopeRanges[idx] = [start, start + 9] as [number, number];
   }
-  return majorPeriodRanges;
+  return horoscopeRanges;
 }
 
 /**
@@ -393,6 +398,86 @@ export function calculateStarTransformation(
     key: transformationKey,
     name: i18n.$t(`transformation.${transformationKey}`) as TransformationName,
   };
+}
+
+/**
+ * 计算运限数据
+ *
+ * 根据宫位数组、出生年份和可选的宫位索引，计算并返回运限数据。
+ * 如果未提供索引，则会自动根据当前日期计算当前所在的大限。
+ *
+ * @param palaces - 十二宫位数组，包含所有宫位的基础信息
+ * @param lunisolarYear - 出生的农历年份，用于计算年龄和运限
+ * @param index - 可选参数，指定要计算的宫位索引。如果不提供，则计算当前所在的大限
+ *
+ * @returns 返回运限数据对象，包含索引和对应的运限宫位信息
+ *
+ * @example
+ * ```typescript
+ * // 计算当前运限
+ * const currentHoroscope = calculateHoroscope(palaces, 1990);
+ *
+ * // 计算特定宫位的运限
+ * const specificHoroscope = calculateHoroscope(palaces, 1990, 3);
+ * ```
+ */
+export function calculateHoroscope(palaces: Palace[], lunisolarYear: number, index?: number) {
+  if (index === void 0) {
+    const globalConfigs = getGlobalConfigs();
+    // 默认获取当天的日期的阴历年份，计算当前年份的大限索引
+    const lunisolarDate = calculateLunisolarDateBySolar(new Date());
+    const { year } = calculateAstrolabeDateBySolar({
+      date: lunisolarDate,
+      globalConfigs,
+    });
+    // 虚岁
+    const age = year - lunisolarYear + 1;
+    // 当前所在年份的大命索引
+    const horoscopeMainPalaceIndex = palaces.findIndex(
+      (palace) => age >= palace.horoscopeRanges[0] && age <= palace.horoscopeRanges[1],
+    );
+    return createHoroscope({
+      index: horoscopeMainPalaceIndex,
+      palaces: calculateHoroscopePalaces(palaces, horoscopeMainPalaceIndex, lunisolarYear),
+    });
+  }
+  return createHoroscope({
+    index,
+    palaces: calculateHoroscopePalaces(palaces, index, lunisolarYear),
+  });
+}
+
+export function calculateHoroscopePalaces(
+  palaces: Palace[],
+  mainPalaceIndex: number,
+  birthYear: number,
+) {
+  const mainPalace = palaces[mainPalaceIndex];
+  const majorStart = mainPalace.horoscopeRanges[0];
+  const yearlyStartIndex = $index(majorStart - 1);
+
+  // 初始化宫位基础信息（名称）
+  const horoscopePalaces = palaces.map<HoroscopePalace>((_, index) => {
+    const currentPalaceIndex = calculateCurrentPalaceIndex(mainPalaceIndex, index);
+    const currentPalaceKey = _palaceKeys[currentPalaceIndex];
+    return {
+      palaceName: i18n.$t(`palace.horoscope.${currentPalaceKey}`) as PalaceHoroscopeName,
+      age: 0,
+      yearly: 0,
+      yearlyText: ``,
+    };
+  });
+
+  // 批量计算年龄和年份
+  for (let i = 0; i < 10; i++) {
+    const idx = $index(yearlyStartIndex + i);
+    horoscopePalaces[idx].age = majorStart + i;
+    horoscopePalaces[idx].yearly = birthYear + majorStart + i - 1;
+    horoscopePalaces[idx].yearlyText =
+      `${horoscopePalaces[idx].yearly}${i18n.$t("year")}${horoscopePalaces[idx].age}${i18n.$t("age")}`;
+  }
+
+  return horoscopePalaces;
 }
 
 export interface MapStarsWithSelfTransformationParams {
