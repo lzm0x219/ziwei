@@ -437,7 +437,7 @@ export function calculateHoroscope(palaces: Palace[], lunisolarYear: number, ind
       (palace) => age >= palace.horoscopeRanges[0] && age <= palace.horoscopeRanges[1],
     );
     return createHoroscope({
-      index: horoscopeMainPalaceIndex,
+      index: horoscopeMainPalaceIndex === -1 ? 0 : horoscopeMainPalaceIndex,
       palaces: calculateHoroscopePalaces(palaces, horoscopeMainPalaceIndex, lunisolarYear),
     });
   }
