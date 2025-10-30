@@ -54,13 +54,13 @@ export interface CalculateAstrolabeParams {
   // 出生年支 Key
   birthYearBranchKey: BranchKey;
   // 出生阳历
-  solarDate?: string;
+  solarDate: string;
   // 出生阳历之真太阳时
   solarDateByTrue?: string;
   // 出生阴历
-  lunisolarDate?: string;
+  lunisolarDate: string;
   // 出生干支历
-  sexagenaryCycleDate?: string;
+  sexagenaryCycleDate: string;
 }
 
 /**

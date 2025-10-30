@@ -9,6 +9,8 @@ import {
   calculateAstrolabeDateBySolar,
   calculateHourByIndex,
   calculateLunisolarDateBySolar,
+  getLunisolarDateText,
+  getSolarDateText,
 } from "./tools/date";
 
 export interface SolarParams {
@@ -62,10 +64,10 @@ export function bySolar(params: SolarParams) {
     birthYear: lunarHour.getYear(),
     birthYearStemKey: stemKey,
     birthYearBranchKey: branchKey,
-    solarDate: date.toString(),
+    solarDate: getSolarDateText(date),
     solarDateByTrue: undefined,
-    lunisolarDate: lunarHour.toString(),
-    sexagenaryCycleDate: lunarHour.getSixtyCycleHour().toString(),
+    lunisolarDate: getLunisolarDateText(lunarHour, hourIndex),
+    sexagenaryCycleDate: lunarHour.getEightChar().toString(),
   });
 }
 
@@ -100,9 +102,9 @@ export function byLunisolar({ name, gender, date, language }: LunisolarParams) {
     birthYear: lunarHour.getYear(),
     birthYearStemKey: stemKey,
     birthYearBranchKey: branchKey,
-    solarDate: solarTime.toString(),
+    solarDate: getSolarDateText(solarTime),
     solarDateByTrue: undefined,
-    lunisolarDate: lunarHour.toString(),
-    sexagenaryCycleDate: lunarHour.getSixtyCycleHour().toString(),
+    lunisolarDate: getLunisolarDateText(lunarHour, hourIndex),
+    sexagenaryCycleDate: lunarHour.getEightChar().toString(),
   });
 }

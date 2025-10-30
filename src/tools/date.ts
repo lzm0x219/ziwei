@@ -1,7 +1,8 @@
 import { LunarHour, SolarTime } from "tyme4ts";
 import type { GlobalConfigs } from "../configs";
-import { _branchKeys, _stemKeys } from "../constants";
+import { _branchKeys, _hourKeys, _stemKeys } from "../constants";
 import { getHourIndex } from "../core/algorithms";
+import i18n from "../i18n";
 import type { BranchKey, StemKey } from "../locales/typing";
 import { $index } from "./math";
 
@@ -237,4 +238,44 @@ export function getStemAndBranchByYear(year: number): [number, number] {
  */
 export function calculateHourByIndex(hourIndex: number) {
   return [hourIndex * 2, 30, 0];
+}
+
+/**
+ * 将日期对象格式化为标准日期时间文本字符串。
+ *
+ * @param date - 要格式化的日期对象，可以是 SolarTime 或 JavaScript 原生 Date 类型
+ * @returns 格式化后的日期时间字符串，格式为："YYYY-MM-DD HH:MM"，其中月、日、时、分均为两位数字表示（不足两位前补零）
+ *
+ * @example
+ * ```typescript
+ * // 使用 SolarTime 对象
+ * import { SolarTime } from "tyme4ts";
+ * const solarTime = SolarTime.fromYmdHms(2023, 5, 15, 14, 30, 0);
+ * const formatted1 = getSolarDateText(solarTime);
+ * // 结果: "2023-05-15 14:30"
+ *
+ * // 使用 JavaScript Date 对象
+ * const jsDate = new Date(2023, 4, 15, 14, 30); // 注意：月份从0开始
+ * const formatted2 = getSolarDateText(jsDate);
+ * // 结果: "2023-05-15 14:30"
+ * ```
+ */
+export function getSolarDateText(date: SolarTime | Date) {
+  if (date instanceof SolarTime) {
+    const _array = [date.getMonth(), date.getDay(), date.getHour(), date.getMinute()].map((n) =>
+      String(n).padStart(2, "0"),
+    );
+    return `${date.getYear()}-${_array[0]}-${_array[1]} ${_array[2]}:${_array[3]}`;
+  }
+  const _array = [date.getMonth() + 1, date.getDay(), date.getHours(), date.getMinutes()].map((n) =>
+    String(n).padStart(2, "0"),
+  );
+  return `${date.getFullYear()}-${_array[0]}-${_array[1]} ${_array[2]}:${_array[3]}`;
+}
+
+export function getLunisolarDateText(date: LunarHour, hourIndex: number) {
+  const lunarDay = date.getLunarDay();
+  const lunarMonth = lunarDay.getLunarMonth();
+  const lunarYear = lunarMonth.getLunarYear();
+  return `${lunarYear.getName().slice(2)}${lunarMonth.getName()}${lunarDay.getName()}${lunarMonth.getName()} ${i18n.$t(`hour.${_hourKeys[hourIndex]}`)}`;
 }
