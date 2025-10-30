@@ -12,6 +12,9 @@ export default defineConfig({
           root: "./dist/",
         },
       },
+      experiments: {
+        advancedEsm: true,
+      },
     },
     {
       format: "cjs",
@@ -27,6 +30,9 @@ export default defineConfig({
       output: {
         filename: {
           js: "ziweijs.min.js",
+        },
+        externals: {
+          tyme4ts: "tyme4ts",
         },
         distPath: {
           root: "./dist",
