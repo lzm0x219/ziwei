@@ -31,6 +31,7 @@ import {
   calculateMajorStars,
   calculateMinorStars,
   calculatePalaceStemsAndBranches,
+  calculateStarIndex,
   isLaiYin,
   mapStarsWithSelfTransformation,
 } from "./algorithms";
@@ -92,9 +93,12 @@ export function calculateAstrolabe({
     mainPalaceBranch.branchKey,
   );
 
+  // 根据日期和五行局数值计算紫微和天府的宫位索引
+  const { ziweiIndex, tianfuIndex } = calculateStarIndex(day, fiveElementNumValue);
+
   const majorStars = calculateMajorStars({
-    day,
-    fiveElementNumValue,
+    ziweiIndex,
+    tianfuIndex,
     birthYearStemKey,
   });
 
@@ -155,6 +159,10 @@ export function calculateAstrolabe({
     birthYearStemKey,
     birthYearBranch: i18n.$t(`branch.${birthYearBranchKey}`) as BranchName,
     birthYearBranchKey,
+    ziweiBranch: palaces[ziweiIndex].branch,
+    ziweiBranchKey: palaces[ziweiIndex].branchKey,
+    mainPalaceBranch: mainPalaceBranch.branchName,
+    mainPalaceBranchKey: mainPalaceBranch.branchKey,
     solarDate,
     solarDateByTrue,
     lunisolarYear: birthYear,

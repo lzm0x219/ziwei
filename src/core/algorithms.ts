@@ -102,15 +102,6 @@ export function calculateStarIndex(day: number, fiveElementNumValue: FiveElement
   return { ziweiIndex, tianfuIndex };
 }
 
-export interface CalculateMajorStarsParams {
-  // 出生日数
-  day: number;
-  // 五行局数
-  fiveElementNumValue: FiveElementNumValue;
-  // 出生年干 Key
-  birthYearStemKey: StemKey;
-}
-
 export interface MinorStarIndices {
   zuofuIndex: number;
   youbiIndex: number;
@@ -159,6 +150,15 @@ export function getMinorStarIndices(monthIndex: number, hourIndex: number): Mino
   };
 }
 
+export interface CalculateMajorStarsParams {
+  /** 紫微星的索引 */
+  ziweiIndex: number;
+  /** 天府星的索引 */
+  tianfuIndex: number;
+  /** 出生年干 Key */
+  birthYearStemKey: StemKey;
+}
+
 /**
  * 计算紫微斗数的主星分布
  *
@@ -182,15 +182,12 @@ export function getMinorStarIndices(monthIndex: number, hourIndex: number): Mino
  * ```
  */
 export function calculateMajorStars({
-  day,
-  fiveElementNumValue,
+  ziweiIndex,
+  tianfuIndex,
   birthYearStemKey,
 }: CalculateMajorStarsParams) {
   // 初始化一个空的星曜分布数组
   const stars = createEmptyStars();
-
-  // 根据日期和五行局数值计算紫微和天府的宫位索引
-  const { ziweiIndex, tianfuIndex } = calculateStarIndex(day, fiveElementNumValue);
 
   // 创建主星的元数据（包括星曜的初始位置和方向）
   const _majorStars = createMetaMajorStars(ziweiIndex, tianfuIndex);

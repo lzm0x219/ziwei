@@ -139,6 +139,14 @@ export interface AstrolabeProps {
   fiveElementName: FiveElementNumName;
   /** 五行局数 */
   fiveElementNum: FiveElementNumValue;
+  /** 紫微星所在地支 */
+  ziweiBranch: BranchName;
+  /** 紫微星所在地支Key */
+  ziweiBranchKey: BranchKey;
+  /** 命宫之地支 */
+  mainPalaceBranch: BranchName;
+  /** 命宫之地支 Key */
+  mainPalaceBranchKey: BranchKey;
   /** 十二宫数据 */
   palaces: Palace[];
   /** 运限数据 */
