@@ -120,13 +120,13 @@ export interface AstrolabeProps {
   /** 出生年份地支 Key */
   birthYearBranchKey: BranchKey;
   /** 阳历日期 */
-  solarDate?: string;
+  solarDate: string;
   /** 阳历日期之真太阳时 */
   solarDateByTrue?: string;
   /** 阴历年份 */
   lunisolarYear: number;
   /** 阴阳合历日期 */
-  lunisolarDate?: string;
+  lunisolarDate: string;
   /** 干支日期 */
   sexagenaryCycleDate?: string;
   /** 时辰 */
