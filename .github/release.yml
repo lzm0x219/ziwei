@@ -39,7 +39,7 @@ changelog:
         - build-system
         - ci
 
-    - title: Chores
+    - title: Miscellaneous Chores
       labels:
         - chore
 
