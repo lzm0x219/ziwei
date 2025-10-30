@@ -46,6 +46,10 @@ export const _genderMap: Record<Gender, number> = {
   male: 1,
 };
 
+export const _one = ["yin", "yang"] as const;
+
+export type One = (typeof _one)[number];
+
 type MonthlyStemsAndBranch = [
   {
     stemKey: StemKey;

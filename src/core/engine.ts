@@ -3,6 +3,7 @@ import {
   _genderMap,
   _hourKeys,
   _hourRanges,
+  _one,
   _palaceKeys,
   _stemKeys,
   _zodiacMaps,
@@ -12,7 +13,6 @@ import type {
   BranchKey,
   BranchName,
   GenderKey,
-  GenderName,
   HourName,
   PalaceName,
   StemKey,
@@ -108,8 +108,10 @@ export function calculateAstrolabe({
     birthYearStemKey,
   });
 
-  const horoscopeDirection =
-    _genderMap[gender] === (_stemKeys.indexOf(birthYearStemKey) + 1) % 2 ? 1 : -1;
+  // 出生年干的阴阳属性 0 为阴，1 为阳
+  const stemAttr = (_stemKeys.indexOf(birthYearStemKey) + 1) % 2;
+
+  const horoscopeDirection = _genderMap[gender] === stemAttr ? 1 : -1;
 
   const horoscopeRanges = calculateMajorPeriodRanges(
     mainPalaceIndex,
@@ -154,7 +156,7 @@ export function calculateAstrolabe({
 
   const astrolabe = createAstrolabe({
     name,
-    gender: i18n.$t(`gender.${gender}`) as GenderName,
+    gender: i18n.$t(`one.${_one[stemAttr]}`) + i18n.$t(`gender.${gender}`),
     birthYearStem: i18n.$t(`stem.${birthYearStemKey}`) as StemName,
     birthYearStemKey,
     birthYearBranch: i18n.$t(`branch.${birthYearBranchKey}`) as BranchName,

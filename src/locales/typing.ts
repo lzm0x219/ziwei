@@ -1,4 +1,4 @@
-import type { Gender } from "../constants";
+import type { Gender, One } from "../constants";
 import type { Branch, FiveElementNum, Palace, Star, Stem, Transformation, Zodiac } from "../enums";
 import type ZH_CN from "./zh-CN";
 import type ZH_HANT from "./zh-Hant";
@@ -8,6 +8,13 @@ export type GenderKey = Gender;
 export type GenderNameZhCN = (typeof ZH_CN.gender)[GenderKey];
 export type GenderNameZhHant = (typeof ZH_HANT.gender)[GenderKey];
 export type GenderName = GenderNameZhCN | GenderNameZhHant;
+
+// One
+
+export type OneKey = One;
+export type OneZhCN = (typeof ZH_CN.one)[OneKey];
+export type OneZhHant = (typeof ZH_HANT.one)[OneKey];
+export type OneName = OneZhCN | OneZhHant;
 
 // Zodiac
 export type ZodiacKey = Zodiac;

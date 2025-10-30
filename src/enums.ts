@@ -1,8 +1,3 @@
-export enum Gender {
-  MALE = "MALE",
-  FEMALE = "FEMALE",
-}
-
 export enum Zodiac {
   RAT = "RAT",
   OX = "OX",

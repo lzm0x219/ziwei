@@ -6,6 +6,10 @@ export default {
     male: "男",
     female: "女",
   },
+  one: {
+    yin: "阴",
+    yang: "阳",
+  },
   zodiac: {
     [Zodiac.RAT]: "鼠",
     [Zodiac.OX]: "牛",
