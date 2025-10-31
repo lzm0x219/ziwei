@@ -203,9 +203,9 @@ export default {
     D: "忌",
   },
   fiveElementNum: {
-    WATER: "水二局",
     WOOD: "木三局",
     METAL: "金四局",
+    WATER: "水二局",
     EARTH: "土五局",
     FIRE: "火六局",
   },

@@ -152,7 +152,7 @@ export function calculateAstrolabe({
     gender: i18n.$t(`one.${_one[stemAttr]}`) + i18n.$t(`gender.${gender}`),
     birthYearStem: i18n.$t(`stem.${birthYearStemKey}`) as StemName,
     birthYearStemKey,
-    birthYearBranch: i18n.$t(`branch.${birthYearBranchKey}`) as BranchName,
+    birthYearBranch: i18n.$t(`branch.${birthYearBranchKey}.name`) as BranchName,
     birthYearBranchKey,
     ziweiBranch: palaces[ziweiIndex].branch,
     ziweiBranchKey: palaces[ziweiIndex].branchKey,

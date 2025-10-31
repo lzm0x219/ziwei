@@ -25,7 +25,8 @@ export const _stemKeys = Object.keys(zhCN.stem) as StemKey[];
 /** 十二地支 Key 数组 */
 export const _branchKeys = Object.keys(zhCN.branch) as BranchKey[];
 
-export const _fiveElementNumValue = [2, 3, 4, 5, 6] as const;
+/** 五行局数 - 顺序与国际化对应且不可变，影响排序计算 */
+export const _fiveElementNumValue = [3, 4, 2, 5, 6] as const;
 
 export type FiveElementNumValue = (typeof _fiveElementNumValue)[number];
 
