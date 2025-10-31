@@ -181,7 +181,7 @@ export function calculateAstrolabeDateBySolar({
 export function calculateLunisolarDateBySolar(date: Date) {
   const solarTime = SolarTime.fromYmdHms(
     date.getFullYear(),
-    date.getMonth(),
+    date.getMonth() + 1,
     date.getDate(),
     date.getHours(),
     date.getMinutes(),
