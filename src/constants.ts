@@ -1,25 +1,17 @@
-import {
-  Branch,
-  FiveElementNum,
-  Galaxy,
-  Palace,
-  Star,
-  Stem,
-  Transformation,
-  Zodiac,
-} from "./enums";
 import i18n from "./i18n";
 import type {
   BranchKey,
   BranchName,
   FiveElementNumKey,
-  HourKey,
+  GenderKey,
+  OneKey,
   PalaceKey,
   StarKey,
   StemKey,
   StemName,
-  ZodiacKey,
+  TransformationKey,
 } from "./locales/typing";
+import zhCN from "./locales/zh-CN";
 import type { Star as StarModel } from "./models/typing";
 
 /** 现支持的国际化语言 */
@@ -28,16 +20,30 @@ export const _languages = ["zh-CN", "zh-Hant"] as const;
 export type Language = (typeof _languages)[number];
 
 /** 十天干 Key 数组 */
-export const _stemKeys = Object.keys(Stem) as StemKey[];
+export const _stemKeys = Object.keys(zhCN.stem) as StemKey[];
 
 /** 十二地支 Key 数组 */
-export const _branchKeys = Object.keys(Branch) as BranchKey[];
+export const _branchKeys = Object.keys(zhCN.branch) as BranchKey[];
 
-/** 十二生肖 Key 数组 */
-export const _zodiacKeys = Object.keys(Zodiac) as ZodiacKey[];
+export const _fiveElementNumValue = [2, 3, 4, 5, 6] as const;
 
-/** 性别 */
-export const _genders = ["male", "female"] as const;
+export type FiveElementNumValue = (typeof _fiveElementNumValue)[number];
+
+export const _fiveElementNumMaps = Object.keys(zhCN.fiveElementNum).reduce<
+  Record<FiveElementNumKey, FiveElementNumValue>
+>(
+  (result, key, index) => {
+    result[key as FiveElementNumKey] = _fiveElementNumValue[index];
+    return result;
+  },
+  {} as Record<FiveElementNumKey, FiveElementNumValue>,
+);
+
+export const _selfTransformation = ["CP", "CF"] as const;
+
+export type SelfTransformation = (typeof _selfTransformation)[number];
+
+export const _genders = Object.keys(zhCN.gender) as GenderKey[];
 
 export type Gender = (typeof _genders)[number];
 
@@ -46,9 +52,13 @@ export const _genderMap: Record<Gender, number> = {
   male: 1,
 };
 
-export const _one = ["yin", "yang"] as const;
+/**
+ * 星辰所属星系（南 | 北 | 中）
+ */
+export const _galaxyKeys = ["S", "N", "C"] as const;
+export type Galaxy = (typeof _galaxyKeys)[number];
 
-export type One = (typeof _one)[number];
+export const _one = Object.keys(zhCN.one) as OneKey[];
 
 type MonthlyStemsAndBranch = [
   {
@@ -83,7 +93,7 @@ function getMonthlyStemsAndBranches(startStemIndex: number, startBranchIndex: nu
       },
       {
         branchKey,
-        branchName: i18n.$t(`branch.${branchKey}`) as BranchName,
+        branchName: i18n.$t(`branch.${branchKey}.name`) as unknown as BranchName,
       },
     ];
   });
@@ -105,23 +115,30 @@ const _jia = getMonthlyStemsAndBranches(0);
  * 戊癸起甲寅
  */
 export const _yearToMonthMap: Record<StemKey, MonthlyStemsAndBranch[]> = {
-  [Stem.JIA]: _bing,
-  [Stem.YI]: _wu,
-  [Stem.BING]: _geng,
-  [Stem.DING]: _ren,
-  [Stem.WU]: _jia,
-  [Stem.JI]: _bing,
-  [Stem.GENG]: _wu,
-  [Stem.XIN]: _geng,
-  [Stem.REN]: _ren,
-  [Stem.GUI]: _jia,
+  JIA: _bing,
+  YI: _wu,
+  BING: _geng,
+  DING: _ren,
+  WU: _jia,
+  JI: _bing,
+  GENG: _wu,
+  XIN: _geng,
+  REN: _ren,
+  GUI: _jia,
 };
 
 // 十二宫职 Key 数组
-export const _palaceKeys = Object.keys(Palace) as PalaceKey[];
+export const _palaceKeys = Object.keys(zhCN.palace) as PalaceKey[];
 
 // 五行局数 Key 数组
-export const _fiveElementKeys = Object.keys(FiveElementNum) as FiveElementNumKey[];
+export const _fiveElementKeys = Object.keys(zhCN.fiveElementNum) as FiveElementNumKey[];
+
+export interface StarMeta {
+  starKey?: StarKey;
+  startIndex: number;
+  direction: 1 | -1;
+  galaxy?: Galaxy;
+}
 
 /**
  * 根据紫微天府的索引创建星辰元数组
@@ -129,31 +146,31 @@ export const _fiveElementKeys = Object.keys(FiveElementNum) as FiveElementNumKey
  * @param tianfuIndex
  * @returns 十二宫位元数组
  */
-export function createMetaMajorStars(ziweiIndex: number, tianfuIndex: number) {
+export function createMetaMajorStars(ziweiIndex: number, tianfuIndex: number): StarMeta[] {
   return [
     // 紫微星系（逆时针）
-    { starKey: Star.ZI_WEI, startIndex: ziweiIndex, direction: -1, galaxy: Galaxy.C },
-    { starKey: Star.TIAN_JI, startIndex: ziweiIndex, direction: -1, galaxy: Galaxy.N },
-    { starKey: "", startIndex: ziweiIndex, direction: -1, galaxy: undefined },
-    { starKey: Star.TAI_YANG, startIndex: ziweiIndex, direction: -1, galaxy: Galaxy.N },
-    { starKey: Star.WU_QU, startIndex: ziweiIndex, direction: -1, galaxy: Galaxy.N },
-    { starKey: Star.TIAN_TONG, startIndex: ziweiIndex, direction: -1, galaxy: Galaxy.N },
-    { starKey: "", startIndex: ziweiIndex, direction: -1, galaxy: undefined },
-    { starKey: "", startIndex: ziweiIndex, direction: -1, galaxy: undefined },
-    { starKey: Star.LIAN_ZHEN, startIndex: ziweiIndex, direction: -1, galaxy: Galaxy.N },
+    { starKey: "ZI_WEI", startIndex: ziweiIndex, direction: -1, galaxy: "C" },
+    { starKey: "TIAN_JI", startIndex: ziweiIndex, direction: -1, galaxy: "N" },
+    { starKey: undefined, startIndex: ziweiIndex, direction: -1, galaxy: undefined },
+    { starKey: "TAI_YANG", startIndex: ziweiIndex, direction: -1, galaxy: "N" },
+    { starKey: "WU_QU", startIndex: ziweiIndex, direction: -1, galaxy: "N" },
+    { starKey: "TIAN_TONG", startIndex: ziweiIndex, direction: -1, galaxy: "N" },
+    { starKey: undefined, startIndex: ziweiIndex, direction: -1, galaxy: undefined },
+    { starKey: undefined, startIndex: ziweiIndex, direction: -1, galaxy: undefined },
+    { starKey: "LIAN_ZHEN", startIndex: ziweiIndex, direction: -1, galaxy: "N" },
 
     // 天府星系（顺时针）
-    { starKey: Star.TIAN_FU, startIndex: tianfuIndex, direction: 1, galaxy: undefined },
-    { starKey: Star.TAI_YIN, startIndex: tianfuIndex, direction: 1, galaxy: Galaxy.S },
-    { starKey: Star.TAN_LANG, startIndex: tianfuIndex, direction: 1, galaxy: Galaxy.S },
-    { starKey: Star.JU_MEN, startIndex: tianfuIndex, direction: 1, galaxy: Galaxy.S },
-    { starKey: Star.TIAN_XIANG, startIndex: tianfuIndex, direction: 1, galaxy: undefined },
-    { starKey: Star.TIAN_LIANG, startIndex: tianfuIndex, direction: 1, galaxy: Galaxy.S },
-    { starKey: Star.QI_SHA, startIndex: tianfuIndex, direction: 1, galaxy: undefined },
-    { starKey: "", startIndex: tianfuIndex, direction: 1, galaxy: undefined },
-    { starKey: "", startIndex: tianfuIndex, direction: 1, galaxy: undefined },
-    { starKey: "", startIndex: tianfuIndex, direction: 1, galaxy: undefined },
-    { starKey: Star.PO_JUN, startIndex: tianfuIndex, direction: 1, galaxy: Galaxy.S },
+    { starKey: "TIAN_FU", startIndex: tianfuIndex, direction: 1, galaxy: undefined },
+    { starKey: "TAI_YIN", startIndex: tianfuIndex, direction: 1, galaxy: "S" },
+    { starKey: "TAN_LANG", startIndex: tianfuIndex, direction: 1, galaxy: "S" },
+    { starKey: "JU_MEN", startIndex: tianfuIndex, direction: 1, galaxy: "S" },
+    { starKey: "TIAN_XIANG", startIndex: tianfuIndex, direction: 1, galaxy: undefined },
+    { starKey: "TIAN_LIANG", startIndex: tianfuIndex, direction: 1, galaxy: "S" },
+    { starKey: "QI_SHA", startIndex: tianfuIndex, direction: 1, galaxy: undefined },
+    { starKey: undefined, startIndex: tianfuIndex, direction: 1, galaxy: undefined },
+    { starKey: undefined, startIndex: tianfuIndex, direction: 1, galaxy: undefined },
+    { starKey: undefined, startIndex: tianfuIndex, direction: 1, galaxy: undefined },
+    { starKey: "PO_JUN", startIndex: tianfuIndex, direction: 1, galaxy: "S" },
   ] as const;
 }
 
@@ -174,12 +191,12 @@ export function createMetaMinorStars({
   youbiIndex,
   wenchangIndex,
   wenquIndex,
-}: CreateMetaMinorStarsParams) {
+}: CreateMetaMinorStarsParams): StarMeta[] {
   return [
-    { starKey: Star.ZUO_FU, startIndex: zuofuIndex, direction: 1, galaxy: Galaxy.C },
-    { starKey: Star.YOU_BI, startIndex: youbiIndex, direction: -1, galaxy: Galaxy.C },
-    { starKey: Star.WEN_CHANG, startIndex: wenchangIndex, direction: -1, galaxy: Galaxy.C },
-    { starKey: Star.WEN_QU, startIndex: wenquIndex, direction: 1, galaxy: Galaxy.C },
+    { starKey: "ZUO_FU", startIndex: zuofuIndex, direction: 1, galaxy: "C" },
+    { starKey: "YOU_BI", startIndex: youbiIndex, direction: -1, galaxy: "C" },
+    { starKey: "WEN_CHANG", startIndex: wenchangIndex, direction: -1, galaxy: "C" },
+    { starKey: "WEN_QU", startIndex: wenquIndex, direction: 1, galaxy: "C" },
   ];
 }
 
@@ -193,22 +210,22 @@ export function createEmptyStars() {
 
 // 十天干四化曜表
 export const _stemStarTransformations: Record<StemKey, StarKey[]> = {
-  [Stem.JIA]: [Star.LIAN_ZHEN, Star.PO_JUN, Star.WU_QU, Star.TAI_YANG],
-  [Stem.YI]: [Star.TIAN_JI, Star.TIAN_LIANG, Star.ZI_WEI, Star.TAI_YIN],
-  [Stem.BING]: [Star.TIAN_TONG, Star.TIAN_JI, Star.WEN_CHANG, Star.LIAN_ZHEN],
-  [Stem.DING]: [Star.TAI_YIN, Star.TIAN_TONG, Star.TIAN_JI, Star.JU_MEN],
-  [Stem.WU]: [Star.TAN_LANG, Star.TAI_YIN, Star.YOU_BI, Star.TIAN_JI],
-  [Stem.JI]: [Star.WU_QU, Star.TAN_LANG, Star.TIAN_LIANG, Star.WEN_QU],
-  [Stem.GENG]: [Star.TAI_YANG, Star.WU_QU, Star.TAI_YIN, Star.TIAN_TONG],
-  [Stem.XIN]: [Star.JU_MEN, Star.TAI_YANG, Star.WU_QU, Star.WEN_CHANG],
-  [Stem.REN]: [Star.TIAN_LIANG, Star.ZI_WEI, Star.ZUO_FU, Star.WU_QU],
-  [Stem.GUI]: [Star.PO_JUN, Star.JU_MEN, Star.TAI_YIN, Star.TAN_LANG],
+  JIA: ["LIAN_ZHEN", "PO_JUN", "WU_QU", "TAI_YANG"],
+  YI: ["TIAN_JI", "TIAN_LIANG", "ZI_WEI", "TAI_YIN"],
+  BING: ["TIAN_TONG", "TIAN_JI", "WEN_CHANG", "LIAN_ZHEN"],
+  DING: ["TAI_YIN", "TIAN_TONG", "TIAN_JI", "JU_MEN"],
+  WU: ["TAN_LANG", "TAI_YIN", "YOU_BI", "TIAN_JI"],
+  JI: ["WU_QU", "TAN_LANG", "TIAN_LIANG", "WEN_QU"],
+  GENG: ["TAI_YANG", "WU_QU", "TAI_YIN", "TIAN_TONG"],
+  XIN: ["JU_MEN", "TAI_YANG", "WU_QU", "WEN_CHANG"],
+  REN: ["TIAN_LIANG", "ZI_WEI", "ZUO_FU", "WU_QU"],
+  GUI: ["PO_JUN", "JU_MEN", "TAI_YIN", "TAN_LANG"],
 };
 
-// 四化 key 数组
-export const _transformationKeys = Object.keys(Transformation) as Transformation[];
-
-export const _hourKeys = Object.keys(Branch) as HourKey[];
+/**
+ * 四化 key 数组
+ */
+export const _transformationKeys = Object.keys(zhCN.transformation) as TransformationKey[];
 
 export const _hourRanges = [
   "23:00~12:59",
@@ -227,15 +244,4 @@ export const _hourRanges = [
 
 export type HourRange = (typeof _hourRanges)[number];
 
-/**
- * 地支生肖对应表
- */
-export const _zodiacMaps = _branchKeys.reduce<Record<BranchKey, ZodiacKey>>(
-  (result, branchKey, i) => {
-    result[branchKey] = _zodiacKeys[i];
-    return result;
-  },
-  {} as Record<BranchKey, ZodiacKey>,
-);
-
-export const _minorStars = [Star.ZUO_FU, Star.YOU_BI, Star.WEN_CHANG, Star.WEN_QU];
+export const _minorStars: StarKey[] = ["ZUO_FU", "YOU_BI", "WEN_CHANG", "WEN_QU"];

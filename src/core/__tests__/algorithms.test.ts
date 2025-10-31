@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@rstest/core";
 import { _yearToMonthMap } from "../../constants";
-import { Branch, FiveElementNumValue, Stem } from "../../enums";
+import type { BranchKey, StemKey } from "../../locales/typing";
 import {
   calculateCurrentPalaceIndex,
   calculateMainPalaceIndex,
@@ -13,8 +13,8 @@ import {
 
 describe("calculatePalaceStemsAndBranches()", () => {
   test("应该返回正确的十二宫干支（有效的stemKey）", () => {
-    const result = calculatePalaceStemsAndBranches(Stem.BING);
-    expect(result).toEqual(_yearToMonthMap[Stem.BING]);
+    const result = calculatePalaceStemsAndBranches("BING");
+    expect(result).toEqual(_yearToMonthMap.BING);
   });
 });
 
@@ -61,11 +61,11 @@ describe("calculateCurrentPalaceIndex()", () => {
 
 describe("calculateStarIndex()", () => {
   test("应该正确处理日数与五行局数可除尽的情况", () => {
-    const result = calculateStarIndex(20, FiveElementNumValue.METAL);
+    const result = calculateStarIndex(20, 4);
     expect(result).toEqual({ ziweiIndex: 4, tianfuIndex: 8 });
   });
   test("应该正确处理日数与五行局数无法除尽的情况", () => {
-    const result = calculateStarIndex(1, FiveElementNumValue.FIRE);
+    const result = calculateStarIndex(1, 6);
     expect(result).toEqual({ ziweiIndex: 7, tianfuIndex: 5 });
   });
 });
@@ -125,29 +125,29 @@ describe("isLaiYin()", () => {
    */
   test("年天干等于月天干且地支非子/丑时，应返回true", () => {
     // 场景1：年干=月干（甲=甲），地支=寅（非子/丑）
-    expect(isLaiYin(Stem.JIA, Stem.JIA, Branch.YIN)).toBe(true);
+    expect(isLaiYin("JIA", "JIA", "YIN")).toBe(true);
 
     // 场景2：年干=月干（乙=乙），地支=卯（非子/丑）
-    expect(isLaiYin(Stem.YI, Stem.YI, Branch.MAO)).toBe(true);
+    expect(isLaiYin("YI", "YI", "MAO")).toBe(true);
 
     // 场景3：年干=月干（丙=丙），地支=辰（非子/丑）
-    expect(isLaiYin(Stem.BING, Stem.BING, Branch.CHEN)).toBe(true);
+    expect(isLaiYin("BING", "BING", "CHEN")).toBe(true);
 
     // 场景4：覆盖所有非子/丑的地支（寅、卯、辰、巳、午、未、申、酉、戌、亥）
-    const validBranches = [
-      Branch.YIN,
-      Branch.MAO,
-      Branch.CHEN,
-      Branch.SI,
-      Branch.WU,
-      Branch.WEI,
-      Branch.SHEN,
-      Branch.YOU,
-      Branch.XU,
-      Branch.HAI,
+    const validBranches: BranchKey[] = [
+      "YIN",
+      "MAO",
+      "CHEN",
+      "SI",
+      "WU",
+      "WEI",
+      "SHEN",
+      "YOU",
+      "XU",
+      "HAI",
     ];
     validBranches.forEach((branch) => {
-      expect(isLaiYin(Stem.JIA, Stem.JIA, branch)).toBe(true);
+      expect(isLaiYin("JIA", "JIA", branch)).toBe(true);
     });
   });
 
@@ -156,31 +156,20 @@ describe("isLaiYin()", () => {
    */
   test("年天干不等于月天干时，无论地支如何都返回false", () => {
     // 场景1：年干≠月干，地支=寅（非子/丑）
-    expect(isLaiYin(Stem.JIA, Stem.YI, Branch.YIN)).toBe(false);
+    expect(isLaiYin("JIA", "YI", "YIN")).toBe(false);
 
     // 场景2：年干≠月干，地支=子（子/丑）
-    expect(isLaiYin(Stem.BING, Stem.DING, Branch.ZI)).toBe(false);
+    expect(isLaiYin("BING", "DING", "ZI")).toBe(false);
 
     // 场景3：年干≠月干，地支=丑（子/丑）
-    expect(isLaiYin(Stem.WU, Stem.JI, Branch.CHOU)).toBe(false);
+    expect(isLaiYin("WU", "JI", "CHOU")).toBe(false);
 
     // 场景4：覆盖所有天干组合不相等的情况
-    const stems: Stem[] = [
-      Stem.JIA,
-      Stem.YI,
-      Stem.BING,
-      Stem.DING,
-      Stem.WU,
-      Stem.JI,
-      Stem.GENG,
-      Stem.XIN,
-      Stem.REN,
-      Stem.GUI,
-    ];
+    const stems: StemKey[] = ["JIA", "YI", "BING", "DING", "WU", "JI", "GENG", "XIN", "REN", "GUI"];
     stems.forEach((yearStem, idx) => {
       // 取不同的月天干
       const monthStem = stems[(idx + 1) % stems.length];
-      expect(isLaiYin(yearStem, monthStem, Branch.YIN)).toBe(false);
+      expect(isLaiYin(yearStem, monthStem, "YIN")).toBe(false);
     });
   });
 
@@ -189,27 +178,16 @@ describe("isLaiYin()", () => {
    */
   test("年天干等于月天干但地支为子或丑时，返回false", () => {
     // 场景1：年干=月干，地支=子
-    expect(isLaiYin(Stem.JIA, Stem.JIA, Branch.ZI)).toBe(false);
+    expect(isLaiYin("JIA", "JIA", "ZI")).toBe(false);
 
     // 场景2：年干=月干，地支=丑
-    expect(isLaiYin(Stem.YI, Stem.YI, Branch.CHOU)).toBe(false);
+    expect(isLaiYin("YI", "YI", "CHOU")).toBe(false);
 
     // 场景3：覆盖所有天干相等+地支子/丑的组合
-    const stems: Stem[] = [
-      Stem.JIA,
-      Stem.YI,
-      Stem.BING,
-      Stem.DING,
-      Stem.WU,
-      Stem.JI,
-      Stem.GENG,
-      Stem.XIN,
-      Stem.REN,
-      Stem.GUI,
-    ];
+    const stems: StemKey[] = ["JIA", "YI", "BING", "DING", "WU", "JI", "GENG", "XIN", "REN", "GUI"];
     stems.forEach((stem) => {
-      expect(isLaiYin(stem, stem, Branch.ZI)).toBe(false);
-      expect(isLaiYin(stem, stem, Branch.CHOU)).toBe(false);
+      expect(isLaiYin(stem, stem, "ZI")).toBe(false);
+      expect(isLaiYin(stem, stem, "CHOU")).toBe(false);
     });
   });
 
@@ -217,31 +195,20 @@ describe("isLaiYin()", () => {
    * 边界场景：验证所有天干和地支组合的完整性
    */
   test("覆盖所有天干地支组合，确保判断逻辑无遗漏", () => {
-    const stems: Stem[] = [
-      Stem.JIA,
-      Stem.YI,
-      Stem.BING,
-      Stem.DING,
-      Stem.WU,
-      Stem.JI,
-      Stem.GENG,
-      Stem.XIN,
-      Stem.REN,
-      Stem.GUI,
-    ];
-    const branches: Branch[] = [
-      Branch.ZI,
-      Branch.CHOU,
-      Branch.YIN,
-      Branch.MAO,
-      Branch.CHEN,
-      Branch.SI,
-      Branch.WU,
-      Branch.WEI,
-      Branch.SHEN,
-      Branch.YOU,
-      Branch.XU,
-      Branch.HAI,
+    const stems: StemKey[] = ["JIA", "YI", "BING", "DING", "WU", "JI", "GENG", "XIN", "REN", "GUI"];
+    const branches: BranchKey[] = [
+      "ZI",
+      "CHOU",
+      "YIN",
+      "MAO",
+      "CHEN",
+      "SI",
+      "WU",
+      "WEI",
+      "SHEN",
+      "YOU",
+      "XU",
+      "HAI",
     ];
 
     // 遍历所有组合（10天干 × 10天干 × 12地支 = 1200种组合）
@@ -249,7 +216,7 @@ describe("isLaiYin()", () => {
       stems.forEach((monthStem) => {
         branches.forEach((branch) => {
           // 核心判断逻辑（与函数实现一致，用于验证）
-          const expected = yearStem === monthStem && ![Branch.ZI, Branch.CHOU].includes(branch);
+          const expected = yearStem === monthStem && !["ZI", "CHOU"].includes(branch);
           expect(isLaiYin(yearStem, monthStem, branch)).toBe(expected);
         });
       });

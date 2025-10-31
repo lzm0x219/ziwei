@@ -1,5 +1,4 @@
 import { describe, expect, test } from "@rstest/core";
-import { Branch, Palace, Star, Stem } from "../../enums";
 import i18n from "../../i18n";
 import type { BranchName, StemName } from "../../locales/typing";
 import { createPalace } from "../palace";
@@ -13,13 +12,13 @@ describe("createPalace 宫位对象创建测试", () => {
     // 定义测试用的星曜属性
     const testProps: PalaceProps = {
       index: 0,
-      key: Palace.CAI_BO,
+      key: "CAI_BO",
       name: "财帛",
       isLaiYin: false,
-      stem: i18n.$t(`stem.${Stem.BING}`) as StemName,
-      stemKey: Stem.BING,
-      branch: i18n.$t(`branch.${Branch.CHEN}`) as BranchName,
-      branchKey: Branch.CHEN,
+      stem: i18n.$t(`stem.BING`) as StemName,
+      stemKey: "BING",
+      branch: i18n.$t(`branch.CHEN.name`) as BranchName,
+      branchKey: "CHEN",
       majorStars: [],
       minorStars: [],
       horoscopeRanges: [2, 11],
@@ -47,13 +46,13 @@ describe("createPalace 宫位对象创建测试", () => {
   test("$starKeysByFlying 方法应该返回正确的飞宫四化", () => {
     const testProps: PalaceProps = {
       index: 0,
-      key: Palace.CAI_BO,
+      key: "CAI_BO",
       name: "财帛",
       isLaiYin: false,
-      stem: i18n.$t(`stem.${Stem.BING}`) as StemName,
-      stemKey: Stem.BING,
-      branch: i18n.$t(`branch.${Branch.CHEN}`) as BranchName,
-      branchKey: Branch.CHEN,
+      stem: i18n.$t(`stem.BING`) as StemName,
+      stemKey: "BING",
+      branch: i18n.$t(`branch.CHEN.name`) as BranchName,
+      branchKey: "CHEN",
       majorStars: [],
       minorStars: [],
       horoscopeRanges: [2, 11],
@@ -62,11 +61,6 @@ describe("createPalace 宫位对象创建测试", () => {
     const palace = createPalace(testProps);
 
     // 验证 $starKeysByFlying 方法返回正确的结果
-    expect(palace.$starKeysByFlying()).toEqual([
-      Star.TIAN_TONG,
-      Star.TIAN_JI,
-      Star.WEN_CHANG,
-      Star.LIAN_ZHEN,
-    ]);
+    expect(palace.$starKeysByFlying()).toEqual(["TIAN_TONG", "TIAN_JI", "WEN_CHANG", "LIAN_ZHEN"]);
   });
 });

@@ -2,6 +2,7 @@ import { getGlobalConfigs } from "../configs";
 import {
   _branchKeys,
   _fiveElementKeys,
+  _fiveElementNumMaps,
   _palaceKeys,
   _stemKeys,
   _stemStarTransformations,
@@ -10,8 +11,8 @@ import {
   createEmptyStars,
   createMetaMajorStars,
   createMetaMinorStars,
+  type FiveElementNumValue,
 } from "../constants";
-import { Branch, FiveElementNumValue, SelfTransformation } from "../enums";
 import i18n from "../i18n";
 import type {
   BranchKey,
@@ -138,8 +139,8 @@ export interface MinorStarIndices {
  */
 export function getMinorStarIndices(monthIndex: number, hourIndex: number): MinorStarIndices {
   // 获取地支索引（辰和戌的索引）
-  const chenIndex = _branchKeys.indexOf(Branch.CHEN) - 2; // 辰宫的索引
-  const xuIndex = _branchKeys.indexOf(Branch.XU) - 2; // 戌宫的索引
+  const chenIndex = _branchKeys.indexOf("CHEN") - 2; // 辰宫的索引
+  const xuIndex = _branchKeys.indexOf("XU") - 2; // 戌宫的索引
 
   // 根据月份和时辰计算左辅、右弼、文昌、文曲的目标宫位索引
   return {
@@ -201,8 +202,8 @@ export function calculateMajorStars({
       // 创建星曜对象
       const star = createStar({
         key: starKey, // 星曜的唯一标识
-        name: i18n.$t(`star.${starKey}`) as StarName, // 星曜的名称（国际化处理）
-        abbrName: i18n.$t(`abbr.star.${starKey}`) as StarAbbrName, // 星曜的简称（国际化处理）
+        name: i18n.$t(`star.${starKey}.name`) as StarName, // 星曜的名称（国际化处理）
+        abbrName: i18n.$t(`star.${starKey}.abbr`) as StarAbbrName, // 星曜的简称（国际化处理）
         type: "major", // 星曜类型（主星）
         galaxy, // 星曜所属的星系
         YT: calculateStarTransformation(birthYearStemKey, starKey), // 根据天干计算星曜的化曜
@@ -254,15 +255,17 @@ export function calculateMinorStars({
 
   // 遍历每颗小星并安置到对应宫位
   _minorStars.forEach(({ starKey, startIndex, galaxy }) => {
-    const star = createStar({
-      key: starKey,
-      name: i18n.$t(`star.${starKey}`) as StarName, // 获取星曜名称
-      abbrName: i18n.$t(`abbr.star.${starKey}`) as StarAbbrName, // 星曜的简称（国际化处理）
-      type: "minor", // 星曜类型
-      galaxy, // 星曜所属宫位
-      YT: calculateStarTransformation(birthYearStemKey, starKey), // 计算星曜的四化结果
-    });
-    stars[startIndex].push(star); // 将星曜安置到对应宫位
+    if (starKey) {
+      const star = createStar({
+        key: starKey,
+        name: i18n.$t(`star.${starKey}.name`) as StarName, // 获取星曜名称
+        abbrName: i18n.$t(`star.${starKey}.abbr`) as StarAbbrName, // 星曜的简称（国际化处理）
+        type: "minor", // 星曜类型
+        galaxy, // 星曜所属宫位
+        YT: calculateStarTransformation(birthYearStemKey, starKey), // 计算星曜的四化结果
+      });
+      stars[startIndex].push(star); // 将星曜安置到对应宫位
+    }
   });
 
   return stars; // 返回完整的星曜数据结构
@@ -318,7 +321,7 @@ export function calculateFiveElementNum(stemKey: StemKey, branchKey: BranchKey) 
   const fiveElementNumIndex = (stemNumber + branchNumber - 1) % 5;
   const fiveElementNumKey = _fiveElementKeys[fiveElementNumIndex];
   const fiveElementNumName = i18n.$t(`fiveElementNum.${fiveElementNumKey}`) as FiveElementNumName;
-  const fiveElementNumValue = FiveElementNumValue[fiveElementNumKey];
+  const fiveElementNumValue = _fiveElementNumMaps[fiveElementNumKey];
 
   return {
     fiveElementNumKey,
@@ -438,7 +441,6 @@ export function calculateHoroscope(
     const horoscopeMainPalaceIndex = palaces.findIndex(
       (palace) => age >= palace.horoscopeRanges[0] && age <= palace.horoscopeRanges[1],
     );
-    console.log(horoscopeMainPalaceIndex, "horoscopeMainPalaceIndex");
     return createHoroscope({
       index: horoscopeMainPalaceIndex === -1 ? 0 : horoscopeMainPalaceIndex,
       palaces: calculateHoroscopePalaces(
@@ -449,7 +451,6 @@ export function calculateHoroscope(
       ),
     });
   }
-  console.log(index);
   return createHoroscope({
     index,
     palaces: calculateHoroscopePalaces(palaces, index, birthYearBranchKey, birthYear),
@@ -472,7 +473,7 @@ export function calculateHoroscopePalaces(
     const currentPalaceIndex = calculateCurrentPalaceIndex(mainPalaceIndex, index);
     const currentPalaceKey = _palaceKeys[currentPalaceIndex];
     return {
-      palaceName: i18n.$t(`palace.horoscope.${currentPalaceKey}`) as PalaceHoroscopeName,
+      palaceName: i18n.$t(`palace.${currentPalaceKey}.horoscope`) as PalaceHoroscopeName,
       age: 0,
       yearly: 0,
       yearlyText: ``,
@@ -545,8 +546,8 @@ export function mapStarsWithSelfTransformation({
 }: MapStarsWithSelfTransformationParams) {
   return stars.map((star) => {
     star.ST = {
-      [SelfTransformation.CF]: calculateStarTransformation(stemKey, star.key),
-      [SelfTransformation.CP]: calculateStarTransformation(oppositeStemKey, star.key),
+      CF: calculateStarTransformation(stemKey, star.key),
+      CP: calculateStarTransformation(oppositeStemKey, star.key),
     };
     return star;
   });
@@ -567,7 +568,7 @@ export function mapStarsWithSelfTransformation({
  * - `false`: 不是来因宫
  */
 export function isLaiYin(yearStem: StemKey, monthStem: StemKey, branch: BranchKey): boolean {
-  return yearStem === monthStem && ![Branch.ZI, Branch.CHOU].includes(branch);
+  return yearStem === monthStem && !["ZI", "CHOU"].includes(branch);
 }
 
 /**

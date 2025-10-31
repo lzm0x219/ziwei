@@ -1,13 +1,5 @@
 import { version } from "../../package.json";
-import {
-  _genderMap,
-  _hourKeys,
-  _hourRanges,
-  _one,
-  _palaceKeys,
-  _stemKeys,
-  _zodiacMaps,
-} from "../constants";
+import { _branchKeys, _genderMap, _hourRanges, _one, _palaceKeys, _stemKeys } from "../constants";
 import i18n from "../i18n";
 import type {
   BranchKey,
@@ -17,6 +9,7 @@ import type {
   PalaceName,
   StemKey,
   StemName,
+  ZodiacName,
 } from "../locales/typing";
 import { createAstrolabe } from "../models/astrolabe";
 import { createPalace } from "../models/palace";
@@ -67,7 +60,7 @@ export interface CalculateAstrolabeParams {
  * 获取排盘布星后的十二宫数据
  */
 export function calculateAstrolabe({
-  name = i18n.$t("name"),
+  name = "匿名",
   gender,
   monthIndex,
   day,
@@ -123,7 +116,7 @@ export function calculateAstrolabe({
   const palaces = palaceStemsAndBranches.map<Palace>(([stem, branch], index) => {
     const currentPalaceIndex = calculateCurrentPalaceIndex(mainPalaceIndex, index);
     const currentPalaceKey = _palaceKeys[currentPalaceIndex];
-    const currentPalaceName = i18n.$t(`palace.name.${currentPalaceKey}`) as PalaceName;
+    const currentPalaceName = i18n.$t(`palace.${currentPalaceKey}.name`) as PalaceName;
     const [oppositeStem] = palaceStemsAndBranches[$oppositeIndex(index)];
     const palace = createPalace({
       index,
@@ -170,9 +163,9 @@ export function calculateAstrolabe({
     lunisolarYear: birthYear,
     lunisolarDate,
     sexagenaryCycleDate,
-    hour: i18n.$t(`hour.${_hourKeys[hourIndex]}`) as HourName,
+    hour: `${i18n.$t(`branch.${_branchKeys[hourIndex]}.name`) as BranchName}${i18n.$t("hour") as HourName}`,
     hourRange: _hourRanges[hourIndex],
-    zodiac: _zodiacMaps[birthYearBranchKey],
+    zodiac: i18n.$t(`branch.${birthYearBranchKey}.zodiac`) as ZodiacName,
     fiveElementNum: fiveElementNumValue,
     fiveElementName: fiveElementNumName,
     palaces,

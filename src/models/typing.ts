@@ -1,5 +1,4 @@
-import type { HourRange } from "../constants";
-import type { FiveElementNumValue, Galaxy, SelfTransformation } from "../enums";
+import type { FiveElementNumValue, Galaxy, HourRange, SelfTransformation } from "../constants";
 import type {
   BranchKey,
   BranchName,
@@ -15,6 +14,7 @@ import type {
   StemName,
   TransformationKey,
   TransformationName,
+  ZodiacName,
 } from "../locales/typing";
 
 /**
@@ -130,11 +130,11 @@ export interface AstrolabeProps {
   /** 干支日期 */
   sexagenaryCycleDate?: string;
   /** 时辰 */
-  hour: HourName;
+  hour: `${BranchName}${HourName}`;
   /** 时辰对应的时间段 */
   hourRange: HourRange;
   /** 生肖 */
-  zodiac: string;
+  zodiac: ZodiacName;
   /** 五行局 */
   fiveElementName: FiveElementNumName;
   /** 五行局数 */

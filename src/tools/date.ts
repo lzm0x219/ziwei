@@ -1,6 +1,6 @@
 import { LunarHour, SolarTime } from "tyme4ts";
 import type { GlobalConfigs } from "../configs";
-import { _branchKeys, _hourKeys, _stemKeys } from "../constants";
+import { _branchKeys, _stemKeys } from "../constants";
 import { getHourIndex } from "../core/algorithms";
 import i18n from "../i18n";
 import type { BranchKey, StemKey } from "../locales/typing";
@@ -302,5 +302,5 @@ export function getLunisolarDateText(date: LunarHour, hourIndex: number) {
   const lunarDay = date.getLunarDay();
   const lunarMonth = lunarDay.getLunarMonth();
   const lunarYear = lunarMonth.getLunarYear();
-  return `${lunarYear.getName().slice(2)}${lunarMonth.getName()}${lunarDay.getName()} ${i18n.$t(`hour.${_hourKeys[hourIndex]}`)}`;
+  return `${lunarYear.getName().slice(2)}${lunarMonth.getName()}${lunarDay.getName()} ${i18n.$t(`branch.${_branchKeys[hourIndex]}.name`)}${i18n.$t(`hour`)}`;
 }

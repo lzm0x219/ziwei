@@ -1,7 +1,6 @@
 import { describe, expect, test } from "@rstest/core";
 import { LunarHour, SolarTime } from "tyme4ts";
 import { type GlobalConfigs, getGlobalConfigs } from "../../configs";
-import { Branch, Stem } from "../../enums";
 import {
   calculateAstrolabeDate,
   calculateAstrolabeDateBySolar,
@@ -20,8 +19,8 @@ describe("calculateAstrolabeDate()", () => {
 
     // 验证结果
     expect(result).toEqual({
-      stemKey: Stem.GUI,
-      branchKey: Branch.MAO,
+      stemKey: "GUI",
+      branchKey: "MAO",
       monthIndex: 3,
       day: 23,
       hourIndex: 4,
@@ -231,8 +230,8 @@ describe("calculateAstrolabeDateBySolar()", () => {
       globalConfigs: getGlobalConfigs(),
     });
     expect(result.monthIndex).toBe(0);
-    expect(result.stemKey).toBe(Stem.YI);
-    expect(result.branchKey).toBe(Branch.HAI);
+    expect(result.stemKey).toBe("YI");
+    expect(result.branchKey).toBe("HAI");
   });
 
   test("闰月15日23点且配置为normal时应修正为下个月", () => {

@@ -1,5 +1,4 @@
 import { describe, expect, test } from "@rstest/core";
-import { Galaxy, Star, Transformation } from "../../enums";
 import i18n from "../../i18n";
 import type { TransformationName } from "../../locales/typing";
 import { createStar } from "../star";
@@ -12,14 +11,14 @@ describe("createStar 星曜对象创建测试", () => {
   test("传入完整StarProps时，应返回包含所有属性的星曜对象", () => {
     // 定义测试用的星曜属性
     const testProps: StarProps = {
-      key: Star.ZI_WEI,
+      key: "ZI_WEI",
       name: "紫微",
       abbrName: "紫",
       type: "major",
-      galaxy: Galaxy.C,
+      galaxy: "C",
       YT: {
-        key: Transformation.B,
-        name: i18n.$t(`transformation.${Transformation.B}`) as TransformationName,
+        key: "B",
+        name: i18n.$t(`transformation.B`) as TransformationName,
       },
     };
 
@@ -29,7 +28,7 @@ describe("createStar 星曜对象创建测试", () => {
     // 验证返回对象的类型和属性完整性
     expect(star).toBeInstanceOf(Object); // 是对象类型
     expect(star).toEqual(testProps); // 包含所有传入的属性
-    expect(star.key).toBe(Star.ZI_WEI); // 关键属性正确
+    expect(star.key).toBe("ZI_WEI"); // 关键属性正确
     expect(star.type).toBe("major"); // 类型属性正确
   });
 
@@ -39,7 +38,7 @@ describe("createStar 星曜对象创建测试", () => {
   test("传入部分属性时，返回对象仅包含传入的属性（无默认值）", () => {
     // 仅包含必填属性和部分可选属性
     const minimalProps: StarProps = {
-      key: Star.TIAN_FU,
+      key: "TIAN_FU",
       abbrName: "府",
       name: "天府",
       type: "major",
@@ -49,7 +48,7 @@ describe("createStar 星曜对象创建测试", () => {
     const star = createStar(minimalProps);
 
     // 验证存在的属性正确
-    expect(star.key).toBe(Star.TIAN_FU);
+    expect(star.key).toBe("TIAN_FU");
     expect(star.name).toBe("天府");
     expect(star.type).toBe("major");
     expect(star.abbrName).toBe("府");

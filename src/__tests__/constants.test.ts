@@ -6,7 +6,6 @@ import {
   createMetaMajorStars,
   createMetaMinorStars,
 } from "../constants";
-import { Galaxy, Star } from "../enums";
 import type { Star as StarModel } from "../models/typing";
 
 describe("createMetaMajorStars 星辰元数组创建测试", () => {
@@ -39,27 +38,27 @@ describe("createMetaMajorStars 星辰元数组创建测试", () => {
     // 4. 验证星曜键值（starKey）的固定顺序
     const expectedStarKeys = [
       // 紫微星系
-      Star.ZI_WEI,
-      Star.TIAN_JI,
-      "",
-      Star.TAI_YANG,
-      Star.WU_QU,
-      Star.TIAN_TONG,
-      "",
-      "",
-      Star.LIAN_ZHEN,
+      "ZI_WEI",
+      "TIAN_JI",
+      undefined,
+      "TAI_YANG",
+      "WU_QU",
+      "TIAN_TONG",
+      undefined,
+      undefined,
+      "LIAN_ZHEN",
       // 天府星系
-      Star.TIAN_FU,
-      Star.TAI_YIN,
-      Star.TAN_LANG,
-      Star.JU_MEN,
-      Star.TIAN_XIANG,
-      Star.TIAN_LIANG,
-      Star.QI_SHA,
-      "",
-      "",
-      "",
-      Star.PO_JUN,
+      "TIAN_FU",
+      "TAI_YIN",
+      "TAN_LANG",
+      "JU_MEN",
+      "TIAN_XIANG",
+      "TIAN_LIANG",
+      "QI_SHA",
+      undefined,
+      undefined,
+      undefined,
+      "PO_JUN",
     ];
     result.forEach((item, index) => {
       expect(item.starKey).toBe(expectedStarKeys[index]);
@@ -73,28 +72,28 @@ describe("createMetaMajorStars 星辰元数组创建测试", () => {
     const result = createMetaMajorStars(0, 0);
 
     // 验证紫微星系的 galaxy
-    expect(result[0].galaxy).toBe(Galaxy.C); // 紫微属C星系
-    expect(result[1].galaxy).toBe(Galaxy.N); // 天机属N星系
+    expect(result[0].galaxy).toBe("C"); // 紫微属C星系
+    expect(result[1].galaxy).toBe("N"); // 天机属N星系
     expect(result[2].galaxy).toBeUndefined(); // 空星无星系
-    expect(result[3].galaxy).toBe(Galaxy.N); // 太阳属N星系
-    expect(result[4].galaxy).toBe(Galaxy.N); // 武曲属N星系
-    expect(result[5].galaxy).toBe(Galaxy.N); // 天同属N星系
+    expect(result[3].galaxy).toBe("N"); // 太阳属N星系
+    expect(result[4].galaxy).toBe("N"); // 武曲属N星系
+    expect(result[5].galaxy).toBe("N"); // 天同属N星系
     expect(result[6].galaxy).toBeUndefined(); // 空星无星系
     expect(result[7].galaxy).toBeUndefined(); // 空星无星系
-    expect(result[8].galaxy).toBe(Galaxy.N); // 廉贞属N星系
+    expect(result[8].galaxy).toBe("N"); // 廉贞属N星系
 
     // 验证天府星系的 galaxy
     expect(result[9].galaxy).toBeUndefined(); // 天府无星系
-    expect(result[10].galaxy).toBe(Galaxy.S); // 太阴属S星系
-    expect(result[11].galaxy).toBe(Galaxy.S); // 贪狼属S星系
-    expect(result[12].galaxy).toBe(Galaxy.S); // 巨门属S星系
+    expect(result[10].galaxy).toBe("S"); // 太阴属S星系
+    expect(result[11].galaxy).toBe("S"); // 贪狼属S星系
+    expect(result[12].galaxy).toBe("S"); // 巨门属S星系
     expect(result[13].galaxy).toBeUndefined(); // 天相无星系
-    expect(result[14].galaxy).toBe(Galaxy.S); // 天梁属S星系
+    expect(result[14].galaxy).toBe("S"); // 天梁属S星系
     expect(result[15].galaxy).toBeUndefined(); // 七杀无星系
     expect(result[16].galaxy).toBeUndefined(); // 空星无星系
     expect(result[17].galaxy).toBeUndefined(); // 空星无星系
     expect(result[18].galaxy).toBeUndefined(); // 空星无星系
-    expect(result[19].galaxy).toBe(Galaxy.S); // 破军属S星系
+    expect(result[19].galaxy).toBe("S"); // 破军属S星系
   });
 
   /**
@@ -134,7 +133,7 @@ describe("createMetaMajorStars 星辰元数组创建测试", () => {
 
     emptyStarIndices.forEach((index) => {
       const item = result[index];
-      expect(item.starKey).toBe(""); // 星曜键为空
+      expect(item.starKey).toBe(undefined); // 星曜键为空
       // 验证所属星系的方向和起始索引（继承所在星系的属性）
       if (index < 9) {
         // 紫微星系的空星
@@ -170,18 +169,18 @@ describe("createMetaMinorStars 辅助星曜元数组创建测试", () => {
 
     // 2. 验证星曜键值（starKey）的固定顺序
     const expectedStarKeys = [
-      Star.ZUO_FU, // 左辅
-      Star.YOU_BI, // 右弼
-      Star.WEN_CHANG, // 文昌
-      Star.WEN_QU, // 文曲
+      "ZUO_FU", // 左辅
+      "YOU_BI", // 右弼
+      "WEN_CHANG", // 文昌
+      "WEN_QU", // 文曲
     ];
     result.forEach((item, index) => {
       expect(item.starKey).toBe(expectedStarKeys[index]);
     });
 
-    // 3. 验证所有星曜的星系归属（均为Galaxy.C）
+    // 3. 验证所有星曜的星系归属（均为C）
     result.forEach((item) => {
-      expect(item.galaxy).toBe(Galaxy.C);
+      expect(item.galaxy).toBe("C");
     });
   });
 
@@ -254,8 +253,8 @@ describe("createMetaMinorStars 辅助星曜元数组创建测试", () => {
 
     // 其他属性不受极端索引影响
     expect(result[0].direction).toBe(1);
-    expect(result[1].galaxy).toBe(Galaxy.C);
-    expect(result[3].starKey).toBe(Star.WEN_QU);
+    expect(result[1].galaxy).toBe("C");
+    expect(result[3].starKey).toBe("WEN_QU");
   });
 });
 
