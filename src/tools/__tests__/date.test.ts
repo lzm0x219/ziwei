@@ -1,13 +1,16 @@
 import { describe, expect, test } from "@rstest/core";
-import { LunarHour } from "tyme4ts";
+import { LunarHour, SolarTime } from "tyme4ts";
 import { type GlobalConfigs, getGlobalConfigs } from "../../configs";
 import { Branch, Stem } from "../../enums";
 import {
   calculateAstrolabeDate,
   calculateAstrolabeDateBySolar,
   calculateHourByIndex,
+  calculateLunisolarDateBySolar,
   fixLateZiHour,
   fixLeapMonth,
+  getLunisolarDateText,
+  getSolarDateText,
   getStemAndBranchByYear,
 } from "../date";
 
@@ -240,6 +243,51 @@ describe("calculateAstrolabeDateBySolar()", () => {
 
     expect(result.monthIndex).toBe(6); // 修正为下个月索引
     expect(result.hourIndex).toBe(0); // 23点对应亥时（索引11）
+  });
+});
+
+describe("calculateLunisolarDateBySolar()", () => {
+  test("应根据提供的日期正确计算农历时辰", () => {
+    // 准备测试数据
+    const testDate = new Date(2025, 9, 31, 12, 30, 45); // 日期: 2025-10-31 12:30:45
+
+    // 调用被测试的函数
+    const result = calculateLunisolarDateBySolar(testDate);
+
+    // 验证返回值
+    // 假设 SolarTime 的真实实现返回 "辰时"，你可以根据实际模块的行为调整断言
+    expect(result.getYear()).toBe(2025);
+    expect(result.getMonth()).toBe(9);
+    expect(result.getDay()).toBe(11);
+    expect(result.getHour()).toBe(12);
+  });
+});
+
+describe("getSolarDateText()", () => {
+  test("应该正确格式化真实的 SolarTime 对象", () => {
+    const solarTime = SolarTime.fromYmdHms(2024, 1, 1, 12, 30, 0);
+    const formatted = getSolarDateText(solarTime);
+    expect(formatted).toEqual("2024-01-01 12:30");
+  });
+
+  test("应该正确格式化 Date 对象", () => {
+    const solarTime = new Date(2024, 0, 1, 12, 30, 0);
+    const formatted = getSolarDateText(solarTime);
+    expect(formatted).toEqual("2024-01-01 12:30");
+  });
+});
+
+describe("getLunisolarDateText()", () => {
+  test("应该正确格式化农历日期和时辰", () => {
+    // 创建测试数据
+    const mockLunarHour = LunarHour.fromYmdHms(1999, 8, 8, 12, 30, 0);
+    const hourIndex = 0; // 子时
+
+    // 调用函数
+    const result = getLunisolarDateText(mockLunarHour, hourIndex);
+
+    // 验证结果
+    expect(result).toBe("己卯年八月初八 子时");
   });
 });
 

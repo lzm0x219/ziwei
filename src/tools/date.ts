@@ -175,8 +175,18 @@ export function calculateAstrolabeDateBySolar({
 
 /**
  * 根据公历日期计算对应的阴阳合历日期对象。
- * @param date
- * @returns
+ *
+ * 此函数将JavaScript原生Date对象转换为阴阳合历（农历）的LunarHour对象，
+ * 通过tyme4ts库的SolarTime中间对象进行转换。
+ *
+ * @param date - 要转换的公历日期对象
+ * @returns 返回对应的阴阳合历时辰对象，包含农历年、月、日、时等信息
+ *
+ * @example
+ * // 将当前公历日期转换为农历时辰
+ * const today = new Date();
+ * const lunarHour = calculateLunisolarDateBySolar(today);
+ * console.log(lunarHour.getLunarDay().getName()); // 输出农历日名称，如"初一"、"十五"等
  */
 export function calculateLunisolarDateBySolar(date: Date) {
   const solarTime = SolarTime.fromYmdHms(
@@ -273,9 +283,24 @@ export function getSolarDateText(date: SolarTime | Date) {
   return `${date.getFullYear()}-${_array[0]}-${_array[1]} ${_array[2]}:${_array[3]}`;
 }
 
+/**
+ * 将阴阳合历（农历）时辰对象格式化为人类可读的文本字符串。
+ *
+ * 此函数接收一个 LunarHour 对象和时辰索引，生成格式为"年支名月名日名 时辰名"的文本。
+ * 例如："甲子年正月初一 午时"。
+ *
+ * @param date - 阴阳合历时辰对象，包含农历年、月、日信息
+ * @param hourIndex - 时辰索引（0-11），对应十二地支时辰
+ * @returns 格式化后的农历日期和时辰文本
+ *
+ * @example
+ * // 假设 lunarHour 表示农历甲子年正月初一，hourIndex 为 6（午时）
+ * const text = getLunisolarDateText(lunarHour, 6);
+ * // 返回: "甲子年正月初一 午时"
+ */
 export function getLunisolarDateText(date: LunarHour, hourIndex: number) {
   const lunarDay = date.getLunarDay();
   const lunarMonth = lunarDay.getLunarMonth();
   const lunarYear = lunarMonth.getLunarYear();
-  return `${lunarYear.getName().slice(2)}${lunarMonth.getName()}${lunarDay.getName()}${lunarMonth.getName()} ${i18n.$t(`hour.${_hourKeys[hourIndex]}`)}`;
+  return `${lunarYear.getName().slice(2)}${lunarMonth.getName()}${lunarDay.getName()} ${i18n.$t(`hour.${_hourKeys[hourIndex]}`)}`;
 }
