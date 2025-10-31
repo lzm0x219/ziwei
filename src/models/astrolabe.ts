@@ -5,7 +5,12 @@ export function createAstrolabe(props: AstrolabeProps): Astrolabe {
   return {
     ...props,
     getHoroscope(index) {
-      return calculateHoroscope(props.palaces, props.lunisolarYear, index);
+      return calculateHoroscope(
+        props.palaces,
+        props.birthYearBranchKey,
+        props.lunisolarYear,
+        index,
+      );
     },
   };
 }

@@ -404,7 +404,7 @@ export function calculateStarTransformation(
  * 如果未提供索引，则会自动根据当前日期计算当前所在的大限。
  *
  * @param palaces - 十二宫位数组，包含所有宫位的基础信息
- * @param lunisolarYear - 出生的农历年份，用于计算年龄和运限
+ * @param birthYear - 出生的农历年份，用于计算年龄和运限
  * @param index - 可选参数，指定要计算的宫位索引。如果不提供，则计算当前所在的大限
  *
  * @returns 返回运限数据对象，包含索引和对应的运限宫位信息
@@ -418,7 +418,12 @@ export function calculateStarTransformation(
  * const specificHoroscope = calculateHoroscope(palaces, 1990, 3);
  * ```
  */
-export function calculateHoroscope(palaces: Palace[], lunisolarYear: number, index?: number) {
+export function calculateHoroscope(
+  palaces: Palace[],
+  birthYearBranchKey: BranchKey,
+  birthYear: number,
+  index?: number,
+) {
   if (index === void 0) {
     const globalConfigs = getGlobalConfigs();
     // 默认获取当天的日期的阴历年份，计算当前年份的大限索引
@@ -428,30 +433,39 @@ export function calculateHoroscope(palaces: Palace[], lunisolarYear: number, ind
       globalConfigs,
     });
     // 虚岁
-    const age = year - lunisolarYear + 1;
+    const age = year - birthYear + 1;
     // 当前所在年份的大命索引
     const horoscopeMainPalaceIndex = palaces.findIndex(
       (palace) => age >= palace.horoscopeRanges[0] && age <= palace.horoscopeRanges[1],
     );
+    console.log(horoscopeMainPalaceIndex, "horoscopeMainPalaceIndex");
     return createHoroscope({
       index: horoscopeMainPalaceIndex === -1 ? 0 : horoscopeMainPalaceIndex,
-      palaces: calculateHoroscopePalaces(palaces, horoscopeMainPalaceIndex, lunisolarYear),
+      palaces: calculateHoroscopePalaces(
+        palaces,
+        horoscopeMainPalaceIndex,
+        birthYearBranchKey,
+        birthYear,
+      ),
     });
   }
+  console.log(index);
   return createHoroscope({
     index,
-    palaces: calculateHoroscopePalaces(palaces, index, lunisolarYear),
+    palaces: calculateHoroscopePalaces(palaces, index, birthYearBranchKey, birthYear),
   });
 }
 
 export function calculateHoroscopePalaces(
   palaces: Palace[],
   mainPalaceIndex: number,
+  birthYearBranchKey: BranchKey,
   birthYear: number,
 ) {
   const mainPalace = palaces[mainPalaceIndex];
   const majorStart = mainPalace.horoscopeRanges[0];
-  const yearlyStartIndex = $index(majorStart - 1);
+  const birthYearIndex = palaces.findIndex((palace) => palace.branchKey === birthYearBranchKey);
+  const yearlyStartIndex = $index(birthYearIndex + majorStart - 1);
 
   // 初始化宫位基础信息（名称）
   const horoscopePalaces = palaces.map<HoroscopePalace>((_, index) => {

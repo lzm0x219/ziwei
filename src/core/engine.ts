@@ -152,7 +152,7 @@ export function calculateAstrolabe({
     return palace;
   });
 
-  const horoscope = calculateHoroscope(palaces, birthYear);
+  const horoscope = calculateHoroscope(palaces, birthYearBranchKey, birthYear);
 
   const astrolabe = createAstrolabe({
     name,
