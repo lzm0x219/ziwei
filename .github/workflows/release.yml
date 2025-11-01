@@ -56,6 +56,9 @@ jobs:
       - name: Build package
         run: pnpm build
 
+      - name: Update npm version
+        run: npm install -g npm@latest
+
       - name: Publish version
         run: |
           if [[ "${{ github.ref }}" == *"-alpha"* ]]; then
