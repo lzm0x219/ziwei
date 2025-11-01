@@ -60,4 +60,11 @@ jobs:
         run: pnpm build
 
       - name: Publish version
-        run: npm publish
+        run: |
+          if [[ "${{ github.ref }}" == *"-alpha"* ]]; then
+            npm publish --tag alpha
+          elif [[ "${{ github.ref }}" == *"-beta"* ]]; then
+            npm publish --tag beta
+          else
+            npm publish
+          fi
