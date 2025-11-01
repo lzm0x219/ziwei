@@ -1,8 +1,7 @@
 import { describe, expect, test } from "@rstest/core";
 import i18n from "../../i18n";
-import type { TransformationName } from "../../locales/typing";
+import type { StarProps, TransformationName } from "../../typings";
 import { createStar } from "../star";
-import type { StarProps } from "../typing";
 
 describe("createStar 星曜对象创建测试", () => {
   /**

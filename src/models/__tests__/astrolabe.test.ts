@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@rstest/core";
+import type { AstrolabeProps, Horoscope, HoroscopePalace, Palace } from "../../typings";
 import { createAstrolabe } from "../astrolabe";
-import type { AstrolabeProps, Horoscope, HoroscopePalace, Palace } from "../typing";
 
 // 创建一个模拟的 calculateHoroscope 函数实现
 // 由于我们不能轻松地模拟导入的函数，我们将直接测试 getHoroscope 的结果

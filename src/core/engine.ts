@@ -1,20 +1,20 @@
 import { version } from "../../package.json";
 import { _branchKeys, _genderMap, _hourRanges, _one, _palaceKeys, _stemKeys } from "../constants";
 import i18n from "../i18n";
+import { createAstrolabe } from "../models/astrolabe";
+import { createPalace } from "../models/palace";
+import { $oppositeIndex } from "../tools/math";
 import type {
   BranchKey,
   BranchName,
   GenderKey,
   HourName,
+  Palace,
   PalaceName,
   StemKey,
   StemName,
   ZodiacName,
-} from "../locales/typing";
-import { createAstrolabe } from "../models/astrolabe";
-import { createPalace } from "../models/palace";
-import type { Palace } from "../models/typing";
-import { $oppositeIndex } from "../tools/math";
+} from "../typings";
 import {
   calculateCurrentPalaceIndex,
   calculateFiveElementNum,

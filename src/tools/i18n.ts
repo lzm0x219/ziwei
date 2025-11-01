@@ -1,4 +1,4 @@
-import type { Language } from "../constants";
+import type { Language } from "../typings";
 
 // 递归类型：生成嵌套键（限制递归深度）
 type NestedKeyOf<T, Depth extends number = 5> = [Depth] extends [never]
