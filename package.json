@@ -64,7 +64,7 @@
     "dist/"
   ],
   "scripts": {
-    "build": "rslib build",
+    "build": "tsc --noEmit && rslib build",
     "build:watch": "rslib build --watch",
     "docs:build": "rspress build",
     "docs:dev": "rspress dev",
