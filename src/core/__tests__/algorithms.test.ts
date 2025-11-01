@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@rstest/core";
 import { _yearToMonthMap } from "../../constants";
-import type { BranchKey, StemKey } from "../../locales/typing";
+import type { BranchKey, StemKey } from "../../typings";
 import {
   calculateCurrentPalaceIndex,
   calculateMainPalaceIndex,

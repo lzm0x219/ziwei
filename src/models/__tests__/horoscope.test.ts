@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@rstest/core";
+import type { HoroscopePalace, HoroscopeProps } from "../../typings";
 import { createHoroscope } from "../horoscope";
-import type { HoroscopePalace, HoroscopeProps } from "../typing";
 
 describe("createHoroscope 运限对象创建测试", () => {
   /**

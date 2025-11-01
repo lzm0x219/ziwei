@@ -3,7 +3,7 @@ import type { GlobalConfigs } from "../configs";
 import { _branchKeys, _stemKeys } from "../constants";
 import { getHourIndex } from "../core/algorithms";
 import i18n from "../i18n";
-import type { BranchKey, StemKey } from "../locales/typing";
+import type { BranchKey, StemKey } from "../typings";
 import { $index } from "./math";
 
 export function calculateAstrolabeDate(date: string) {

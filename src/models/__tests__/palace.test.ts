@@ -1,8 +1,7 @@
 import { describe, expect, test } from "@rstest/core";
 import i18n from "../../i18n";
-import type { BranchName, StemName } from "../../locales/typing";
+import type { BranchName, PalaceProps, StemName } from "../../typings";
 import { createPalace } from "../palace";
-import type { PalaceProps } from "../typing";
 
 describe("createPalace 宫位对象创建测试", () => {
   /**

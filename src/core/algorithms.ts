@@ -11,24 +11,27 @@ import {
   createEmptyStars,
   createMetaMajorStars,
   createMetaMinorStars,
-  type FiveElementNumValue,
 } from "../constants";
 import i18n from "../i18n";
+import { createHoroscope } from "../models/horoscope";
+import { createStar } from "../models/star";
+import { calculateAstrolabeDateBySolar, calculateLunisolarDateBySolar } from "../tools/date";
+import { $index, $relativeIndex } from "../tools/math";
 import type {
   BranchKey,
   FiveElementNumName,
+  FiveElementNumValue,
+  HoroscopePalace,
+  Palace,
   PalaceHoroscopeName,
+  Star,
   StarAbbrName,
   StarKey,
   StarName,
+  StarTransformation,
   StemKey,
   TransformationName,
-} from "../locales/typing";
-import { createHoroscope } from "../models/horoscope";
-import { createStar } from "../models/star";
-import type { HoroscopePalace, Palace, Star, StarTransformation } from "../models/typing";
-import { calculateAstrolabeDateBySolar, calculateLunisolarDateBySolar } from "../tools/date";
-import { $index, $relativeIndex } from "../tools/math";
+} from "../typings";
 
 /**
  * 起宫干 - 通过出生年干通过五虎遁月诀计算十二宫干

@@ -1,12 +1,11 @@
 import { describe, expect, test } from "@rstest/core";
 import {
   _branchKeys,
-  type CreateMetaMinorStarsParams,
   createEmptyStars,
   createMetaMajorStars,
   createMetaMinorStars,
 } from "../constants";
-import type { Star as StarModel } from "../models/typing";
+import type { CreateMetaMinorStarsParams, Star } from "../typings";
 
 describe("createMetaMajorStars 星辰元数组创建测试", () => {
   /**
@@ -291,7 +290,7 @@ describe("createEmptyStars 十二空宫初始化测试", () => {
     const emptyStars = createEmptyStars();
 
     // 修改第一个宫位的数组
-    emptyStars[0].push({ key: "TEST", name: "测试星" } as unknown as StarModel);
+    emptyStars[0].push({ key: "TEST", name: "测试星" } as unknown as Star);
 
     // 验证只有第一个宫位被修改，其他仍为空
     expect(emptyStars[0].length).toBe(1);
@@ -310,7 +309,7 @@ describe("createEmptyStars 十二空宫初始化测试", () => {
     expect(emptyStars1).not.toBe(emptyStars2);
 
     // 修改其中一个，另一个不受影响
-    emptyStars1[0].push({} as StarModel);
+    emptyStars1[0].push({} as Star);
     expect(emptyStars1[0].length).toBe(1);
     expect(emptyStars2[0].length).toBe(0);
   });

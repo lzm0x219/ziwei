@@ -1,5 +1,5 @@
 import { calculateHoroscope } from "../core/algorithms";
-import type { Astrolabe, AstrolabeProps } from "./typing";
+import type { Astrolabe, AstrolabeProps } from "../typings";
 
 export function createAstrolabe(props: AstrolabeProps): Astrolabe {
   return {
