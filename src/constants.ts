@@ -45,11 +45,10 @@ export const _genderMap: Record<Gender, number> = {
   male: 1,
 };
 
-/**
- * 星辰所属星系（南 | 北 | 中）
- */
+/** 星辰所属星系（南 | 北 | 中） */
 export const _galaxyKeys = ["S", "N", "C"] as const;
 
+/** 太极 Key 数组 */
 export const _one = Object.keys(zhCN.one) as OneKey[];
 
 /** 十二宫职 Key 数组 */
@@ -61,6 +60,7 @@ export const _fiveElementKeys = Object.keys(zhCN.fiveElementNum) as FiveElementN
 /** 四化 key 数组 */
 export const _transformationKeys = Object.keys(zhCN.transformation) as TransformationKey[];
 
+/** 时辰间隔文案数组 */
 export const _hourRanges = [
   "23:00~12:59",
   "01:00~02:59",
@@ -76,6 +76,7 @@ export const _hourRanges = [
   "21:00~22:59",
 ] as const;
 
+/** 辅星 Key  数组 */
 export const _minorStars: StarKey[] = ["ZUO_FU", "YOU_BI", "WEN_CHANG", "WEN_QU"];
 
 /**
