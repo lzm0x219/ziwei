@@ -1,9 +1,7 @@
 import { LunarHour } from "tyme4ts";
 import { getGlobalConfigs } from "./configs";
-import type { Language } from "./constants";
 import { calculateAstrolabe } from "./core/engine";
 import i18n from "./i18n";
-import type { GenderKey } from "./locales/typing";
 import {
   calculateAstrolabeDate,
   calculateAstrolabeDateBySolar,
@@ -12,6 +10,7 @@ import {
   getLunisolarDateText,
   getSolarDateText,
 } from "./tools/date";
+import type { GenderKey, Language } from "./typings";
 
 export interface SolarParams {
   /** 姓名 */

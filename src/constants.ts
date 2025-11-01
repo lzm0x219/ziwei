@@ -1,18 +1,23 @@
 import i18n from "./i18n";
+import zhCN from "./locales/zh-CN";
 import type {
   BranchKey,
   BranchName,
+  CreateMetaMinorStarsParams,
   FiveElementNumKey,
+  FiveElementNumValue,
+  Gender,
   GenderKey,
+  MonthlyStemsAndBranch,
   OneKey,
   PalaceKey,
+  Star,
   StarKey,
+  StarMeta,
   StemKey,
   StemName,
   TransformationKey,
-} from "./locales/typing";
-import zhCN from "./locales/zh-CN";
-import type { Star } from "./models/typing";
+} from "./typings";
 
 /** 现支持的国际化语言 */
 export const _languages = ["zh-CN", "zh-Hant"] as const;
@@ -101,7 +106,7 @@ export function getMonthlyStemsAndBranches(startStemIndex: number, startBranchIn
       },
       {
         branchKey,
-        branchName: i18n.$t(`branch.${branchKey}.name`) as unknown as BranchName,
+        branchName: i18n.$t(`branch.${branchKey}.name`) as BranchName,
       },
     ];
   });
@@ -205,33 +210,4 @@ export function createMetaMinorStars({
  */
 export function createEmptyStars() {
   return _branchKeys.map<Star[]>(() => []);
-}
-
-export type Language = (typeof _languages)[number];
-export type FiveElementNumValue = (typeof _fiveElementNumValue)[number];
-export type SelfTransformation = (typeof _selfTransformation)[number];
-export type Gender = (typeof _genders)[number];
-export type Galaxy = (typeof _galaxyKeys)[number];
-export type HourRange = (typeof _hourRanges)[number];
-export type MonthlyStemsAndBranch = [
-  {
-    stemKey: StemKey;
-    stemName: StemName;
-  },
-  {
-    branchKey: BranchKey;
-    branchName: BranchName;
-  },
-];
-export interface StarMeta {
-  starKey?: StarKey;
-  startIndex: number;
-  direction: 1 | -1;
-  galaxy?: Galaxy;
-}
-export interface CreateMetaMinorStarsParams {
-  zuofuIndex: number;
-  youbiIndex: number;
-  wenchangIndex: number;
-  wenquIndex: number;
 }
