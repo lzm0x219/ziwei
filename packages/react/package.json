@@ -78,6 +78,7 @@
     "@rslib/core": "catalog:",
     "typescript": "catalog:",
     "@typescript/native-preview": "catalog:",
-    "@microsoft/api-extractor": "catalog:"
+    "@microsoft/api-extractor": "catalog:",
+    "@rsbuild/plugin-react": "catalog:"
   }
 }

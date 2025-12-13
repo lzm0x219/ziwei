@@ -18,6 +18,9 @@ catalogs:
     "@moonrepo/cli":
       specifier: 1.41.7
       version: 1.41.7
+    "@rsbuild/plugin-react":
+      specifier: 1.4.2
+      version: 1.4.2
     "@rslib/core":
       specifier: 0.18.4
       version: 0.18.3
@@ -201,6 +204,9 @@ importers:
       "@microsoft/api-extractor":
         specifier: "catalog:"
         version: 7.55.2(@types/node@24.6.1)
+      "@rsbuild/plugin-react":
+        specifier: "catalog:"
+        version: 1.4.2(@rsbuild/core@1.6.14)
       "@rslib/core":
         specifier: "catalog:"
         version: 0.18.3(@microsoft/api-extractor@7.55.2(@types/node@24.6.1))(@typescript/native-preview@7.0.0-dev.20251206.1)(typescript@5.9.3)
@@ -1579,6 +1585,14 @@ packages:
     engines: { node: ">=18.12.0" }
     hasBin: true
 
+  "@rsbuild/plugin-react@1.4.2":
+    resolution:
+      {
+        integrity: sha512-2rJb5mOuqVof2aDq4SbB1E65+0n1vjhAADipC88jvZRNuTOulg79fh7R4tsCiBMI4VWq46gSpwekiK8G5bq6jg==,
+      }
+    peerDependencies:
+      "@rsbuild/core": 1.x
+
   "@rslib/core@0.18.3":
     resolution:
       {
@@ -1713,6 +1727,18 @@ packages:
       {
         integrity: sha512-E2B0JhYFmVAwdDiG14+DW0Di4Ze4Jg10Pc4/lILUrd5DRCaklduz2OvJ5HYQ6G+hd+WTzqQb3QnDNfK4yvAFYw==,
       }
+
+  "@rspack/plugin-react-refresh@1.5.3":
+    resolution:
+      {
+        integrity: sha512-VOnQMf3YOHkTqJ0+BJbrYga4tQAWNwoAnkgwRauXB4HOyCc5wLfBs9DcOFla/2usnRT3Sq6CMVhXmdPobwAoTA==,
+      }
+    peerDependencies:
+      react-refresh: ">=0.10.0 <1.0.0"
+      webpack-hot-middleware: 2.x
+    peerDependenciesMeta:
+      webpack-hot-middleware:
+        optional: true
 
   "@rushstack/node-core-library@5.19.1":
     resolution:
@@ -2341,6 +2367,12 @@ packages:
       }
     engines: { node: ">=8.6" }
 
+  error-stack-parser@2.1.4:
+    resolution:
+      {
+        integrity: sha512-Sk5V6wVazPhq5MhpO+AUxJn5x7XSXGl1R93Vn7i+zS15KDVxQijejNCrz8340/2bgLBjR9GtEG8ZVKONDjcqGQ==,
+      }
+
   es-module-lexer@1.7.0:
     resolution:
       {
@@ -2535,6 +2567,12 @@ packages:
         integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==,
       }
     engines: { node: ">= 0.4" }
+
+  html-entities@2.6.0:
+    resolution:
+      {
+        integrity: sha512-kig+rMn/QOVRvr7c86gQ8lWXq+Hkv6CbAH1hLu+RG338StTpE8Z0b44SDVaqVu7HGKf27frdmUYEs9hTUX/cLQ==,
+      }
 
   html-escaper@2.0.2:
     resolution:
@@ -3526,6 +3564,12 @@ packages:
     resolution:
       {
         integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==,
+      }
+
+  stackframe@1.3.4:
+    resolution:
+      {
+        integrity: sha512-oeVtt7eWQS+Na6F//S4kJ2K2VbRlS9D43mAlMyVpVWovy9o+jfgH8O9agzANzaiLjclA0oYzUXEM4PurhSUChw==,
       }
 
   std-env@3.10.0:
@@ -4668,6 +4712,14 @@ snapshots:
       core-js: 3.47.0
       jiti: 2.6.1
 
+  "@rsbuild/plugin-react@1.4.2(@rsbuild/core@1.6.14)":
+    dependencies:
+      "@rsbuild/core": 1.6.14
+      "@rspack/plugin-react-refresh": 1.5.3(react-refresh@0.18.0)
+      react-refresh: 0.18.0
+    transitivePeerDependencies:
+      - webpack-hot-middleware
+
   "@rslib/core@0.18.3(@microsoft/api-extractor@7.55.2(@types/node@24.6.1))(@typescript/native-preview@7.0.0-dev.20251206.1)(typescript@5.9.3)":
     dependencies:
       "@rsbuild/core": 1.6.14
@@ -4742,6 +4794,12 @@ snapshots:
       "@swc/helpers": 0.5.17
 
   "@rspack/lite-tapable@1.1.0": {}
+
+  "@rspack/plugin-react-refresh@1.5.3(react-refresh@0.18.0)":
+    dependencies:
+      error-stack-parser: 2.1.4
+      html-entities: 2.6.0
+      react-refresh: 0.18.0
 
   "@rushstack/node-core-library@5.19.1(@types/node@24.6.1)":
     dependencies:
@@ -5151,6 +5209,10 @@ snapshots:
       ansi-colors: 4.1.3
       strip-ansi: 6.0.1
 
+  error-stack-parser@2.1.4:
+    dependencies:
+      stackframe: 1.3.4
+
   es-module-lexer@1.7.0: {}
 
   esbuild@0.25.12:
@@ -5275,6 +5337,8 @@ snapshots:
   hasown@2.0.2:
     dependencies:
       function-bind: 1.1.2
+
+  html-entities@2.6.0: {}
 
   html-escaper@2.0.2: {}
 
@@ -5782,6 +5846,8 @@ snapshots:
   sprintf-js@1.0.3: {}
 
   stackback@0.0.2: {}
+
+  stackframe@1.3.4: {}
 
   std-env@3.10.0: {}
 
