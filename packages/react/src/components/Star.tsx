@@ -70,6 +70,8 @@ function Star({ index, x, y, name, fill, palace, starKey, YT, ST }: StarProps) {
       palacePadding,
     });
 
+  console.log(starKey, ST?.exit);
+
   return (
     <g>
       {/* Background highlight for flying transformation; omit node entirely if not active */}

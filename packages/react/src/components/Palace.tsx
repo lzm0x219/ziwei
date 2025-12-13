@@ -10,7 +10,6 @@ export interface PalaceProps {
   width: number;
   height: number;
   fill?: string;
-  hasZiWei?: boolean;
   onClick?: (e: MouseEvent | TouchEvent) => void;
   onContextMenu?: MouseEventHandler<SVGSVGElement>;
   onLongPress?: (e: MouseEvent | TouchEvent) => void;
@@ -24,12 +23,11 @@ function Palace({
   height,
   fill = "#fff",
   children,
-  hasZiWei = false,
   onClick,
   onContextMenu,
   onLongPress,
 }: PropsWithChildren<PalaceProps>) {
-  const { palaceStrokeWidth, ziweiPalaceFill } = use(ConfigContext);
+  const { palaceStrokeWidth } = use(ConfigContext);
   const ref = useRef(null);
 
   useLongPress(
@@ -60,7 +58,7 @@ function Palace({
         stroke="#000"
         strokeWidth={palaceStrokeWidth}
         shapeRendering="crispEdges"
-        fill={hasZiWei ? ziweiPalaceFill : fill}
+        fill={fill}
       />
       {children}
     </svg>

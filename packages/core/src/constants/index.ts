@@ -53,7 +53,7 @@ export const STEM_TRANSFORMATIONS: Record<(typeof STEM_KEYS)[number], (keyof typ
     Wu: ["TanLang", "TaiYin", "YouBi", "TianJi"],
     Ji: ["WuQu", "TanLang", "TianLiang", "WenQu"],
     Geng: ["TaiYang", "WuQu", "TaiYin", "TianTong"],
-    Xin: ["JuMen", "TaiYang", "WuQu", "WenChang"],
+    Xin: ["JuMen", "TaiYang", "WenQu", "WenChang"],
     Ren: ["TianLiang", "ZiWei", "ZuoFu", "WuQu"],
     Gui: ["PoJun", "JuMen", "TaiYin", "TanLang"],
   };

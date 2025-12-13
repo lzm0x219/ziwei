@@ -5,10 +5,10 @@ tasks:
   dev:
     deps:
       - "^:build"
-    command: "rsbuild dev"
+    command: "vite dev"
     inputs:
       - "src/**/*"
-      - "rsbuild.config.ts"
+      - "vite.config.ts"
       - "tsconfig.json"
     outputs:
       - "dist"

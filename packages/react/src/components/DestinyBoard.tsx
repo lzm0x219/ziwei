@@ -55,6 +55,7 @@ export default function DestinyBoard({ side = 600, palaces, ...props }: DestinyB
     centralPalaceSide,
     centralPalaceX,
     centralPalaceY,
+    ziweiPalaceFill,
   } = use(ConfigContext);
 
   const { showPalaceName, showStem, showBranch, showLaiYin, showSelf } = use(RenderContext);
@@ -75,11 +76,15 @@ export default function DestinyBoard({ side = 600, palaces, ...props }: DestinyB
   const _CP = useCentripetal();
 
   const getPalaceFill = (palace: PalaceModel) => {
+    const hasZiWei = palace.stars.some((star) => star.key === "ZiWei");
     if (flyingPalaceKey === palace.key) {
       return palaceFlyFill;
     }
     if (decadeIndex === palace.index) {
       return palaceHoroscopeFill;
+    }
+    if (hasZiWei) {
+      return ziweiPalaceFill;
     }
     return boardFill;
   };
@@ -110,14 +115,12 @@ export default function DestinyBoard({ side = 600, palaces, ...props }: DestinyB
             [],
           );
           const hasCP = currentTransformations.length > 0;
-          const hasZiWei = palace.stars.some((star) => star.key === "ZiWei");
           return (
             <Palace
               key={palace.key}
               name={palace.name}
               width={palaceSide}
               height={palaceSide}
-              hasZiWei={hasZiWei}
               x={coordinates[index].x}
               y={coordinates[index].y}
               fill={getPalaceFill(palace)}

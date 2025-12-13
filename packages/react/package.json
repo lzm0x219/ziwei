@@ -75,11 +75,9 @@
   "devDependencies": {
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@rsbuild/core": "catalog:",
     "@rslib/core": "catalog:",
     "typescript": "catalog:",
     "@typescript/native-preview": "catalog:",
-    "@microsoft/api-extractor": "catalog:",
-    "@rsbuild/plugin-react": "catalog:"
+    "@microsoft/api-extractor": "catalog:"
   }
 }

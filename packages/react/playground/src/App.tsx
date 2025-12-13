@@ -1,22 +1,23 @@
 import "./App.css";
-import { colorPalette, ZiWeiSimulator } from "../src";
+import { colorPalette, ZiWei, ZiWeiSimulator } from "../../src";
 
 export default function App() {
   return (
     <div>
-      {/* <ZiWei side={800} name="xx" date="1998-1-23-1" gender="Yang" language="zh-Hant" /> */}
-      <ZiWeiSimulator
+      {/* 1994-2-16-7 */}
+      <ZiWei side={800} name="xx" date="1983-5-12-5" gender="Yang" language="zh-Hant" />
+      {/* <ZiWeiSimulator
         side={800}
-        birthYearStemKey="Gui"
-        ziweiBranchKey="Shen"
+        birthYearStemKey="Jia"
+        ziweiBranchKey="Chou"
         mainPalaceBranchKey="Shen"
         language="zh-Hant"
         options={{
           showPalaceName: false,
-          showSelf: true,
-          showStem: true,
-          showBranch: true,
-          showTransformation: true,
+          showSelf: false,
+          showStem: false,
+          showBranch: false,
+          showTransformation: false,
           showLaiYin: false,
         }}
         config={{
@@ -24,7 +25,7 @@ export default function App() {
           ziweiPalaceFill: colorPalette.w8,
           palaceRectStrokeWidth: 0,
         }}
-      />
+      /> */}
     </div>
   );
 }

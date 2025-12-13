@@ -90,7 +90,7 @@ export function computeExitArrowLayout(input: ExitArrowInput): ExitArrowLayout {
     palacePadding,
   } = input;
 
-  const { width, height, padding, centerX } = computeBaseMetrics({
+  const { height, padding, centerX } = computeBaseMetrics({
     x,
     fontSize,
     fontLineHeight,
