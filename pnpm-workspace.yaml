@@ -8,8 +8,8 @@ catalog:
   "@changesets/cli": 2.29.8
   "@microsoft/api-extractor": 7.55.2
   "@moonrepo/cli": 1.41.7
-  "@rsbuild/core": 1.6.12
-  "@rsbuild/plugin-react": 1.4.2
+  "@rsbuild/core": 1.7.5
+  "@rsbuild/plugin-react": 1.4.6
   "@rslib/core": 0.18.4
   "@types/react": 19.2.10
   "@types/react-dom": 19.2.3
