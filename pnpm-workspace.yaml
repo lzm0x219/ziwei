@@ -23,7 +23,7 @@ catalog:
   lefthook: 2.0.11
   oxfmt: 0.17.0
   oxlint: 1.32.0
-  oxlint-tsgolint: 0.8.6
+  oxlint-tsgolint: 0.23.0
   react: 19.2.4
   react-dom: 19.2.4
   sort-package-json: 3.5.1
