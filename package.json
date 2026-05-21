@@ -12,7 +12,7 @@
     "test:analytics": "vitest --reporter=junit --outputFile=test-report.junit.xml"
   },
   "overrides": {
-    "vite": "8.0.0-beta.0"
+    "vite": "8.0.14"
   },
   "devDependencies": {
     "@changesets/changelog-github": "catalog:",
