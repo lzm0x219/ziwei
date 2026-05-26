@@ -22,7 +22,7 @@ catalog:
   is-ci: 4.1.0
   lefthook: 2.0.11
   oxfmt: 0.17.0
-  oxlint: 1.32.0
+  oxlint: 1.67.0
   oxlint-tsgolint: 0.8.6
   react: 19.2.4
   react-dom: 19.2.4
