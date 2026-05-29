@@ -20,7 +20,7 @@ catalog:
   "@vitest/ui": 4.0.15
   ahooks: 3.9.6
   is-ci: 4.1.0
-  lefthook: 2.0.11
+  lefthook: 2.1.9
   oxfmt: 0.17.0
   oxlint: 1.32.0
   oxlint-tsgolint: 0.8.6
