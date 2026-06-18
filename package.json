@@ -9,7 +9,7 @@
     "build:calendar": "pnpm moon run calendar:build",
     "build:core": "pnpm moon run core:build",
     "build:render": "pnpm moon run render:build",
-    "build": "pnpm moon run build"
+    "build": "pnpm moon run :build"
   },
   "devDependencies": {
     "@changesets/cli": "catalog:",
