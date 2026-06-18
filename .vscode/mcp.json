@@ -1,0 +1,10 @@
+{
+  "servers": {
+    "moon": {
+      "type": "stdio",
+      "command": "pnpm",
+      "args": ["exec", "moon", "mcp"],
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}

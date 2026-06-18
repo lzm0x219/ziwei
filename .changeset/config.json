@@ -1,0 +1,12 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@4.0.0-next.5/schema.json",
+  "baseBranch": "main",
+  "access": "public",
+  "ignore": [],
+  "fixed": [],
+  "linked": [["@ziweijs/*"]],
+  "format": "auto",
+  "updateInternalDependencies": "patch",
+  "commit": false,
+  "changelog": ["./changelog.config.ts", { "repo": "https://github.com/lzm0x219/ziwei" }]
+}
