@@ -40,6 +40,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: lzm0x219/ziwei
 
       - name: Generate a JUnit XML
         run: pnpm test:analytics

@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "test": "vitest",
+    "test:analytics": "vitest --reporter=junit --outputFile=test-report.junit.xml",
     "coverage": "vitest run --coverage",
     "build:chart": "pnpm moon run chart:build",
     "build:analysis": "pnpm moon run analysis:build",
