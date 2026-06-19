@@ -7,7 +7,7 @@ allowBuilds:
   lefthook: true
 
 catalog:
-  "@moonrepo/cli": 2.3.3
+  "@moonrepo/cli": 2.3.4
   "@vitest/coverage-v8": 4.1.9
   "@types/node": 25.9.3
   "@typescript/native-preview": 7.0.0-dev.20260616.1
