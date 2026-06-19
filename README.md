@@ -1,8 +1,8 @@
 <p align="center">
-  <img src=".github/splash.png" alt="ziwei banner" width="100%" />
+  <img src=".github/splash.png" alt="Ziwei banner" width="100%" />
 </p>
 
-<h1 align="center">ziwei</h1>
+<h1 align="center">Ziwei</h1>
 
 <p align="center">
   为紫微斗数计算、解盘分析与命盘可视化提供清晰分层、可长期维护的开源基础设施。
@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="#why-ziwei">Why ziwei</a> ·
+  <a href="#why-ziwei">Why Ziwei</a> ·
   <a href="#current-status">Current Status</a> ·
   <a href="#architecture">Architecture</a> ·
   <a href="#commands">Commands</a> ·
