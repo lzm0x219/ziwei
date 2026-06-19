@@ -108,8 +108,8 @@ importers:
   packages/calendar:
     dependencies:
       tyme4ts:
-        specifier: 1.4.5
-        version: 1.4.5
+        specifier: 1.5.2
+        version: 1.5.2
     devDependencies:
       '@typescript/native-preview':
         specifier: 'catalog:'
@@ -1536,8 +1536,8 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
-  tyme4ts@1.4.5:
-    resolution: {integrity: sha512-PwrWXVvMDVZR7CnYJnI5wPvPliBJfQQcuoe6qpIAu370dbw8WkPQvwC8f0l1M6GpuiS7fWphk1BR19yF2UPnGA==}
+  tyme4ts@1.5.2:
+    resolution: {integrity: sha512-vVAjUv1ieXleS7hCOgjAoHaZ0BdNJIza0uDOhXNpndegqWQh9ytKMR0fjkG869yqLtpXAHnzNSouBg28nrIaAg==}
 
   typescript@6.0.3:
     resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
@@ -2776,7 +2776,7 @@ snapshots:
   tslib@2.8.1:
     optional: true
 
-  tyme4ts@1.4.5: {}
+  tyme4ts@1.5.2: {}
 
   typescript@6.0.3: {}
 
