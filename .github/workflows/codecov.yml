@@ -37,7 +37,7 @@ jobs:
         run: pnpm coverage
 
       - name: Upload tests coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           slug: lzm0x219/ziwei
