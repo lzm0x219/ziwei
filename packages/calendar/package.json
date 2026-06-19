@@ -69,15 +69,9 @@
     },
     "access": "public"
   },
-  "dependencies": {
-    "tyme4ts": "1.4.5"
-  },
   "devDependencies": {
     "@typescript/native-preview": "catalog:",
     "tsdown": "catalog:",
     "typescript": "catalog:"
-  },
-  "peerDependencies": {
-    "tyme4ts": ">=1.4.5"
   }
 }
