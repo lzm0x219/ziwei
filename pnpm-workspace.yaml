@@ -13,7 +13,7 @@ catalog:
   "@typescript/native-preview": 7.0.0-dev.20260616.1
   "@changesets/cli": 3.0.0-next.5
   "@changesets/types": 6.1.0
-  vite: 8.0.16
+  vite: 8.1.0
   vitest: 4.1.9
   lefthook: 2.1.9
   oxfmt: 0.55.0
