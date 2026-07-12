@@ -1,9 +1,0 @@
-coverage:
-  status:
-    project:
-      core:
-        paths:
-          - packages/core/
-      calendar:
-        paths:
-          - packages/calendar/
