@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use super::{branch::Branch, calendar::NormalizedDate, position::twelve_index, stem::Stem};
+use super::{branch::Branch, position::twelve_index, stem::Stem};
 
 /// 命主的性别。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -13,13 +13,21 @@ pub enum Gender {
     Female = 0,
 }
 
-/// 由性别和归一化出生日期组成的出生资料。
+/// 供 `from_birth` 使用的农历出生资料。
+///
+/// 月以正月为 0，时辰以子时为 0，日以初一为 1；历法换算与闰月/晚子时由调用方消解。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct BirthInfo {
+pub struct ZiweiBirth {
     /// 命主的性别。
     pub gender: Gender,
-    /// 历法层归一化后的出生日期。
-    pub date: NormalizedDate,
+    /// 农历年序号；年干支由 `(year - 4).rem_euclid(10|12)` 推导。
+    pub year: i32,
+    /// 农历月，`0..=11`，正月 = 0。
+    pub month: u8,
+    /// 农历日，`1..=30`，初一 = 1。
+    pub day: u8,
+    /// 时辰，`0..=11`，子时 = 0。
+    pub hour: u8,
 }
 
 /// 已经预处理的紫微斗数排盘数据。
@@ -136,19 +144,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn birth_info_contains_gender_and_normalized_date() {
-        let birth = BirthInfo {
+    fn ziwei_birth_holds_flat_lunar_fields() {
+        let birth = ZiweiBirth {
             gender: Gender::Male,
-            date: NormalizedDate {
-                year: 2024,
-                month: 1,
-                day: 1,
-                hour: 12,
-            },
+            year: 2024,
+            month: 0,
+            day: 1,
+            hour: 0,
         };
 
         assert_eq!(birth.gender, Gender::Male);
-        assert_eq!(birth.date.year, 2024);
+        assert_eq!(birth.year, 2024);
+        assert_eq!(birth.month, 0);
+        assert_eq!(birth.day, 1);
+        assert_eq!(birth.hour, 0);
     }
 
     #[test]
