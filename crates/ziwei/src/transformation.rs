@@ -1,0 +1,66 @@
+//! 四化象的身份与显示文本。
+
+/// 紫微斗数中的一种四化象。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Transformation {
+    /// A，显示为禄／祿。
+    A,
+    /// B，显示为权／權。
+    B,
+    /// C，显示为科。
+    C,
+    /// D，显示为忌。
+    D,
+}
+
+impl Transformation {
+    /// 返回简体中文的四化象文本。
+    pub const fn simplified_chinese(self) -> &'static str {
+        match self {
+            Self::A => "禄",
+            Self::B => "权",
+            Self::C => "科",
+            Self::D => "忌",
+        }
+    }
+
+    /// 返回繁体中文的四化象文本。
+    pub const fn traditional_chinese(self) -> &'static str {
+        match self {
+            Self::A => "祿",
+            Self::B => "權",
+            Self::C => "科",
+            Self::D => "忌",
+        }
+    }
+
+    pub(crate) const fn index(self) -> usize {
+        match self {
+            Self::A => 0,
+            Self::B => 1,
+            Self::C => 2,
+            Self::D => 3,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn labels_match_the_confirmed_four_transformations() {
+        let expected = [
+            (Transformation::A, "禄", "祿", 0),
+            (Transformation::B, "权", "權", 1),
+            (Transformation::C, "科", "科", 2),
+            (Transformation::D, "忌", "忌", 3),
+        ];
+
+        for (transformation, hans, hant, index) in expected {
+            assert_eq!(transformation.simplified_chinese(), hans);
+            assert_eq!(transformation.traditional_chinese(), hant);
+            assert_eq!(transformation.index(), index);
+        }
+    }
+}

@@ -1,0 +1,15 @@
+[package]
+name = "ziwei_binding"
+version = "0.1.0"
+publish = false
+
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+ziwei.workspace = true
+
+[lints]
+workspace = true

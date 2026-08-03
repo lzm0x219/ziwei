@@ -1,0 +1,28 @@
+{
+  "scripts": {
+    "prepare": "lefthook install",
+    "ts:lint": "oxlint",
+    "ts:lint:fix": "oxlint --fix",
+    "ts:fmt": "oxfmt",
+    "ts:fmt:check": "oxfmt --check"
+  },
+  "devDependencies": {
+    "lefthook": "2.1.10",
+    "oxfmt": "0.61.0",
+    "oxlint": "1.76.0",
+    "oxlint-tsgolint": "7.0.2001",
+    "typescript": "7.0.2"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.18.0",
+      "onFail": "error"
+    },
+    "runtime": {
+      "name": "node",
+      "version": ">=24.18.1",
+      "onFail": "error"
+    }
+  }
+}

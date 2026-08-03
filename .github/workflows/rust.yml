@@ -1,0 +1,23 @@
+name: Rust
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+      - name: Show toolchain
+        run: mise exec -- rustup show active-toolchain
+      - name: Check format
+        run: mise exec -- cargo fmt --all -- --check
+      - name: Run Clippy
+        run: mise exec -- cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+      - name: Run tests
+        run: mise exec -- cargo test --workspace --locked

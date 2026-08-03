@@ -1,0 +1,22 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: TypeScript format
+      run: pnpm ts:fmt {staged_files}
+      glob: "*.{js,ts,cjs,mjs,jsx,tsx,json,md}"
+      stage_fixed: true
+
+    - name: TypeScript lint
+      run: pnpm ts:lint:fix {staged_files}
+      glob: "*.{js,ts,cjs,mjs,jsx,tsx}"
+      stage_fixed: true
+
+    - name: Rust format
+      run: cargo fmt --all -- --check
+      glob: "*.{rs,toml}"
+      stage_fixed: true
+
+    - name: Rust Clippy
+      run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+      glob: "*.{rs,toml,lock}"
+      stage_fixed: true
