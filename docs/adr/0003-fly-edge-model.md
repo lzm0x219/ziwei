@@ -7,10 +7,10 @@
 ## 接口草图
 
 ```text
-FlyEdge { source_branch, transformation, target_branch, star }
+ZiweiFly { source_branch, transformation, target_branch, star }
 // Out | In | None 由几何派生，不入库
 
-palace_fly_edges()              // 全量 ≤48，只来自本命宫干
+palace_flies()                  // 全量 ≤48，只来自本命宫干
 flies_from_branch(branch)
 flies_from_role(role, view)     // view: Natal | Decade | Annual
 
