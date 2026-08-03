@@ -4,13 +4,15 @@ use core::fmt;
 
 use super::{branch::Branch, position::twelve_index, stem::Stem};
 
-/// 命主的性别。
+/// 命主的性别（阴阳）。
+///
+/// 与大限顺逆一致：阳对应男、阴对应女；阳干+阳人顺行，异性逆行（见 ADR-0006）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Gender {
-    /// 男性。
-    Male = 1,
-    /// 女性。
-    Female = 0,
+    /// 阴（女）。
+    Yin,
+    /// 阳（男）。
+    Yang,
 }
 
 /// 供 `from_birth` 使用的农历出生资料。
@@ -146,14 +148,14 @@ mod tests {
     #[test]
     fn ziwei_birth_holds_flat_lunar_fields() {
         let birth = ZiweiBirth {
-            gender: Gender::Male,
+            gender: Gender::Yang,
             year: 2024,
             month: 0,
             day: 1,
             hour: 0,
         };
 
-        assert_eq!(birth.gender, Gender::Male);
+        assert_eq!(birth.gender, Gender::Yang);
         assert_eq!(birth.year, 2024);
         assert_eq!(birth.month, 0);
         assert_eq!(birth.day, 1);
@@ -162,7 +164,7 @@ mod tests {
 
     #[test]
     fn try_new_accepts_positions_within_zero_to_eleven() {
-        let input = ZiweiInput::try_new(Gender::Male, Stem::Jia, Branch::Zi, 0, 11, 0, 11)
+        let input = ZiweiInput::try_new(Gender::Yang, Stem::Jia, Branch::Zi, 0, 11, 0, 11)
             .expect("0 至 11 的位置应有效");
 
         assert_eq!(input.birth_month_position, 0);
@@ -234,7 +236,7 @@ mod tests {
 
         for (month, hour, ming_palace, ziwei_star, expected_error) in invalid_inputs {
             let result = ZiweiInput::try_new(
-                Gender::Male,
+                Gender::Yang,
                 Stem::Jia,
                 Branch::Zi,
                 month,

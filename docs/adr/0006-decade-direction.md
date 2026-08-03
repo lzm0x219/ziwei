@@ -1,0 +1,17 @@
+# 大限顺逆
+
+大限顺逆由**生年天干阴阳**与**性别**是否同属阳/阴决定，与口诀「阳男阴女顺、阴男阳女逆」及 backup `decadeDirection = (YIN_YANG[gender] === stemAttr) ? 1 : -1` 等价。
+
+```text
+year_yang   := year_stem ∈ {甲, 丙, 戊, 庚, 壬}
+person_yang := gender = Yang   // Gender::Yang 阳/男；Gender::Yin 阴/女
+forward     := year_yang == person_yang   // true=顺(+1), false=逆(-1)
+```
+
+- **顺：** 第一限在命宫，之后命 → 父 → 福 → 田 → …
+- **逆：** 第一限在命宫，之后命 → 兄 → 夫 → 子 → …
+- **起运：** 虚岁起点 = 五行局数；每限 10 年 `[start, start+9]`（地图 Notes，本 ADR 不改）。
+- **Gender** 为 `Yang` / `Yin`（阳男、阴女），与年干阴阳直接比较，同 backup。
+- **大限干** = 该限所落宫的本命宫干（既有决议）。
+
+样例：甲+Yang 顺、甲+Yin 逆、乙+Yang 逆、乙+Yin 顺。
