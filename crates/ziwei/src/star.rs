@@ -51,6 +51,50 @@ pub struct StarLabel {
 }
 
 impl Star {
+    pub(crate) const ALL: [Self; 18] = [
+        Self::ZiWei,
+        Self::TianJi,
+        Self::TaiYang,
+        Self::WuQu,
+        Self::TianTong,
+        Self::LianZhen,
+        Self::TianFu,
+        Self::TaiYin,
+        Self::TanLang,
+        Self::JuMen,
+        Self::TianXiang,
+        Self::TianLiang,
+        Self::QiSha,
+        Self::PoJun,
+        Self::ZuoFu,
+        Self::YouBi,
+        Self::WenChang,
+        Self::WenQu,
+    ];
+
+    pub(crate) const fn index(self) -> usize {
+        match self {
+            Self::ZiWei => 0,
+            Self::TianJi => 1,
+            Self::TaiYang => 2,
+            Self::WuQu => 3,
+            Self::TianTong => 4,
+            Self::LianZhen => 5,
+            Self::TianFu => 6,
+            Self::TaiYin => 7,
+            Self::TanLang => 8,
+            Self::JuMen => 9,
+            Self::TianXiang => 10,
+            Self::TianLiang => 11,
+            Self::QiSha => 12,
+            Self::PoJun => 13,
+            Self::ZuoFu => 14,
+            Self::YouBi => 15,
+            Self::WenChang => 16,
+            Self::WenQu => 17,
+        }
+    }
+
     /// 返回简体中文的星曜显示文本。
     pub const fn simplified_chinese(self) -> StarLabel {
         match self {

@@ -62,7 +62,7 @@ impl Stem {
         TRANSFORMATION_STARS[self.index()][transformation.index()]
     }
 
-    const fn index(self) -> usize {
+    pub(crate) const fn index(self) -> usize {
         match self {
             Self::Jia => 0,
             Self::Yi => 1,
@@ -74,6 +74,40 @@ impl Stem {
             Self::Xin => 7,
             Self::Ren => 8,
             Self::Gui => 9,
+        }
+    }
+
+    pub(crate) const fn from_index(index: u8) -> Self {
+        match index % 10 {
+            0 => Self::Jia,
+            1 => Self::Yi,
+            2 => Self::Bing,
+            3 => Self::Ding,
+            4 => Self::Wu,
+            5 => Self::Ji,
+            6 => Self::Geng,
+            7 => Self::Xin,
+            8 => Self::Ren,
+            _ => Self::Gui,
+        }
+    }
+
+    /// 甲丙戊庚壬为阳干。
+    pub(crate) const fn is_yang(self) -> bool {
+        matches!(
+            self,
+            Self::Jia | Self::Bing | Self::Wu | Self::Geng | Self::Ren
+        )
+    }
+
+    /// 五虎遁：生年干 → 寅宫起干。
+    pub(crate) const fn yin_head_stem(self) -> Self {
+        match self {
+            Self::Jia | Self::Ji => Self::Bing,
+            Self::Yi | Self::Geng => Self::Wu,
+            Self::Bing | Self::Xin => Self::Geng,
+            Self::Ding | Self::Ren => Self::Ren,
+            Self::Wu | Self::Gui => Self::Jia,
         }
     }
 }

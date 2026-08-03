@@ -43,6 +43,39 @@ pub struct PalaceRoleLabel {
 }
 
 impl PalaceRole {
+    pub(crate) const ALL: [Self; 12] = [
+        Self::Ming,
+        Self::XiongDi,
+        Self::FuQi,
+        Self::ZiNv,
+        Self::CaiBo,
+        Self::JiE,
+        Self::QianYi,
+        Self::JiaoYou,
+        Self::GuanLu,
+        Self::TianZhai,
+        Self::FuDe,
+        Self::FuMu,
+    ];
+
+    /// 自命起的宫职下标：命=0 … 父母=11。
+    pub const fn index(self) -> usize {
+        match self {
+            Self::Ming => 0,
+            Self::XiongDi => 1,
+            Self::FuQi => 2,
+            Self::ZiNv => 3,
+            Self::CaiBo => 4,
+            Self::JiE => 5,
+            Self::QianYi => 6,
+            Self::JiaoYou => 7,
+            Self::GuanLu => 8,
+            Self::TianZhai => 9,
+            Self::FuDe => 10,
+            Self::FuMu => 11,
+        }
+    }
+
     /// 返回简体中文的宫职显示文本。
     pub const fn simplified_chinese(self) -> PalaceRoleLabel {
         match self {
