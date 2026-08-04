@@ -243,7 +243,7 @@ impl Ziwei {
     /// 本命宫干飞全量边（恰好 48 条）。
     ///
     /// 布局：按 [`Branch::index`] 升序，每支连续 4 条，四化顺序与
-    /// [`Transformation::ALL`] 一致（禄→权→科→忌）。
+    /// [`crate::Transformation::ALL`] 一致（禄→权→科→忌）。
     pub const fn palace_flies(&self) -> &[ZiweiFly; 48] {
         &self.flies
     }

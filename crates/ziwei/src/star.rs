@@ -5,7 +5,7 @@
 
 /// 第一版星曜集合中的一颗星。
 ///
-/// 枚举变体顺序不必与 [`Self::index`] 相同；存放落宫数组时一律用 `index()`。
+/// 枚举变体声明顺序不必与落宫数组下标相同；存放与遍历时一律以 [`Self::ALL`] 为准。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Star {
     /// 紫微。

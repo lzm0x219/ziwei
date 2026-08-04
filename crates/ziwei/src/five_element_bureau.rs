@@ -23,7 +23,7 @@ pub enum FiveElementBureau {
 impl FiveElementBureau {
     /// 根据命宫的天干和地支计算五行局数。
     ///
-    /// 天干按甲乙/丙丁/戊己/庚辛/壬癸五组，地支按子丑/寅卯/…六组，查 [`BUREAUS`]。
+    /// 天干按甲乙/丙丁/戊己/庚辛/壬癸五组，地支按子丑/寅卯/…六组，查 5×6 纳音局表。
     pub const fn from_ming_palace(stem: Stem, branch: Branch) -> Self {
         BUREAUS[stem_group_index(stem)][branch_group_index(branch)]
     }
