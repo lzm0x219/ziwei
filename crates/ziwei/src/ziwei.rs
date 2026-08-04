@@ -31,9 +31,11 @@ use super::{
 
 /// 可供调用者查询的紫微斗数命盘对象（本命真相源）。
 ///
-/// 体积固定、`Copy`，适合按值传递；星位与飞边在构造时算完。
+/// 体积固定且较大（含十二宫、十八星、48 条飞边与十二步大限），仅 [`Clone`]，
+/// **不**实现 [`Copy`]；查询方法一律借用 `&self`，需要副本时显式调用
+/// [`Clone::clone`]。星位与飞边在构造时算完。
 /// 大限/流年查询一律传入 [`ZiweiView`]，不提供第二份盘或句柄类型。
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Ziwei {
     /// 十二本命宫（职/支/干）。
     palaces: Palaces,
@@ -108,7 +110,7 @@ impl Ziwei {
     }
 
     /// 身宫所叠地支。
-    pub const fn shen_branch(self) -> Branch {
+    pub const fn shen_branch(&self) -> Branch {
         self.shen_branch
     }
 
@@ -118,29 +120,29 @@ impl Ziwei {
     }
 
     /// 命宫五行局。
-    pub const fn bureau(self) -> FiveElementBureau {
+    pub const fn bureau(&self) -> FiveElementBureau {
         self.bureau
     }
 
     /// 生年天干。
-    pub const fn birth_stem(self) -> Stem {
+    pub const fn birth_stem(&self) -> Stem {
         self.birth_stem
     }
 
     /// 生年地支。
-    pub const fn birth_branch(self) -> Branch {
+    pub const fn birth_branch(&self) -> Branch {
         self.birth_branch
     }
 
     /// 真实农历出生年序号。
     ///
     /// [`Self::from_birth`] 返回 `Some(year)`；仅有生年干支的 [`Self::from_input`] 返回 `None`。
-    pub const fn birth_year(self) -> Option<i32> {
+    pub const fn birth_year(&self) -> Option<i32> {
         self.birth_year
     }
 
     /// 性别。
-    pub const fn gender(self) -> Gender {
+    pub const fn gender(&self) -> Gender {
         self.gender
     }
 
@@ -152,22 +154,22 @@ impl Ziwei {
     }
 
     /// 星曜落宫支。
-    pub const fn branch_of_star(self, star: Star) -> Branch {
+    pub const fn branch_of_star(&self, star: Star) -> Branch {
         self.star_branches[star.index()]
     }
 
     /// 来因宫地支。
-    pub const fn laiyin_branch(self) -> Branch {
+    pub const fn laiyin_branch(&self) -> Branch {
         self.birth_stem.laiyin_branch()
     }
 
     /// 生年四化（固定，不随视图变）。
-    pub fn year_transformations(self) -> [LayerTransformation; 4] {
+    pub fn year_transformations(&self) -> [LayerTransformation; 4] {
         self.stem_transformations(self.birth_stem)
     }
 
     /// 任意天干的层四化：四星及其在本命盘上的落宫（ADR-0003）。
-    pub fn stem_transformations(self, stem: Stem) -> [LayerTransformation; 4] {
+    pub fn stem_transformations(&self, stem: Stem) -> [LayerTransformation; 4] {
         stem_layer_transformations(stem, &self.star_branches)
     }
 
@@ -182,7 +184,7 @@ impl Ziwei {
     }
 
     /// 虚岁落在哪一步大限。
-    pub fn decade_step_for_age(self, virtual_age: u8) -> Option<DecadeIndex> {
+    pub fn decade_step_for_age(&self, virtual_age: u8) -> Option<DecadeIndex> {
         self.decade_steps
             .iter()
             .find(|step| (step.age_start..=step.age_end).contains(&virtual_age))
@@ -195,7 +197,10 @@ impl Ziwei {
     ///
     /// 没有真实出生年时返回 [`DecadeYearsError::BirthYearUnavailable`]；任一流年超出
     /// [`i32`] 可表示范围时返回 [`DecadeYearsError::LunarYearOutOfRange`]。
-    pub fn years_in_decade(self, index: DecadeIndex) -> Result<[DecadeYear; 10], DecadeYearsError> {
+    pub fn years_in_decade(
+        &self,
+        index: DecadeIndex,
+    ) -> Result<[DecadeYear; 10], DecadeYearsError> {
         let birth_year = self
             .birth_year
             .ok_or(DecadeYearsError::BirthYearUnavailable)?;
@@ -218,8 +223,7 @@ impl Ziwei {
     }
 
     /// 视图下宫职对应的地支。
-    ///
-    pub fn branch_of_role(self, role: PalaceRole, view: ZiweiView) -> Branch {
+    pub fn branch_of_role(&self, role: PalaceRole, view: ZiweiView) -> Branch {
         let ming = self.view_ming_branch(view);
         Branch::from_index(twelve_index(ming.index() as i32 - role.index() as i32))
     }
@@ -230,7 +234,7 @@ impl Ziwei {
     }
 
     /// 层四化 overlay：本命为 `None`；大限/流年为该层干四化。
-    pub fn overlay_transformations(self, view: ZiweiView) -> Option<[LayerTransformation; 4]> {
+    pub fn overlay_transformations(&self, view: ZiweiView) -> Option<[LayerTransformation; 4]> {
         match view {
             ZiweiView::Natal => None,
             ZiweiView::Decade(index) => {
@@ -261,7 +265,7 @@ impl Ziwei {
     }
 
     /// 当前视图下「命」所在地支。
-    fn view_ming_branch(self, view: ZiweiView) -> Branch {
+    fn view_ming_branch(&self, view: ZiweiView) -> Branch {
         match view {
             ZiweiView::Natal => self.ming_branch,
             ZiweiView::Decade(index) => self.decade_step(index).ming_branch,
