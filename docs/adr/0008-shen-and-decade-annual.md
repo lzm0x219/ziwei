@@ -32,13 +32,14 @@ decade_step_for_age(virtual_age: u8) -> Option<DecadeIndex>
 用户选中某步大限时，必须能列出该限覆盖的**十个流年**（按需生成，不强制预存进 `Ziwei`）：
 
 ```text
-years_in_decade(index: DecadeIndex) -> Option<[(lunar_year, virtual_age); 10]>
+years_in_decade(index: DecadeIndex) -> Result<[(lunar_year, virtual_age); 10], DecadeYearsError>
 // virtual_age 从 age_start 到 age_end
 // lunar_year = birth_lunar_year + virtual_age - 1
-// None 仅表示 lunar_year 超出 i32，不表示大限序号越界
+// BirthYearUnavailable：命盘来自 from_input，没有真实出生年
+// LunarYearOutOfRange：lunar_year 超出 i32
 ```
 
-与 `ZiweiView::Annual { year }` 衔接：列表中的 `lunar_year` 可直接作为 Annual 视图参数。
+绝对流年序号能力只属于 `from_birth` 路径（ADR-0009）。成功列表中的 `lunar_year` 可直接作为 `ZiweiView::Annual { year }` 参数。
 
 ## 流年宫职
 

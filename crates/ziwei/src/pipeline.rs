@@ -54,16 +54,17 @@ pub(crate) struct ChartParts {
     pub decade_steps: [DecadeStep; 12],
     /// 生年干（回填盘对象）。
     pub birth_stem: Stem,
+    /// 生年支（回填盘对象）。
+    pub birth_branch: Branch,
     /// 性别。
     pub gender: Gender,
-    /// 时间线年序号。
-    pub birth_year: i32,
 }
 
 /// 已校验输入 → 全盘零件（双入口最终实现体）。
-pub(crate) fn build_chart_parts(input: ZiweiInput, birth_year: i32) -> ChartParts {
+pub(crate) fn build_chart_parts(input: ZiweiInput) -> ChartParts {
     let gender = input.gender();
     let birth_stem = input.birth_stem();
+    let birth_branch = input.birth_branch();
     let month = input.month();
     let day = input.day();
     let hour = input.hour();
@@ -107,7 +108,7 @@ pub(crate) fn build_chart_parts(input: ZiweiInput, birth_year: i32) -> ChartPart
         flies,
         decade_steps,
         birth_stem,
+        birth_branch,
         gender,
-        birth_year,
     }
 }
