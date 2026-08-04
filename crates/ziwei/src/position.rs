@@ -22,20 +22,29 @@ pub(crate) const fn twelve_index(index: i32) -> u8 {
     index.rem_euclid(12) as u8
 }
 
-/// 子序地支下标（0=子）→ 寅起环下标（0=寅）。
+/// 子序 → 寅环：预计算表，避免热路径反复 `rem_euclid`。
 ///
-/// 例：子(0)→10，丑(1)→11，寅(2)→0，卯(3)→1。
+/// 子(0)→10 … 寅(2)→0 … 亥(11)→9。
+const BRANCH_INDEX_TO_YIN0: [u8; 12] = [10, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+/// 寅环 → 子序下标表。
+///
+/// 寅(0)→2 … 子(10)→0，丑(11)→1。
+const YIN0_TO_BRANCH_INDEX: [u8; 12] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1];
+
+/// 子序地支下标（0=子）→ 寅起环下标（0=寅）。
 pub(crate) const fn branch_index_to_yin0(branch_index: u8) -> u8 {
-    // +10 ≡ -2 (mod 12)：把子序原点搬到寅。
-    twelve_index(branch_index as i32 + 10)
+    BRANCH_INDEX_TO_YIN0[(branch_index % 12) as usize]
 }
 
 /// 寅起环下标（0=寅）→ 子序地支下标（0=子）。
-///
-/// 例：寅(0)→2，卯(1)→3，…，子(10)→0，丑(11)→1。
 pub(crate) const fn yin0_to_branch_index(yin0: u8) -> u8 {
-    // +2：寅环原点搬回子序。
-    twelve_index(yin0 as i32 + 2)
+    YIN0_TO_BRANCH_INDEX[(yin0 % 12) as usize]
+}
+
+/// 寅环下标 → [`super::branch::Branch`]（查表）。
+pub(crate) const fn branch_from_yin0(yin0: u8) -> super::branch::Branch {
+    super::branch::Branch::from_index(yin0_to_branch_index(yin0))
 }
 
 #[cfg(test)]

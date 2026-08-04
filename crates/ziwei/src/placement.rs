@@ -1,34 +1,13 @@
-//! 本命安宫与安星（research Steps A–H）。
+//! 本命安宫与安星纯函数（research Steps A–H）。
 //!
-//! 对内一律用寅起环；写出 [`Branch`] / [`Palace`] 前再转到子序。
-//!
-//! # 依赖与可并行波次
-//!
-//! 构造不是必须串成一条长链。先抽出种子，再按依赖分波：
-//!
-//! ```text
-//! Wave 1（彼此无依赖，可并行）
-//!   · 命/身支 ← month, hour
-//!   · 十二宫干 ← birth_stem（五虎遁，与宫职无关）
-//!   · 辅弼昌曲 ← month, hour
-//!
-//! Wave 2（依赖命支 + 宫干）
-//!   · 十二宫职逆布 + 拼装 Palace
-//!   · 命宫五行局
-//!
-//! Wave 3（依赖局数 + 日；可与辅佐合并）
-//!   · 紫微系 + 天府系十四正曜 ← day, bureau
-//!   · 合并辅佐 → 十八星表
-//! ```
-//!
-//! 飞边与大限见上层编排：二者只依赖 Wave2/3 产物，彼此独立，可并行。
+//! 编排与并行 join 见 [`crate::pipeline`]。此处只提供无共享可变状态的积木。
 
 use super::{
     branch::Branch,
     five_element_bureau::FiveElementBureau,
     palace::{Palace, PalaceRole},
     palaces::Palaces,
-    position::{branch_index_to_yin0, twelve_index, yin0_to_branch_index},
+    position::{branch_from_yin0, branch_index_to_yin0, twelve_index},
     star::Star,
     stem::Stem,
 };
@@ -44,17 +23,6 @@ pub(crate) struct MingShen {
     pub shen: Branch,
 }
 
-/// Wave 1 全部可并行预计算结果。
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct PlacementWave1 {
-    /// 命/身。
-    pub ming_shen: MingShen,
-    /// 十二宫干，下标 = [`Branch::index`]。
-    pub palace_stems: [Stem; 12],
-    /// 左辅、右弼、文昌、文曲落宫（尚未写入完整十八星表）。
-    pub assistants: AssistantStars,
-}
-
 /// 辅佐四星落宫。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct AssistantStars {
@@ -68,9 +36,7 @@ pub(crate) struct AssistantStars {
     pub wen_qu: Branch,
 }
 
-// —— Wave 2 / 完整布局 ——
-
-/// 安命身 + 十二职 + 宫干 + 五行局 的中间结果。
+/// 安命身 + 十二职 + 宫干 + 五行局。
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct NatalLayout {
     /// 十二本命宫。
@@ -83,18 +49,6 @@ pub(crate) struct NatalLayout {
     pub bureau: FiveElementBureau,
 }
 
-/// Wave 1：一次算齐彼此独立的参数（逻辑并行边界）。
-///
-/// 实现上顺序调用三个纯函数；调用方可用 `rayon::join` 等替换为真并行，
-/// 但单盘规模下线程开销通常大于收益。
-pub(crate) fn prepare_wave1(birth_stem: Stem, month: u8, hour: u8) -> PlacementWave1 {
-    PlacementWave1 {
-        ming_shen: compute_ming_shen(month, hour),
-        palace_stems: compute_palace_stems(birth_stem),
-        assistants: place_assistants(month, hour),
-    }
-}
-
 /// Step A：寅起正月；命 = (m−h) mod 12，身 = (m+h) mod 12（寅环）。
 pub(crate) fn compute_ming_shen(month: u8, hour: u8) -> MingShen {
     let ming_yin0 = twelve_index(i32::from(month) - i32::from(hour));
@@ -105,18 +59,19 @@ pub(crate) fn compute_ming_shen(month: u8, hour: u8) -> MingShen {
     }
 }
 
-/// 五虎遁：仅依赖生年干，得到十二支各自宫干（与宫职无关，可与安命并行）。
+/// 五虎遁：仅依赖生年干 → 十二支宫干（下标 = [`Branch::index`]）。
 pub(crate) fn compute_palace_stems(birth_stem: Stem) -> [Stem; 12] {
     let yin_head = birth_stem.yin_head_stem();
+    let head = yin_head.index() as u8;
     let mut stems = [Stem::Jia; 12];
     for branch_index in 0..12u8 {
         let yin0 = branch_index_to_yin0(branch_index);
-        stems[branch_index as usize] = Stem::from_index((yin_head.index() as u8 + yin0) % 10);
+        stems[branch_index as usize] = Stem::from_index((head + yin0) % 10);
     }
     stems
 }
 
-/// 辅佐四星：只依赖月、时，可与安命/宫干/定紫微主干并行。
+/// 辅佐四星：只依赖月、时。
 pub(crate) fn place_assistants(month: u8, hour: u8) -> AssistantStars {
     AssistantStars {
         zuo_fu: branch_from_yin0(twelve_index(2 + i32::from(month))),
@@ -126,8 +81,13 @@ pub(crate) fn place_assistants(month: u8, hour: u8) -> AssistantStars {
     }
 }
 
-/// Wave 2：宫职逆布 + 拼装 + 纳音局（依赖命支与已算宫干）。
-pub(crate) fn assemble_natal_layout(ming_shen: MingShen, palace_stems: &[Stem; 12]) -> NatalLayout {
+/// Wave2a：命宫纳音局 — **不必**先布满十二职，只要命支 + 该支宫干。
+pub(crate) fn bureau_from_ming_stems(ming: Branch, palace_stems: &[Stem; 12]) -> FiveElementBureau {
+    FiveElementBureau::from_ming_palace(palace_stems[ming.index()], ming)
+}
+
+/// Wave2b：宫职逆布 + 填干，得到十二宫（局在外部用 [`bureau_from_ming_stems`]）。
+pub(crate) fn assemble_palaces(ming_shen: MingShen, palace_stems: &[Stem; 12]) -> Palaces {
     let ming_branch = ming_shen.ming;
     let mut raw = [Palace {
         role: PalaceRole::Ming,
@@ -145,26 +105,44 @@ pub(crate) fn assemble_natal_layout(ming_shen: MingShen, palace_stems: &[Stem; 1
         };
     }
 
-    let palaces = Palaces::from_filled(raw);
-    let ming_palace = palaces.get(ming_branch);
-    let bureau = FiveElementBureau::from_ming_palace(ming_palace.stem, ming_palace.branch);
+    Palaces::from_filled(raw)
+}
 
+/// 兼容封装：Wave2 全套 layout（单测）。
+#[cfg(test)]
+pub(crate) fn assemble_natal_layout(ming_shen: MingShen, palace_stems: &[Stem; 12]) -> NatalLayout {
+    let bureau = bureau_from_ming_stems(ming_shen.ming, palace_stems);
     NatalLayout {
-        palaces,
-        ming_branch,
+        palaces: assemble_palaces(ming_shen, palace_stems),
+        ming_branch: ming_shen.ming,
         shen_branch: ming_shen.shen,
         bureau,
     }
 }
 
-/// Step A–D 便捷封装（wave1→wave2），供单测对照。
+/// Wave1 一次打包（单测对照；生产路径见 pipeline）。
 #[cfg(test)]
-pub(crate) fn layout_natal_palaces(birth_stem: Stem, month: u8, hour: u8) -> NatalLayout {
-    let wave1 = prepare_wave1(birth_stem, month, hour);
-    assemble_natal_layout(wave1.ming_shen, &wave1.palace_stems)
+pub(crate) fn prepare_wave1(birth_stem: Stem, month: u8, hour: u8) -> PlacementWave1 {
+    PlacementWave1 {
+        ming_shen: compute_ming_shen(month, hour),
+        palace_stems: compute_palace_stems(birth_stem),
+        assistants: place_assistants(month, hour),
+    }
 }
 
-/// Wave 3a：十四正曜（依赖日与局数；与辅佐独立）。
+/// Wave 1 打包结果（单测）。
+#[cfg(test)]
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct PlacementWave1 {
+    /// 命/身。
+    pub ming_shen: MingShen,
+    /// 十二宫干。
+    pub palace_stems: [Stem; 12],
+    /// 辅佐。
+    pub assistants: AssistantStars,
+}
+
+/// Wave 3a：十四正曜（依赖日与局数）。
 pub(crate) fn place_major_stars(day: u8, bureau_n: u8) -> [Branch; 18] {
     let n = i32::from(bureau_n);
     let d = i32::from(day);
@@ -211,7 +189,7 @@ pub(crate) fn place_major_stars(day: u8, bureau_n: u8) -> [Branch; 18] {
     out
 }
 
-/// Wave 3b：把辅佐写入十八星表（与 majors 合并）。
+/// Wave 3b：辅佐写入十八星表。
 pub(crate) fn merge_assistants(
     mut stars: [Branch; 18],
     assistants: AssistantStars,
@@ -223,17 +201,20 @@ pub(crate) fn merge_assistants(
     stars
 }
 
-/// Steps E–H 便捷封装：十四正曜 + 辅佐（单测对照）。
+/// Steps E–H 便捷封装（单测）。
 #[cfg(test)]
 pub(crate) fn place_eighteen_stars(month: u8, hour: u8, day: u8, bureau_n: u8) -> [Branch; 18] {
-    let majors = place_major_stars(day, bureau_n);
-    let assistants = place_assistants(month, hour);
-    merge_assistants(majors, assistants)
+    merge_assistants(
+        place_major_stars(day, bureau_n),
+        place_assistants(month, hour),
+    )
 }
 
-/// 寅环下标 → [`Branch`]。
-pub(crate) const fn branch_from_yin0(yin0: u8) -> Branch {
-    Branch::from_index(yin0_to_branch_index(yin0))
+/// Step A–D 便捷封装（单测）。
+#[cfg(test)]
+pub(crate) fn layout_natal_palaces(birth_stem: Stem, month: u8, hour: u8) -> NatalLayout {
+    let wave1 = prepare_wave1(birth_stem, month, hour);
+    assemble_natal_layout(wave1.ming_shen, &wave1.palace_stems)
 }
 
 const fn set_star_at_yin0(out: &mut [Branch; 18], star: Star, yin0: u8) {
@@ -245,7 +226,6 @@ mod tests {
     use super::*;
     use crate::position::branch_index_to_yin0;
 
-    /// 紫微–天府镜像对任意紫微 yin0 成立。
     #[test]
     fn tianfu_is_yin_shen_mirror_of_ziwei_for_all_offsets() {
         for day in 1..=30u8 {
@@ -258,7 +238,14 @@ mod tests {
         }
     }
 
-    /// Wave1 宫干与完整 layout 一致；辅佐与 place_eighteen 一致。
+    #[test]
+    fn early_bureau_matches_full_layout() {
+        let wave1 = prepare_wave1(Stem::Jia, 2, 4);
+        let early = bureau_from_ming_stems(wave1.ming_shen.ming, &wave1.palace_stems);
+        let layout = assemble_natal_layout(wave1.ming_shen, &wave1.palace_stems);
+        assert_eq!(early, layout.bureau);
+    }
+
     #[test]
     fn wave_pipeline_matches_monolithic_helpers() {
         let birth_stem = Stem::Jia;
@@ -267,7 +254,14 @@ mod tests {
         let day = 15u8;
 
         let wave1 = prepare_wave1(birth_stem, month, hour);
-        let layout = assemble_natal_layout(wave1.ming_shen, &wave1.palace_stems);
+        let bureau = bureau_from_ming_stems(wave1.ming_shen.ming, &wave1.palace_stems);
+        let palaces = assemble_palaces(wave1.ming_shen, &wave1.palace_stems);
+        let layout = NatalLayout {
+            palaces,
+            ming_branch: wave1.ming_shen.ming,
+            shen_branch: wave1.ming_shen.shen,
+            bureau,
+        };
         let legacy = layout_natal_palaces(birth_stem, month, hour);
         assert_eq!(layout.ming_branch, legacy.ming_branch);
         assert_eq!(layout.shen_branch, legacy.shen_branch);
@@ -277,19 +271,19 @@ mod tests {
             assert_eq!(layout.palaces.get(branch), legacy.palaces.get(branch));
         }
 
-        let majors = place_major_stars(day, layout.bureau.number());
-        let stars = merge_assistants(majors, wave1.assistants);
-        let legacy_stars = place_eighteen_stars(month, hour, day, layout.bureau.number());
-        assert_eq!(stars, legacy_stars);
+        let stars = merge_assistants(
+            place_major_stars(day, layout.bureau.number()),
+            wave1.assistants,
+        );
+        assert_eq!(
+            stars,
+            place_eighteen_stars(month, hour, day, layout.bureau.number())
+        );
     }
 
-    /// 宫干只依赖年干：与命宫无关。
     #[test]
     fn palace_stems_independent_of_month_hour() {
         let stems_a = compute_palace_stems(Stem::Bing);
-        let stems_b = compute_palace_stems(Stem::Bing);
-        assert_eq!(stems_a, stems_b);
-        // 丙年寅起庚
         assert_eq!(stems_a[Branch::Yin.index()], Stem::Geng);
     }
 }

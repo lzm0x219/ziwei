@@ -14,16 +14,15 @@
 
 use super::{
     branch::Branch,
-    decade::build_decade_steps,
     five_element_bureau::FiveElementBureau,
-    fly::{ZiweiFly, build_palace_flies},
+    fly::ZiweiFly,
     input::{
         Gender, ZiweiBirth, ZiweiInput, ZiweiInputError, branch_from_year, representative_year,
         stem_from_year,
     },
     palace::{Palace, PalaceRole},
     palaces::Palaces,
-    placement::{assemble_natal_layout, merge_assistants, place_major_stars, prepare_wave1},
+    pipeline::build_chart_parts,
     position::twelve_index,
     star::Star,
     stem::Stem,
@@ -135,50 +134,21 @@ impl Ziwei {
 
     /// 已校验原始量 + 用于时间线的农历年序号 → 命盘（双入口最终实现）。
     ///
-    /// 分波编排（逻辑并行；单盘默认顺序求值，避免线程开销）：
-    /// 1. Wave1 预计算：命身 / 十二宫干 / 辅佐（三者互不依赖）
-    /// 2. Wave2 拼装十二宫 + 局
-    /// 3. Wave3 正曜（依赖局）与辅佐合并
-    /// 4. Wave4 飞边 ∥ 大限（互不依赖，可并行）
+    /// 编排见 [`crate::pipeline`]：Wave1∥ → 早算局 → 拼宫∥正曜 → 合并辅佐 → 飞∥大限。
+    /// 启用 feature `parallel` 时在独立波次使用 `rayon::join`。
     fn from_validated_input(input: ZiweiInput, birth_year: i32) -> Self {
-        let gender = input.gender();
-        let birth_stem = input.birth_stem();
-        let month = input.month();
-        let day = input.day();
-        let hour = input.hour();
-
-        // —— Wave 1：预计算可并行参数 ——
-        let wave1 = prepare_wave1(birth_stem, month, hour);
-
-        // —— Wave 2：依赖命支 + 宫干 ——
-        let layout = assemble_natal_layout(wave1.ming_shen, &wave1.palace_stems);
-        let bureau_n = layout.bureau.number();
-
-        // —— Wave 3：正曜依赖局；辅佐已在 wave1，此处只合并 ——
-        let majors = place_major_stars(day, bureau_n);
-        let star_branches = merge_assistants(majors, wave1.assistants);
-
-        // —— Wave 4：飞边与大限互不依赖 ——
-        let flies = build_palace_flies(&layout.palaces, &star_branches);
-        let decade_steps = build_decade_steps(
-            gender,
-            birth_stem,
-            layout.ming_branch,
-            bureau_n,
-            &layout.palaces,
-        );
-
+        let parts = build_chart_parts(input, birth_year);
         Self {
-            palaces: layout.palaces,
-            ming_branch: layout.ming_branch,
-            shen_branch: layout.shen_branch,
-            bureau: layout.bureau,
-            birth_year,
-            birth_stem,
-            gender,
-            star_branches,
-            flies,
-            decade_steps,
+            palaces: parts.layout.palaces,
+            ming_branch: parts.layout.ming_branch,
+            shen_branch: parts.layout.shen_branch,
+            bureau: parts.layout.bureau,
+            birth_year: parts.birth_year,
+            birth_stem: parts.birth_stem,
+            gender: parts.gender,
+            star_branches: parts.star_branches,
+            flies: parts.flies,
+            decade_steps: parts.decade_steps,
         }
     }
 
@@ -356,8 +326,7 @@ mod tests {
     use crate::{
         Transformation,
         fly::SelfTransformation,
-        placement::branch_from_yin0,
-        position::{branch_index_to_yin0, twelve_index},
+        position::{branch_from_yin0, branch_index_to_yin0, twelve_index},
     };
 
     fn sample_birth_march_chen() -> ZiweiBirth {
