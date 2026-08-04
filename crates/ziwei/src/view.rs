@@ -141,6 +141,28 @@ pub struct DecadeYear {
     pub virtual_age: u8,
 }
 
+/// 生成某步大限的绝对农历年份时可能发生的错误。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DecadeYearsError {
+    /// 命盘仅由生年干支构造，没有真实农历出生年序号。
+    BirthYearUnavailable,
+    /// 至少一个流年超出 [`i32`] 可表示范围。
+    LunarYearOutOfRange,
+}
+
+impl fmt::Display for DecadeYearsError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::BirthYearUnavailable => {
+                formatter.write_str("真实农历出生年不可用；请使用 Ziwei::from_birth 构造命盘")
+            }
+            Self::LunarYearOutOfRange => formatter.write_str("大限流年超出 i32 可表示范围"),
+        }
+    }
+}
+
+impl std::error::Error for DecadeYearsError {}
+
 #[cfg(test)]
 mod tests {
     use super::*;

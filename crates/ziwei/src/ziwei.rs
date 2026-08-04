@@ -5,8 +5,8 @@
 //! # 双入口
 //!
 //! - **[`Ziwei::from_input`]**：排盘实现主体（原始量 → 命盘）。
-//! - **[`Ziwei::from_birth`]**：年序号 → 年干支后组 [`ZiweiInput`]，再委托实现；
-//!   并保留真实农历年供 `years_in_decade` 等时间线 API。
+//! - **[`Ziwei::from_birth`]**：年序号 → 生年干支后组 [`ZiweiInput`]，再委托实现；
+//!   并保留真实农历年供 [`Ziwei::birth_year`]、[`Ziwei::years_in_decade`] 使用。
 //!
 //! # 查询原则（ADR-0004）
 //!
@@ -16,9 +16,7 @@ use super::{
     branch::Branch,
     five_element_bureau::FiveElementBureau,
     fly::ZiweiFly,
-    input::{
-        Gender, ZiweiBirth, ZiweiInput, branch_from_year, representative_year, stem_from_year,
-    },
+    input::{Gender, ZiweiBirth, ZiweiInput, branch_from_year, stem_from_year},
     palace::{Palace, PalaceRole},
     palaces::Palaces,
     pipeline::build_chart_parts,
@@ -26,7 +24,7 @@ use super::{
     star::Star,
     stem::Stem,
     view::{
-        DecadeIndex, DecadeStep, DecadeYear, LayerTransformation, ZiweiView,
+        DecadeIndex, DecadeStep, DecadeYear, DecadeYearsError, LayerTransformation, ZiweiView,
         stem_layer_transformations,
     },
 };
@@ -45,10 +43,12 @@ pub struct Ziwei {
     shen_branch: Branch,
     /// 命宫五行局。
     bureau: FiveElementBureau,
-    /// 农历年序号：`from_birth` 为真实年；纯 `from_input` 为甲子代表年。
-    birth_year: i32,
+    /// 真实农历出生年序号；纯 `from_input` 不具备此资料。
+    birth_year: Option<i32>,
     /// 生年天干。
     birth_stem: Stem,
+    /// 生年地支。
+    birth_branch: Branch,
     /// 命主性别（大限顺逆）。
     gender: Gender,
     /// 十八星落宫，下标为 [`Star::index`]。
@@ -60,41 +60,41 @@ pub struct Ziwei {
 }
 
 impl Ziwei {
-    /// 从农历出生资料构造命盘（权威入口：年序号 → 年柱，再走 [`Self::from_input`] 实现）。
+    /// 从农历出生资料构造命盘（权威入口：年序号 → 生年干支，再走双入口共用实现）。
     ///
-    /// 时间线 API（如 [`Self::years_in_decade`]）使用真实的 `birth.year()`，
-    /// 不会落入纯 `from_input` 的六十甲子代表年。
+    /// [`Self::birth_year`] 与 [`Self::years_in_decade`] 使用真实的 `birth.year()`。
     ///
     /// 入参已由 [`ZiweiBirth::try_new`] 保证合法，故不返回 [`Result`]。
     pub fn from_birth(birth: ZiweiBirth) -> Self {
         let year = birth.year();
         let input = ZiweiInput::from_birth(birth);
-        Self::from_validated_input(input, year)
+        Self::from_validated_input(input, Some(year))
     }
 
     /// 从已校验的原始量构造命盘（**排盘实现主体**）。
     ///
-    /// 年柱已由调用方给出；安宫、安星、飞边、大限均在此路径计算。
-    /// 盘内 `birth_year` 取与年柱同甲子的代表年（甲子 = 4），仅服务绝对年序号类 API。
+    /// 生年干支已由调用方给出；安宫、安星、飞边、大限均在此路径计算。
+    /// 生年干支不能确定历史年，因此 [`Self::birth_year`] 返回 `None`，
+    /// [`Self::years_in_decade`] 返回 [`DecadeYearsError::BirthYearUnavailable`]。
     ///
     /// 入参须经 [`ZiweiInput::try_new`]；类型已保证合法，故不返回 [`Result`]。
     pub fn from_input(input: ZiweiInput) -> Self {
-        let year = representative_year(input.birth_stem(), input.birth_branch());
-        Self::from_validated_input(input, year)
+        Self::from_validated_input(input, None)
     }
 
-    /// 已校验原始量 + 用于时间线的农历年序号 → 命盘（双入口最终实现）。
+    /// 已校验原始量 + 可选真实农历出生年 → 命盘（双入口最终实现）。
     ///
     /// 编排见 [`crate::pipeline`]：Wave1 → 早算局 → 拼宫/正曜 → 合并辅佐 → 飞边/大限。
-    fn from_validated_input(input: ZiweiInput, birth_year: i32) -> Self {
-        let parts = build_chart_parts(input, birth_year);
+    fn from_validated_input(input: ZiweiInput, birth_year: Option<i32>) -> Self {
+        let parts = build_chart_parts(input);
         Self {
             palaces: parts.layout.palaces,
             ming_branch: parts.layout.ming_branch,
             shen_branch: parts.layout.shen_branch,
             bureau: parts.layout.bureau,
-            birth_year: parts.birth_year,
+            birth_year,
             birth_stem: parts.birth_stem,
+            birth_branch: parts.birth_branch,
             gender: parts.gender,
             star_branches: parts.star_branches,
             flies: parts.flies,
@@ -127,8 +127,15 @@ impl Ziwei {
         self.birth_stem
     }
 
-    /// 农历年序号：`from_birth` 为真实年；纯 `from_input` 为甲子代表年。
-    pub const fn birth_year(self) -> i32 {
+    /// 生年地支。
+    pub const fn birth_branch(self) -> Branch {
+        self.birth_branch
+    }
+
+    /// 真实农历出生年序号。
+    ///
+    /// [`Self::from_birth`] 返回 `Some(year)`；仅有生年干支的 [`Self::from_input`] 返回 `None`。
+    pub const fn birth_year(self) -> Option<i32> {
         self.birth_year
     }
 
@@ -184,8 +191,14 @@ impl Ziwei {
 
     /// 某步大限覆盖的十个流年。
     ///
-    /// 任一流年超出 [`i32`] 可表示范围时返回 `None`。
-    pub fn years_in_decade(self, index: DecadeIndex) -> Option<[DecadeYear; 10]> {
+    /// # Errors
+    ///
+    /// 没有真实出生年时返回 [`DecadeYearsError::BirthYearUnavailable`]；任一流年超出
+    /// [`i32`] 可表示范围时返回 [`DecadeYearsError::LunarYearOutOfRange`]。
+    pub fn years_in_decade(self, index: DecadeIndex) -> Result<[DecadeYear; 10], DecadeYearsError> {
+        let birth_year = self
+            .birth_year
+            .ok_or(DecadeYearsError::BirthYearUnavailable)?;
         let step = self.decade_step(index);
         let mut years = [DecadeYear {
             lunar_year: 0,
@@ -195,11 +208,13 @@ impl Ziwei {
             let virtual_age = step.age_start + i;
             let year_offset = i32::from(virtual_age) - 1;
             years[i as usize] = DecadeYear {
-                lunar_year: self.birth_year.checked_add(year_offset)?,
+                lunar_year: birth_year
+                    .checked_add(year_offset)
+                    .ok_or(DecadeYearsError::LunarYearOutOfRange)?,
                 virtual_age,
             };
         }
-        Some(years)
+        Ok(years)
     }
 
     /// 视图下宫职对应的地支。
@@ -565,7 +580,7 @@ mod tests {
 
         let decade_view = ZiweiView::Decade(DecadeIndex::FIRST);
         let annual_view = ZiweiView::Annual {
-            year: chart.birth_year(),
+            year: 4 + chart.birth_stem().index() as i32,
         };
         assert_eq!(chart.year_transformations(), year);
         assert_eq!(chart.laiyin_branch(), laiyin);
@@ -678,7 +693,7 @@ mod tests {
         assert_eq!(years[0].virtual_age, step0.age_start);
         assert_eq!(
             years[0].lunar_year,
-            chart.birth_year() + i32::from(step0.age_start) - 1
+            chart.birth_year().expect("from_birth 保留真实年") + i32::from(step0.age_start) - 1
         );
         assert_eq!(
             chart.decade_step_for_age(step0.age_start),
@@ -691,16 +706,19 @@ mod tests {
         for year in [i32::MIN, i32::MAX] {
             let birth = ZiweiBirth::try_new(Gender::Yang, year, 2, 1, 4).expect("极值年样例合法");
             let chart = Ziwei::from_birth(birth);
-            assert_eq!(chart.birth_year(), year);
+            assert_eq!(chart.birth_year(), Some(year));
         }
     }
 
     #[test]
-    fn years_in_decade_returns_none_when_lunar_year_overflows() {
+    fn years_in_decade_reports_when_lunar_year_overflows() {
         let birth = ZiweiBirth::try_new(Gender::Yang, i32::MAX, 2, 1, 4).expect("极大年样例合法");
         let chart = Ziwei::from_birth(birth);
 
-        assert!(chart.years_in_decade(DecadeIndex::FIRST).is_none());
+        assert_eq!(
+            chart.years_in_decade(DecadeIndex::FIRST),
+            Err(DecadeYearsError::LunarYearOutOfRange)
+        );
     }
 
     #[test]
@@ -804,6 +822,7 @@ mod tests {
             );
         }
         assert_eq!(from_birth.shen_branch(), from_input.shen_branch());
+        assert_eq!(from_birth.birth_branch(), from_input.birth_branch());
         assert_eq!(from_birth.laiyin_branch(), from_input.laiyin_branch());
         assert_eq!(
             from_birth.year_transformations(),
@@ -812,22 +831,13 @@ mod tests {
         assert_eq!(from_birth.decade_steps(), from_input.decade_steps());
         assert_eq!(from_birth.palace_flies(), from_input.palace_flies());
 
-        // from_birth 保留真实年；纯 from_input 用代表年 — 虚岁序列仍一致
-        assert_eq!(from_birth.birth_year(), birth.year());
-        assert_ne!(from_birth.birth_year(), from_input.birth_year());
-        let ages_birth: Vec<_> = from_birth
-            .years_in_decade(DecadeIndex::FIRST)
-            .unwrap()
-            .iter()
-            .map(|y| y.virtual_age)
-            .collect();
-        let ages_input: Vec<_> = from_input
-            .years_in_decade(DecadeIndex::FIRST)
-            .unwrap()
-            .iter()
-            .map(|y| y.virtual_age)
-            .collect();
-        assert_eq!(ages_birth, ages_input);
+        // from_birth 保留真实年；纯 from_input 不虚构绝对年序号。
+        assert_eq!(from_birth.birth_year(), Some(birth.year()));
+        assert_eq!(from_input.birth_year(), None);
+        assert_eq!(
+            from_input.years_in_decade(DecadeIndex::FIRST),
+            Err(DecadeYearsError::BirthYearUnavailable)
+        );
     }
 
     /// from_birth 经 ZiweiInput 委托实现，且 years_in_decade 用真实年号。
@@ -944,9 +954,10 @@ mod tests {
         );
         assert_eq!(chart.shen_branch(), Branch::Shen);
         assert_eq!(chart.birth_stem(), Stem::Jia);
+        assert_eq!(chart.birth_branch(), Branch::Zi);
         assert_eq!(chart.laiyin_branch(), Branch::Xu);
         assert_eq!(chart.gender(), Gender::Yang);
-        assert_eq!(chart.birth_year(), 1984);
+        assert_eq!(chart.birth_year(), Some(1984));
 
         // 十二职逆布、飞边、大限起运
         for role in PalaceRole::ALL {
@@ -971,7 +982,7 @@ mod tests {
         let birth = ZiweiBirth::try_new(Gender::Yin, 1990, 5, 15, 8).unwrap();
         let chart = Ziwei::from_birth(birth);
         assert_eq!(chart.gender(), Gender::Yin);
-        assert_eq!(chart.birth_year(), 1990);
+        assert_eq!(chart.birth_year(), Some(1990));
         assert_eq!(chart.birth_stem(), stem_from_year(1990));
     }
 }

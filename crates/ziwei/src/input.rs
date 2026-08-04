@@ -1,6 +1,6 @@
 //! 命盘输入资料与边界校验（ADR-0001、ADR-0002）。
 //!
-//! - **`ZiweiBirth`**：`from_birth` 适配入口；年序号推年干支后组 [`ZiweiInput`]。
+//! - **`ZiweiBirth`**：`from_birth` 适配入口；年序号推生年干支后组 [`ZiweiInput`]。
 //! - **`ZiweiInput`**：排盘实现所用的原始量；禁止注入命宫/紫微等结果。
 //! - 历法换算、闰月、晚子时均在引擎外消解后再传入。
 
@@ -96,7 +96,7 @@ impl ZiweiBirth {
     }
 }
 
-/// `from_input` 的原始量捷径：性别、年干支、月/日/时。
+/// `from_input` 的原始量捷径：性别、生年干支、月/日/时。
 ///
 /// 字段私有，只能经 [`Self::try_new`] 构造，保证范围与六十甲子合法性。
 /// 不含命宫、紫微等排盘结果（ADR-0002）。
@@ -104,9 +104,9 @@ impl ZiweiBirth {
 pub struct ZiweiInput {
     /// 命主性别。
     gender: Gender,
-    /// 出生年干（历法层已消解）。
+    /// 生年天干（历法层已消解）。
     birth_stem: Stem,
-    /// 出生年支（须与年干组成合法六十甲子）。
+    /// 生年地支（须与天干组成合法六十甲子）。
     birth_branch: Branch,
     /// 农历月，正月 = 0。
     month: u8,
@@ -135,7 +135,7 @@ impl ZiweiInput {
     ///
     /// # Errors
     ///
-    /// 月/日/时越界，或年干支不成六十甲子时返回 [`ZiweiInputError`]。
+    /// 月/日/时越界，或生年干支不成六十甲子时返回 [`ZiweiInputError`]。
     pub fn try_new(
         gender: Gender,
         birth_stem: Stem,
@@ -144,7 +144,6 @@ impl ZiweiInput {
         day: u8,
         hour: u8,
     ) -> Result<Self, ZiweiInputError> {
-        // 先校验时间字段，再校验干支对，错误更贴近字段语义。
         validate_month_day_hour(month, day, hour)?;
         validate_year_pillar(birth_stem, birth_branch)?;
         Ok(Self {
@@ -167,7 +166,7 @@ impl ZiweiInput {
         self.birth_stem
     }
 
-    /// 出生年支。
+    /// 生年地支。
     pub(crate) const fn birth_branch(self) -> Branch {
         self.birth_branch
     }
@@ -206,11 +205,11 @@ pub enum ZiweiInputError {
         /// 不合法的值。
         value: u8,
     },
-    /// 年干与年支不能组成六十甲子（阴阳不配）。
+    /// 生年天干与地支不能组成六十甲子（阴阳不配）。
     InvalidYearPillar {
-        /// 年干。
+        /// 生年天干。
         stem: Stem,
-        /// 年支。
+        /// 生年地支。
         branch: Branch,
     },
 }
@@ -282,26 +281,6 @@ pub(crate) const fn stem_from_year(year: i32) -> Stem {
 /// 农历年序号 → 年支：`(year - 4).rem_euclid(12)`。
 pub(crate) const fn branch_from_year(year: i32) -> Branch {
     Branch::from_index(year_cycle_index(year, 12))
-}
-
-/// 由合法年干支还原六十甲子内的代表农历年序号（甲子年 = 4）。
-///
-/// 用于 `from_input` 路径上需要绝对年序号的 API（如 `years_in_decade`）。
-/// 调用前须通过 [`validate_year_pillar`]；非法组合在 debug 下断言失败，release 回退 4。
-pub(crate) fn representative_year(stem: Stem, branch: Branch) -> i32 {
-    debug_assert!(
-        validate_year_pillar(stem, branch).is_ok(),
-        "representative_year requires a sexagenary stem/branch pair"
-    );
-    let stem_i = stem.index() as i32;
-    let branch_i = branch.index() as i32;
-    // 在 0..60 中求满足 n≡stem (mod 10) 且 n≡branch (mod 12) 的 n，再加 4。
-    for n in 0..60 {
-        if n % 10 == stem_i && n % 12 == branch_i {
-            return 4 + n;
-        }
-    }
-    4
 }
 
 #[cfg(test)]
@@ -380,17 +359,6 @@ mod tests {
                 branch: Branch::Chou,
             })
         );
-    }
-
-    #[test]
-    fn representative_year_round_trips_jia_zi() {
-        assert_eq!(representative_year(Stem::Jia, Branch::Zi), 4);
-        let year: i32 = 1984;
-        let stem = Stem::from_index((year - 4).rem_euclid(10) as u8);
-        let branch = Branch::from_index((year - 4).rem_euclid(12) as u8);
-        let rep = representative_year(stem, branch);
-        assert_eq!((rep - 4).rem_euclid(10), (year - 4).rem_euclid(10));
-        assert_eq!((rep - 4).rem_euclid(12), (year - 4).rem_euclid(12));
     }
 
     #[test]

@@ -7,7 +7,26 @@
 
 // 核心领域类型的透传，便于绑定 crate 作为统一入口。
 pub use ziwei::{
-    Branch, DecadeIndex, DecadeIndexError, DecadeStep, DecadeYear, FiveElementBureau, Gender,
-    LayerTransformation, Palace, PalaceRole, PalaceRoleLabel, SelfTransformation, Star, StarLabel,
-    Stem, Transformation, Ziwei, ZiweiBirth, ZiweiFly, ZiweiInput, ZiweiInputError, ZiweiView,
+    Branch, DecadeIndex, DecadeIndexError, DecadeStep, DecadeYear, DecadeYearsError,
+    FiveElementBureau, Gender, LayerTransformation, Palace, PalaceRole, PalaceRoleLabel,
+    SelfTransformation, Star, StarLabel, Stem, Transformation, Ziwei, ZiweiBirth, ZiweiFly,
+    ZiweiInput, ZiweiInputError, ZiweiView,
 };
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reexports_explicit_birth_year_capability() {
+        let input = ZiweiInput::try_new(Gender::Yang, Stem::Jia, Branch::Zi, 0, 1, 0)
+            .expect("绑定层样例输入合法");
+        let chart = Ziwei::from_input(input);
+
+        assert_eq!(chart.birth_year(), None);
+        assert_eq!(
+            chart.years_in_decade(DecadeIndex::FIRST),
+            Err(DecadeYearsError::BirthYearUnavailable)
+        );
+    }
+}
