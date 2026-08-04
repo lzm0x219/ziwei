@@ -402,21 +402,28 @@
       </div>
       <p class="callout"><strong>要点：</strong>排盘算法只在一处；<code class="inline">from_birth</code> 保留真实农历年给 <code class="inline">years_in_decade</code>；纯 <code class="inline">from_input</code> 用六十甲子代表年。</p>
 
-      <h3>2.2 构造管线（Steps）</h3>
+      <h3>2.2 构造管线（分波 · 逻辑并行）</h3>
+      <p class="callout" style="margin-bottom:14px"><strong>不是必须 A→H 长链。</strong>
+        Wave1 三项互不依赖；Wave4 飞边与大限互不依赖。单盘默认顺序求值（线程池开销通常不划算）；批处理可对 Wave1/Wave4 上 <code class="inline">rayon::join</code>。</p>
       <div class="flow">
-        <div class="step"><strong>A</strong>安命·身（寅环 m±h）</div>
+        <div class="step"><strong>W1∥</strong>命身 · 宫干 · 辅佐</div>
         <span class="chev">→</span>
-        <div class="step"><strong>B</strong>十二职逆布</div>
+        <div class="step"><strong>W2</strong>职逆布 + 局</div>
         <span class="chev">→</span>
-        <div class="step"><strong>C</strong>五虎遁宫干</div>
+        <div class="step"><strong>W3</strong>正曜 ⊔ 辅佐</div>
         <span class="chev">→</span>
-        <div class="step"><strong>D</strong>命宫纳音局</div>
+        <div class="step"><strong>W4∥</strong>飞边 · 大限</div>
         <span class="chev">→</span>
-        <div class="step"><strong>E–H</strong>紫微·天府·正曜·辅佐</div>
-        <span class="chev">→</span>
-        <div class="step"><strong>Fly</strong>12×4 宫干飞</div>
-        <span class="chev">→</span>
-        <div class="step"><strong>Decade</strong>十二步大限</div>
+        <div class="step"><strong>拼装</strong>Ziwei</div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <h4>依赖要点</h4>
+        <ul>
+          <li>宫干只靠年干（五虎遁），不靠命宫</li>
+          <li>辅佐只靠月时，不靠紫微</li>
+          <li>定紫微靠日+局，故在 Wave2 之后</li>
+          <li>飞边需要宫干+星位；大限需要命支+局+宫干 — 二者互不需要对方结果</li>
+        </ul>
       </div>
 
       <h3>2.3 查询时（不重建盘）</h3>

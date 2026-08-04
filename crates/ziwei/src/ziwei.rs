@@ -23,7 +23,7 @@ use super::{
     },
     palace::{Palace, PalaceRole},
     palaces::Palaces,
-    placement::{layout_natal_palaces, place_eighteen_stars},
+    placement::{assemble_natal_layout, merge_assistants, place_major_stars, prepare_wave1},
     position::twelve_index,
     star::Star,
     stem::Stem,
@@ -134,6 +134,12 @@ impl Ziwei {
     }
 
     /// 已校验原始量 + 用于时间线的农历年序号 → 命盘（双入口最终实现）。
+    ///
+    /// 分波编排（逻辑并行；单盘默认顺序求值，避免线程开销）：
+    /// 1. Wave1 预计算：命身 / 十二宫干 / 辅佐（三者互不依赖）
+    /// 2. Wave2 拼装十二宫 + 局
+    /// 3. Wave3 正曜（依赖局）与辅佐合并
+    /// 4. Wave4 飞边 ∥ 大限（互不依赖，可并行）
     fn from_validated_input(input: ZiweiInput, birth_year: i32) -> Self {
         let gender = input.gender();
         let birth_stem = input.birth_stem();
@@ -141,14 +147,24 @@ impl Ziwei {
         let day = input.day();
         let hour = input.hour();
 
-        let layout = layout_natal_palaces(birth_stem, month, hour);
-        let star_branches = place_eighteen_stars(month, hour, day, layout.bureau.number());
+        // —— Wave 1：预计算可并行参数 ——
+        let wave1 = prepare_wave1(birth_stem, month, hour);
+
+        // —— Wave 2：依赖命支 + 宫干 ——
+        let layout = assemble_natal_layout(wave1.ming_shen, &wave1.palace_stems);
+        let bureau_n = layout.bureau.number();
+
+        // —— Wave 3：正曜依赖局；辅佐已在 wave1，此处只合并 ——
+        let majors = place_major_stars(day, bureau_n);
+        let star_branches = merge_assistants(majors, wave1.assistants);
+
+        // —— Wave 4：飞边与大限互不依赖 ——
         let flies = build_palace_flies(&layout.palaces, &star_branches);
         let decade_steps = build_decade_steps(
             gender,
             birth_stem,
             layout.ming_branch,
-            layout.bureau.number(),
+            bureau_n,
             &layout.palaces,
         );
 

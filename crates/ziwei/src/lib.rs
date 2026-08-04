@@ -34,7 +34,7 @@ mod input;
 mod palace;
 /// 十二宫内部存储。
 mod palaces;
-/// 本命安宫与安星（Steps A–H）。
+/// 本命安宫与安星（分波：预计算 ∥ 拼装）。
 mod placement;
 /// 十二环折叠与寅环/子序换算。
 mod position;
