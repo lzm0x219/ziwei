@@ -1,0 +1,52 @@
+{
+  "name": "@ziweijs/core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Node.js binding for the Ziwei chart engine",
+  "license": "MIT",
+  "files": [
+    "index.cjs",
+    "index.mjs",
+    "index.d.ts",
+    "native.cjs",
+    "*.node"
+  ],
+  "type": "commonjs",
+  "main": "index.cjs",
+  "module": "index.mjs",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs",
+      "require": "./index.cjs"
+    }
+  },
+  "scripts": {
+    "build:types": "node ../../scripts/build-binding-types.mjs",
+    "build": "pnpm run build:types && napi build --platform --manifest-path ../../Cargo.toml --package ziwei_binding --package-json-path package.json --output-dir . --js native.cjs --dts native.d.ts",
+    "build:release": "pnpm run build:types && napi build --platform --release --manifest-path ../../Cargo.toml --package ziwei_binding --package-json-path package.json --output-dir . --js native.cjs --dts native.d.ts",
+    "test": "node --test test/from-birth.test.mjs",
+    "test:types": "tsc --ignoreConfig --noEmit --module nodenext --target esnext --strict test/types.mts"
+  },
+  "devDependencies": {
+    "@emnapi/runtime": "2.0.0-alpha.3",
+    "@napi-rs/cli": "3.8.2"
+  },
+  "napi": {
+    "binaryName": "ziwei",
+    "packageName": "@ziweijs/core"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.20.0",
+      "onFail": "error"
+    },
+    "runtime": {
+      "name": "node",
+      "version": ">=24.18.1",
+      "onFail": "error"
+    }
+  }
+}
