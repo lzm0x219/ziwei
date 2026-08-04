@@ -293,11 +293,11 @@
     <!-- ========== 架构 ========== -->
     <section id="arch">
       <h2>1. 架构</h2>
-      <p class="sub">工作区双 crate：领域核心 <code class="inline">ziwei</code> + JavaScript 双后端适配层 <code class="inline">ziwei_binding</code>。核心对外只暴露 crate 根 re-export；<code class="inline">@ziweijs/core</code> 与 <code class="inline">@ziweijs/core-wasm</code> 首版只绑定 <code class="inline">Ziwei.fromBirth</code>。</p>
+      <p class="sub">当前只维护 Rust 实现。语言绑定将在 Rust 公共 API 稳定后重新设计。</p>
 
       <div class="arch">
         <div class="lane-label">调用方 / 适配层（引擎外）</div>
-        <div class="arch-row" style="grid-template-columns: 1fr 1fr 1fr;">
+        <div class="arch-row" style="grid-template-columns: 1fr 1fr;">
           <div class="node rose">
             <div class="kicker">External</div>
             <div class="title">历法适配</div>
@@ -307,11 +307,6 @@
             <div class="kicker">External</div>
             <div class="title">应用 / 产品</div>
             <div class="desc">UI、批命、业务规则包（v1 外）</div>
-          </div>
-          <div class="node">
-            <div class="kicker">NAPI / WASM</div>
-            <div class="title">ziwei_binding</div>
-            <div class="desc">同步 fromBirth：ZiweiBirth → 不透明 Ziwei</div>
           </div>
         </div>
 
@@ -376,7 +371,7 @@
         <div class="card">
           <h4>依赖方向</h4>
           <ul>
-            <li><code class="inline">ziwei_binding → ziwei</code>（单向）</li>
+            <li>当前 workspace 只包含 Rust crate</li>
             <li>公开类型全部经 <code class="inline">lib.rs</code> re-export</li>
             <li>内部 <code class="inline">placement / decade / palaces</code> 不导出</li>
             <li>权威：ADR-0001…0009 + CONTEXT.md</li>
@@ -659,7 +654,6 @@ match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
           <tr><td><code class="inline">palaces.rs</code></td><td>十二宫数组</td><td>crate</td></tr>
           <tr><td><code class="inline">view.rs</code></td><td>View/DecadeStep/层四化类型</td><td>pub</td></tr>
           <tr><td><code class="inline">stem / branch / star / palace / transformation / five_element_bureau / position</code></td><td>表与坐标</td><td>混合</td></tr>
-          <tr><td><code class="inline">ziwei_binding</code></td><td>NAPI / WASM 的最小 fromBirth Adapter</td><td>binding crate</td></tr>
         </tbody>
       </table>
     </section>

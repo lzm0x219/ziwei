@@ -1,16 +1,6 @@
 pre-commit:
   parallel: true
   jobs:
-    - name: TypeScript format
-      run: mise exec -- pnpm ts:fmt {staged_files}
-      glob: "*.{js,ts,cjs,mjs,jsx,tsx,json,md}"
-      stage_fixed: true
-
-    - name: TypeScript lint
-      run: mise exec -- pnpm ts:lint:fix {staged_files}
-      glob: "*.{js,ts,cjs,mjs,jsx,tsx}"
-      stage_fixed: true
-
     - name: Rust format
       run: cargo fmt --all -- --check
       glob: "*.{rs,toml}"
