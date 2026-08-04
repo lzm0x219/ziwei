@@ -11,6 +11,10 @@ repository = "https://github.com/matharts/ziwei"
 
 [workspace.dependencies]
 ziwei = { path = "crates/ziwei" }
+ziwei_analysis = { path = "crates/ziwei_analysis" }
+ziwei_calendar = { path = "crates/ziwei_calendar" }
+ziwei_core = { path = "crates/ziwei_core" }
+ziwei_query = { path = "crates/ziwei_query" }
 
 [workspace.lints.rust]
 missing_docs = "warn"

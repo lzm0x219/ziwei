@@ -1,6 +1,8 @@
 [package]
-name = "ziwei"
+name = "ziwei_core"
 version = "0.1.0"
+description = "Core domain model and chart construction for Ziwei"
+publish = false
 
 edition.workspace = true
 rust-version.workspace = true
@@ -8,10 +10,6 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-ziwei_analysis.workspace = true
-ziwei_calendar.workspace = true
-ziwei_core.workspace = true
-ziwei_query.workspace = true
 
 [lints]
 workspace = true

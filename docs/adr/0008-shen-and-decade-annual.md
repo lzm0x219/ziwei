@@ -17,7 +17,6 @@ step.step()           // DecadeIndex；0 = 第一限
 step.ming_branch()    // 大限命所在支
 step.age_start()      // 虚岁起 = 局数 + 10*step
 step.age_end()        // age_start + 9
-step.stem()           // 该支本命宫干
 
 decade_steps() -> [DecadeStep; 12]  // 或等价序列
 decade_step_for_age(virtual_age: u8) -> Option<DecadeIndex>
@@ -48,7 +47,7 @@ years_in_decade(index: DecadeIndex) -> Result<[DecadeYear; 10], DecadeYearsError
 1. 年支 = `(year - 4).rem_euclid(12)` 映射到 `Branch`（与 ADR-0001 年干锚点一致，子=0 序）。
 2. **流年命坐该年支（太岁）**。
 3. 以流年命支为命，逆布十二流年宫职（与本命/大限同一 `branch_of_role` 机制）。
-4. 流年四化 = 年干 overlay（ADR-0004），不覆盖生年四化。
+4. 流年只叠加宫职；查询宫干飞化时，使用该宫职所落地支的本命宫干，不生成额外四化。
 
 ## 不做
 
