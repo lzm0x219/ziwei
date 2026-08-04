@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ziwei Core 参考 · 架构 · 流程 · 用法 · API</title>
+  <style>
+    :root {
+      --bg: #0c0f14;
+      --bg-elev: #141a22;
+      --bg-soft: #1a222d;
+      --line: #2a3544;
+      --text: #e8eef6;
+      --muted: #93a1b5;
+      --accent: #5b9fd4;
+      --accent-2: #7bc9a6;
+      --warn: #e0b35a;
+      --rose: #d47a8c;
+      --violet: #a78bfa;
+      --code-bg: #0a0d12;
+      --shadow: 0 12px 40px rgba(0,0,0,.35);
+      --radius: 14px;
+      --font: "SF Pro Text", "PingFang SC", "Helvetica Neue", system-ui, sans-serif;
+      --mono: "SF Mono", "JetBrains Mono", "Menlo", ui-monospace, monospace;
+    }
+    [data-theme="light"] {
+      --bg: #f4f6f9;
+      --bg-elev: #ffffff;
+      --bg-soft: #eef2f7;
+      --line: #d5deea;
+      --text: #152033;
+      --muted: #5a6b82;
+      --accent: #2563a8;
+      --accent-2: #1f8a60;
+      --warn: #a67c20;
+      --rose: #b54d63;
+      --violet: #6d4fc7;
+      --code-bg: #f0f3f8;
+      --shadow: 0 10px 30px rgba(20,40,80,.08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 55%),
+        radial-gradient(900px 500px at 90% 0%, color-mix(in srgb, var(--accent-2) 12%, transparent), transparent 50%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 28px 20px 80px; }
+    header.hero {
+      display: grid;
+      gap: 18px;
+      margin-bottom: 28px;
+      padding: 28px 28px 24px;
+      background: linear-gradient(145deg, var(--bg-elev), var(--bg-soft));
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 4px);
+      box-shadow: var(--shadow);
+    }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .badge {
+      font-size: 12px;
+      letter-spacing: .02em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--muted);
+    }
+    .badge.ok { color: var(--accent-2); border-color: color-mix(in srgb, var(--accent-2) 40%, var(--line)); }
+    .badge.core { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+    h1 { margin: 0; font-size: clamp(1.6rem, 2.5vw, 2.15rem); letter-spacing: -.02em; }
+    .lede { margin: 0; color: var(--muted); max-width: 62ch; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 10px; }
+    button, .btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 12px;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    button:hover, .btn:hover { border-color: var(--accent); }
+    nav.toc {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 0 14px;
+      margin-bottom: 8px;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid transparent;
+    }
+    nav.toc a {
+      color: var(--muted);
+      font-size: 13px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+    }
+    nav.toc a:hover { color: var(--text); background: var(--bg-soft); text-decoration: none; }
+    section {
+      margin: 36px 0;
+      padding: 24px;
+      background: var(--bg-elev);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    section h2 {
+      margin: 0 0 8px;
+      font-size: 1.35rem;
+      letter-spacing: -.01em;
+    }
+    section .sub { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
+    h3 { margin: 22px 0 10px; font-size: 1.05rem; color: color-mix(in srgb, var(--text) 92%, var(--accent)); }
+    .grid-2 { display: grid; grid-template-columns: 1.1fr .9fr; gap: 18px; }
+    @media (max-width: 860px) { .grid-2 { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--bg-soft);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+    .card h4 { margin: 0 0 8px; font-size: 14px; }
+    .card p, .card li { font-size: 13.5px; color: var(--muted); }
+    .card ul { margin: 0; padding-left: 1.15em; }
+    /* Architecture diagram */
+    .arch {
+      display: grid;
+      gap: 14px;
+      padding: 8px 0 4px;
+    }
+    .arch-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 860px) {
+      .arch-row { grid-template-columns: 1fr 1fr; }
+    }
+    .node {
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      padding: 12px 12px 10px;
+      min-height: 78px;
+    }
+    .node .kicker {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .node .title { font-weight: 650; font-size: 14px; }
+    .node .desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .node.emphasis { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent); }
+    .node.green { border-color: color-mix(in srgb, var(--accent-2) 50%, var(--line)); }
+    .node.violet { border-color: color-mix(in srgb, var(--violet) 45%, var(--line)); }
+    .node.rose { border-color: color-mix(in srgb, var(--rose) 45%, var(--line)); }
+    .lane-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 4px 2px 0;
+    }
+    .arrow-row {
+      display: flex;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .04em;
+    }
+    /* Flow */
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .flow .step {
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      max-width: 160px;
+    }
+    .flow .step strong { display: block; font-size: 12px; color: var(--accent); margin-bottom: 2px; }
+    .flow .chev { color: var(--muted); font-size: 16px; }
+    pre, code { font-family: var(--mono); }
+    pre {
+      margin: 0;
+      padding: 14px 16px;
+      overflow: auto;
+      background: var(--code-bg);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+    code.inline {
+      font-size: 0.9em;
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: var(--bg-soft);
+      border: 1px solid var(--line);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 10px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    th { color: var(--muted); font-weight: 600; font-size: 12px; letter-spacing: .03em; }
+    tr:hover td { background: color-mix(in srgb, var(--bg-soft) 70%, transparent); }
+    .sig { font-family: var(--mono); font-size: 12px; color: var(--accent-2); }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      margin-right: 4px;
+    }
+    footer {
+      margin-top: 40px;
+      color: var(--muted);
+      font-size: 12.5px;
+      text-align: center;
+    }
+    .callout {
+      border-left: 3px solid var(--accent);
+      padding: 10px 14px;
+      background: color-mix(in srgb, var(--accent) 8%, var(--bg-soft));
+      border-radius: 0 10px 10px 0;
+      font-size: 13.5px;
+      color: var(--muted);
+      margin: 12px 0 0;
+    }
+    .callout strong { color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div class="badge-row">
+        <span class="badge core">crates/ziwei</span>
+        <span class="badge ok">v1 排盘引擎</span>
+        <span class="badge">Rust · ADR 0001–0008</span>
+        <span class="badge">commit 796b78f</span>
+      </div>
+      <h1>Ziwei Core 可视化参考</h1>
+      <p class="lede">
+        MathArts 紫微斗数排盘引擎：模块架构、构造流水线、调用方式与公开 API 一览。
+        契约以 <code class="inline">CONTEXT.md</code> 与 <code class="inline">docs/adr/</code> 为准。
+      </p>
+      <div class="toolbar">
+        <button type="button" id="themeToggle" title="切换明暗主题">切换主题</button>
+        <a class="btn" href="../../crates/ziwei/src/lib.rs">源码 lib.rs</a>
+        <a class="btn" href="../../CONTEXT.md">CONTEXT.md</a>
+      </div>
+    </header>
+
+    <nav class="toc" aria-label="目录">
+      <a href="#arch">架构</a>
+      <a href="#flow">流程</a>
+      <a href="#usage">如何使用</a>
+      <a href="#api">API</a>
+      <a href="#modules">模块表</a>
+      <a href="#coords">坐标与约定</a>
+    </nav>
+
+    <!-- ========== 架构 ========== -->
+    <section id="arch">
+      <h2>1. 架构</h2>
+      <p class="sub">工作区双 crate：领域核心 <code class="inline">ziwei</code> + 绑定壳 <code class="inline">ziwei_binding</code>（NAPI 延后）。核心对外只暴露 crate 根 re-export。</p>
+
+      <div class="arch">
+        <div class="lane-label">调用方 / 适配层（引擎外）</div>
+        <div class="arch-row" style="grid-template-columns: 1fr 1fr 1fr;">
+          <div class="node rose">
+            <div class="kicker">External</div>
+            <div class="title">历法适配</div>
+            <div class="desc">公历↔农历、闰月、晚子时、时区</div>
+          </div>
+          <div class="node rose">
+            <div class="kicker">External</div>
+            <div class="title">应用 / 产品</div>
+            <div class="desc">UI、批命、业务规则包（v1 外）</div>
+          </div>
+          <div class="node">
+            <div class="kicker">Future</div>
+            <div class="title">ziwei_binding</div>
+            <div class="desc">当前 re-export；正式 NAPI 待 core 稳定</div>
+          </div>
+        </div>
+
+        <div class="arrow-row">↓ 农历原始量 / 年序号 · 禁止注入排盘结果</div>
+
+        <div class="lane-label">公开表面 · crates/ziwei</div>
+        <div class="arch-row" style="grid-template-columns: 1fr 1.2fr 1fr;">
+          <div class="node green">
+            <div class="kicker">Input</div>
+            <div class="title">ZiweiBirth</div>
+            <div class="desc">from_birth 适配：年序号→干支</div>
+          </div>
+          <div class="node emphasis">
+            <div class="kicker">Core entry</div>
+            <div class="title">ZiweiInput → Ziwei</div>
+            <div class="desc">from_input 实现主体；from_birth 委托</div>
+          </div>
+          <div class="node green">
+            <div class="kicker">Query</div>
+            <div class="title">ZiweiView / Handle</div>
+            <div class="desc">本命·大限·流年叠层查询</div>
+          </div>
+        </div>
+
+        <div class="arrow-row">↓ 私有管线（不公开步进 API）</div>
+
+        <div class="lane-label">内部模块（按职责拆分）</div>
+        <div class="arch-row">
+          <div class="node violet">
+            <div class="kicker">placement</div>
+            <div class="title">安宫安星 A–H</div>
+            <div class="desc">命身·职·干·局·十八星</div>
+          </div>
+          <div class="node violet">
+            <div class="kicker">decade</div>
+            <div class="title">大限序列</div>
+            <div class="desc">顺逆·虚岁·宫干</div>
+          </div>
+          <div class="node violet">
+            <div class="kicker">fly</div>
+            <div class="title">宫干飞边</div>
+            <div class="desc">≤48 单跳 + 自化</div>
+          </div>
+          <div class="node">
+            <div class="kicker">tables</div>
+            <div class="title">stem / bureau / star…</div>
+            <div class="desc">四化·来因·纳音·目录</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:18px">
+        <div class="card">
+          <h4>设计原则</h4>
+          <ul>
+            <li><strong>一份本命真相源</strong>：<code class="inline">Ziwei</code>（Copy，构造期算完）</li>
+            <li><strong>视图只叠层</strong>：不重算星/宫干/飞边/生年四化</li>
+            <li><strong>禁止结果注入</strong>：测例不能预填命宫/紫微</li>
+            <li><strong>坐标分流</strong>：对内寅环，对外 <code class="inline">Branch</code>（子=0）</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>依赖方向</h4>
+          <ul>
+            <li><code class="inline">ziwei_binding → ziwei</code>（单向）</li>
+            <li>公开类型全部经 <code class="inline">lib.rs</code> re-export</li>
+            <li>内部 <code class="inline">placement / decade / palaces</code> 不导出</li>
+            <li>权威：ADR-0001…0008 + CONTEXT.md</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 流程 ========== -->
+    <section id="flow">
+      <h2>2. 流程</h2>
+      <p class="sub">双入口汇合到同一实现 <code class="inline">from_validated_input</code>，再跑安宫→安星→飞→大限。</p>
+
+      <h3>2.1 入口与委托</h3>
+      <div class="flow" style="margin-bottom:16px">
+        <div class="step"><strong>from_birth</strong>ZiweiBirth 年→干支组 Input</div>
+        <span class="chev">→</span>
+        <div class="step"><strong>try_new</strong>校验月日时+六十甲子</div>
+        <span class="chev">→</span>
+        <div class="step"><strong>from_validated_input</strong>birth_year=真实年</div>
+        <span class="chev">⇢</span>
+        <div class="step"><strong>from_input</strong>代表年（仅时间线）</div>
+      </div>
+      <p class="callout"><strong>要点：</strong>排盘算法只在一处；<code class="inline">from_birth</code> 保留真实农历年给 <code class="inline">years_in_decade</code>；纯 <code class="inline">from_input</code> 用六十甲子代表年。</p>
+
+      <h3>2.2 构造管线（Steps）</h3>
+      <div class="flow">
+        <div class="step"><strong>A</strong>安命·身（寅环 m±h）</div>
+        <span class="chev">→</span>
+        <div class="step"><strong>B</strong>十二职逆布</div>
+        <span class="chev">→</span>
+        <div class="step"><strong>C</strong>五虎遁宫干</div>
+        <span class="chev">→</span>
+        <div class="step"><strong>D</strong>命宫纳音局</div>
+        <span class="chev">→</span>
+        <div class="step"><strong>E–H</strong>紫微·天府·正曜·辅佐</div>
+        <span class="chev">→</span>
+        <div class="step"><strong>Fly</strong>12×4 宫干飞</div>
+        <span class="chev">→</span>
+        <div class="step"><strong>Decade</strong>十二步大限</div>
+      </div>
+
+      <h3>2.3 查询时（不重建盘）</h3>
+      <div class="grid-2">
+        <div class="card">
+          <h4>固定（本命）</h4>
+          <ul>
+            <li>十二宫职/支/干、身宫</li>
+            <li>十八星落宫</li>
+            <li>来因、生年四化</li>
+            <li>飞边集（48）、大限序列表</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>随 ZiweiView 变</h4>
+          <ul>
+            <li><code class="inline">Natal</code>：本命职贴标；无 overlay</li>
+            <li><code class="inline">Decade { step }</code>：大限命支起逆布职；层干四化</li>
+            <li><code class="inline">Annual { year }</code>：太岁为命；年干四化</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== 使用 ========== -->
+    <section id="usage">
+      <h2>3. 如何使用</h2>
+      <p class="sub">依赖 workspace 内 <code class="inline">ziwei</code> crate。历法消解完成后只传农历字段。</p>
+
+      <h3>3.1 Cargo</h3>
+<pre><code>[dependencies]
+ziwei = { path = "crates/ziwei" }
+# 或 workspace: ziwei = { workspace = true }</code></pre>
+
+      <h3>3.2 from_birth（推荐权威路径）</h3>
+<pre><code>use ziwei::{
+    Branch, Gender, PalaceRole, Ziwei, ZiweiBirth, ZiweiView,
+};
+
+let chart = Ziwei::from_birth(ZiweiBirth {
+    gender: Gender::Yang, // 阳/男；阴 = Yin
+    year: 1984,           // 农历年序号
+    month: 2,             // 正月=0 → 三月=2
+    day: 1,               // 初一=1
+    hour: 4,              // 子时=0 → 辰时=4
+})?;
+
+// 三月辰时：命在子、身在申
+assert_eq!(
+    chart.branch_of_role(PalaceRole::Ming, ZiweiView::Natal),
+    Some(Branch::Zi)
+);
+assert_eq!(chart.shen_branch(), Branch::Shen);
+
+// 本命宫干与星
+let ming = chart.palace_at(Branch::Zi);
+let stars: Vec&lt;_&gt; = chart.stars_at(Branch::Zi).collect();
+let laiyin = chart.laiyin_branch();
+let year_hua = chart.year_transformations(); // [禄权科忌]
+
+// 大限 / 流年视图
+let step1 = chart.decade_steps()[1];
+let decade_ming = chart.branch_of_role(
+    PalaceRole::Ming,
+    ZiweiView::Decade { step: 1 },
+);
+let annual_ming = chart.branch_of_role(
+    PalaceRole::Ming,
+    ZiweiView::Annual { year: 1990 },
+); // 太岁 = 年支
+
+// 飞宫
+for fly in chart.palace_flies() {
+    let _ = fly.self_transformation(); // Out | In | None
+}</code></pre>
+
+      <h3>3.3 from_input（历法层已给年柱）</h3>
+<pre><code>use ziwei::{Branch, Gender, Stem, Ziwei, ZiweiInput};
+
+let input = ZiweiInput::try_new(
+    Gender::Yang,
+    Stem::Jia,
+    Branch::Zi,
+    2,  // 月
+    1,  // 日
+    4,  // 时
+)?;
+let chart = Ziwei::from_input(input)?;
+// birth_year() 为甲子代表年（如 4），非历史公历/农历序号
+// 宫盘与同柱 from_birth 一致；years_in_decade 绝对年可能不同</code></pre>
+
+      <h3>3.4 错误处理</h3>
+<pre><code>use ziwei::ZiweiInputError;
+
+match Ziwei::from_birth(birth) {
+    Ok(chart) =&gt; { /* ... */ }
+    Err(ZiweiInputError::MonthOutOfRange { value }) =&gt; { /* 0..=11 */ }
+    Err(ZiweiInputError::DayOutOfRange { value }) =&gt; { /* 1..=30 */ }
+    Err(ZiweiInputError::HourOutOfRange { value }) =&gt; { /* 0..=11 */ }
+    Err(ZiweiInputError::InvalidYearPillar { .. }) =&gt; { /* 仅 from_input 路径 */ }
+}</code></pre>
+    </section>
+
+    <!-- ========== API ========== -->
+    <section id="api">
+      <h2>4. 公开 API</h2>
+      <p class="sub">以下为 crate 根导出类型与主要方法。内部 <code class="inline">placement</code> / <code class="inline">decade</code> 等无公开步进函数。</p>
+
+      <h3>4.1 构造</h3>
+      <table>
+        <thead><tr><th>API</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="sig">Ziwei::from_birth(ZiweiBirth) → Result&lt;Ziwei, ZiweiInputError&gt;</td>
+            <td>年序号→干支→委托实现；保留真实 <code class="inline">birth_year</code></td>
+          </tr>
+          <tr>
+            <td class="sig">Ziwei::from_input(ZiweiInput) → Result&lt;Ziwei, ZiweiInputError&gt;</td>
+            <td>排盘实现主体；代表年作时间线锚</td>
+          </tr>
+          <tr>
+            <td class="sig">ZiweiInput::try_new(gender, stem, branch, month, day, hour)</td>
+            <td>校验月日时 + 六十甲子奇偶</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>4.2 本命查询</h3>
+      <table>
+        <thead><tr><th>API</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td class="sig">palace_at(Branch) → &amp;Palace</td><td>本命宫（role/branch/stem）</td></tr>
+          <tr><td class="sig">shen_branch() → Branch</td><td>身宫叠支</td></tr>
+          <tr><td class="sig">shen_natal_role() → PalaceRole</td><td>身落在本命何职</td></tr>
+          <tr><td class="sig">bureau() → FiveElementBureau</td><td>命宫五行局</td></tr>
+          <tr><td class="sig">birth_stem() / birth_year() / gender()</td><td>生年干、年序号、性别</td></tr>
+          <tr><td class="sig">stars_at(Branch) → impl Iterator&lt;Star&gt;</td><td>该宫十八星</td></tr>
+          <tr><td class="sig">branch_of_star(Star) → Branch</td><td>星落宫</td></tr>
+          <tr><td class="sig">laiyin_branch() → Branch</td><td>来因（年干表）</td></tr>
+          <tr><td class="sig">year_transformations() → [LayerTransformation; 4]</td><td>生年禄权科忌+落宫</td></tr>
+          <tr><td class="sig">stem_transformations(Stem) → [LayerTransformation; 4]</td><td>任意干层四化</td></tr>
+        </tbody>
+      </table>
+
+      <h3>4.3 大限 / 流年 / 视图</h3>
+      <table>
+        <thead><tr><th>API</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td class="sig">decade_steps() → &amp;[DecadeStep; 12]</td><td>十二步大限</td></tr>
+          <tr><td class="sig">decade_step(step) → Option&lt;&amp;DecadeStep&gt;</td><td>0..=11，越界 None</td></tr>
+          <tr><td class="sig">decade_step_for_age(virtual_age) → Option&lt;u8&gt;</td><td>虚岁落在哪一步</td></tr>
+          <tr><td class="sig">years_in_decade(step) → Option&lt;[DecadeYear; 10]&gt;</td><td>该限十年流年</td></tr>
+          <tr><td class="sig">branch_of_role(role, view) → Option&lt;Branch&gt;</td><td>视图下宫职→支</td></tr>
+          <tr><td class="sig">palace_for_role(role, view) → Option&lt;&amp;Palace&gt;</td><td>视图下取本命宫对象</td></tr>
+          <tr><td class="sig">overlay_transformations(view) → Option&lt;[…;4]&gt;</td><td>Natal=None；大限/流年层四化</td></tr>
+          <tr><td class="sig">with_view(view) → ZiweiHandle</td><td>薄句柄，绑死当前 view</td></tr>
+        </tbody>
+      </table>
+
+      <h3>4.4 飞宫</h3>
+      <table>
+        <thead><tr><th>API</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td class="sig">palace_flies() → &amp;[ZiweiFly; 48]</td><td>全量宫干飞边</td></tr>
+          <tr><td class="sig">flies_from_branch(Branch)</td><td>自某支飞出</td></tr>
+          <tr><td class="sig">flies_from_role(role, view)</td><td>视图职→支后再滤边；越界空</td></tr>
+          <tr><td class="sig">ZiweiFly::self_transformation()</td><td>Out / In / None</td></tr>
+        </tbody>
+      </table>
+
+      <h3>4.5 领域类型一览</h3>
+      <table>
+        <thead><tr><th>类型</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td><code class="inline">ZiweiBirth</code></td><td><code class="inline">{ gender, year, month, day, hour }</code></td></tr>
+          <tr><td><code class="inline">ZiweiInput</code></td><td>原始量；仅 try_new</td></tr>
+          <tr><td><code class="inline">Gender</code></td><td>Yin / Yang</td></tr>
+          <tr><td><code class="inline">Branch</code> / <code class="inline">Stem</code></td><td>地支、天干；index 子=0 / 甲=0</td></tr>
+          <tr><td><code class="inline">Palace</code> / <code class="inline">PalaceRole</code></td><td>宫对象与十二职</td></tr>
+          <tr><td><code class="inline">Star</code> / <code class="inline">StarLabel</code></td><td>十八主星与标签</td></tr>
+          <tr><td><code class="inline">Transformation</code></td><td>A–D 与别名 LU/QUAN/KE/JI</td></tr>
+          <tr><td><code class="inline">FiveElementBureau</code></td><td>水二…火六；number()</td></tr>
+          <tr><td><code class="inline">ZiweiView</code></td><td>Natal | Decade{step} | Annual{year}</td></tr>
+          <tr><td><code class="inline">DecadeStep</code> / <code class="inline">DecadeYear</code></td><td>大限步、限内流年</td></tr>
+          <tr><td><code class="inline">LayerTransformation</code></td><td>四化+星+落宫</td></tr>
+          <tr><td><code class="inline">ZiweiFly</code> / <code class="inline">SelfTransformation</code></td><td>飞边与自化</td></tr>
+          <tr><td><code class="inline">ZiweiInputError</code></td><td>月/日/时/干支对错误</td></tr>
+          <tr><td><code class="inline">ZiweiHandle</code></td><td>with_view 包装</td></tr>
+        </tbody>
+      </table>
+
+      <h3>4.6 Stem / Bureau 辅助（公开）</h3>
+      <table>
+        <thead><tr><th>API</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td class="sig">Stem::laiyin_branch()</td><td>年干→来因支固定表</td></tr>
+          <tr><td class="sig">Stem::transformation_star(Transformation)</td><td>干×四化→星</td></tr>
+          <tr><td class="sig">FiveElementBureau::from_ming_palace(stem, branch)</td><td>命宫纳音局</td></tr>
+          <tr><td class="sig">PalaceRole / Star / Transformation 的 simplified_chinese()</td><td>显示文案</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ========== 模块 ========== -->
+    <section id="modules">
+      <h2>5. 源码模块地图</h2>
+      <p class="sub">路径均在 <code class="inline">crates/ziwei/src/</code>。</p>
+      <table>
+        <thead><tr><th>模块</th><th>职责</th><th>可见性</th></tr></thead>
+        <tbody>
+          <tr><td><code class="inline">lib.rs</code></td><td>导出表面</td><td>pub</td></tr>
+          <tr><td><code class="inline">ziwei.rs</code></td><td>编排 + 查询 API</td><td>pub types</td></tr>
+          <tr><td><code class="inline">input.rs</code></td><td>Birth/Input/校验/年柱公式</td><td>pub types</td></tr>
+          <tr><td><code class="inline">placement.rs</code></td><td>安宫 A–D + 安星 E–H</td><td>crate</td></tr>
+          <tr><td><code class="inline">decade.rs</code></td><td>大限序列</td><td>crate</td></tr>
+          <tr><td><code class="inline">fly.rs</code></td><td>飞边类型 + 构造</td><td>pub + crate</td></tr>
+          <tr><td><code class="inline">palaces.rs</code></td><td>十二宫数组</td><td>crate</td></tr>
+          <tr><td><code class="inline">view.rs</code></td><td>View/DecadeStep/层四化类型</td><td>pub</td></tr>
+          <tr><td><code class="inline">stem / branch / star / palace / transformation / five_element_bureau / position</code></td><td>表与坐标</td><td>混合</td></tr>
+          <tr><td><code class="inline">ziwei_binding</code></td><td>re-export 占位</td><td>binding crate</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ========== 约定 ========== -->
+    <section id="coords">
+      <h2>6. 坐标与 v1 边界</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h4>零点</h4>
+          <ul>
+            <li><strong>Branch::index</strong>：子=0 … 亥=11（对外）</li>
+            <li><strong>寅环 yin0</strong>：寅=0（规则内部）</li>
+            <li><strong>month</strong>：正月=0</li>
+            <li><strong>hour</strong>：子时=0</li>
+            <li><strong>day</strong>：初一=1</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>v1 不做</h4>
+          <ul>
+            <li>引擎内公历/真太阳时</li>
+            <li>杂曜全集、小限、批命文案</li>
+            <li>多跳飞串、三爻变</li>
+            <li>结果注入；NAPI 正式包（延后）</li>
+          </ul>
+        </div>
+      </div>
+      <p class="callout" style="margin-top:16px">
+        <strong>大限顺逆：</strong>年干阴阳与 <code class="inline">Gender</code> 同性顺、异性逆（阳男阴女顺）。起运虚岁=局数，每限 10 年。
+      </p>
+    </section>
+
+    <footer>
+      生成自仓库当前实现 · 打开方式：浏览器直接打开本 HTML · 主题偏好保存在 localStorage
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const root = document.documentElement;
+      const key = "ziwei-core-ref-theme";
+      const saved = localStorage.getItem(key);
+      if (saved === "light" || saved === "dark") {
+        if (saved === "light") root.setAttribute("data-theme", "light");
+      } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
+        root.setAttribute("data-theme", "light");
+      }
+      document.getElementById("themeToggle").addEventListener("click", () => {
+        const next = root.getAttribute("data-theme") === "light" ? "dark" : "light";
+        if (next === "dark") root.removeAttribute("data-theme");
+        else root.setAttribute("data-theme", "light");
+        localStorage.setItem(key, next);
+      });
+    })();
+  </script>
+</body>
+</html>
