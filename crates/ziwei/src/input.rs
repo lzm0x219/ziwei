@@ -233,14 +233,19 @@ const fn ring_position_is_valid(position: u8) -> bool {
     twelve_index(position as i32) == position
 }
 
+/// 先折叠到小环再减 4，等价于 `(year - 4).rem_euclid(modulus)`，且极值不溢出。
+const fn year_cycle_index(year: i32, modulus: i32) -> u8 {
+    (year.rem_euclid(modulus) - 4).rem_euclid(modulus) as u8
+}
+
 /// 农历年序号 → 年干：`(year - 4).rem_euclid(10)`（ADR-0001）。
 pub(crate) const fn stem_from_year(year: i32) -> Stem {
-    Stem::from_index((year - 4).rem_euclid(10) as u8)
+    Stem::from_index(year_cycle_index(year, 10))
 }
 
 /// 农历年序号 → 年支：`(year - 4).rem_euclid(12)`。
 pub(crate) const fn branch_from_year(year: i32) -> Branch {
-    Branch::from_index((year - 4).rem_euclid(12) as u8)
+    Branch::from_index(year_cycle_index(year, 12))
 }
 
 /// 由合法年干支还原六十甲子内的代表农历年序号（甲子年 = 4）。
@@ -350,5 +355,20 @@ mod tests {
         let rep = representative_year(stem, branch);
         assert_eq!((rep - 4).rem_euclid(10), (year - 4).rem_euclid(10));
         assert_eq!((rep - 4).rem_euclid(12), (year - 4).rem_euclid(12));
+    }
+
+    #[test]
+    fn year_pillar_handles_the_full_i32_range() {
+        for year in [i32::MIN, i32::MIN + 1, i32::MAX - 1, i32::MAX] {
+            let shifted = i64::from(year) - 4;
+            assert_eq!(
+                stem_from_year(year).index(),
+                shifted.rem_euclid(10) as usize
+            );
+            assert_eq!(
+                branch_from_year(year).index(),
+                shifted.rem_euclid(12) as usize
+            );
+        }
     }
 }

@@ -189,7 +189,9 @@ impl Ziwei {
             .map(|step| step.step)
     }
 
-    /// 某步大限覆盖的十个流年；`step` 超出 `0..=11` 时返回 `None`。
+    /// 某步大限覆盖的十个流年。
+    ///
+    /// `step` 超出 `0..=11`，或任一流年超出 [`i32`] 可表示范围时返回 `None`。
     pub fn years_in_decade(self, step: u8) -> Option<[DecadeYear; 10]> {
         let step = self.decade_step(step)?;
         let mut years = [DecadeYear {
@@ -198,8 +200,9 @@ impl Ziwei {
         }; 10];
         for i in 0..10u8 {
             let virtual_age = step.age_start + i;
+            let year_offset = i32::from(virtual_age) - 1;
             years[i as usize] = DecadeYear {
-                lunar_year: self.birth_year + i32::from(virtual_age) - 1,
+                lunar_year: self.birth_year.checked_add(year_offset)?,
                 virtual_age,
             };
         }
@@ -729,6 +732,29 @@ mod tests {
         );
         assert_eq!(chart.decade_step_for_age(step0.age_start), Some(0));
         assert!(chart.years_in_decade(12).is_none());
+    }
+
+    #[test]
+    fn from_birth_accepts_extreme_i32_years() {
+        for year in [i32::MIN, i32::MAX] {
+            let chart = Ziwei::from_birth(ZiweiBirth {
+                year,
+                ..sample_birth_march_chen()
+            })
+            .expect("极值农历年序号也应能构盘");
+            assert_eq!(chart.birth_year(), year);
+        }
+    }
+
+    #[test]
+    fn years_in_decade_returns_none_when_lunar_year_overflows() {
+        let chart = Ziwei::from_birth(ZiweiBirth {
+            year: i32::MAX,
+            ..sample_birth_march_chen()
+        })
+        .expect("极大农历年序号应能构盘");
+
+        assert!(chart.years_in_decade(0).is_none());
     }
 
     #[test]
