@@ -48,8 +48,10 @@ pub struct PalaceRoleLabel {
 }
 
 impl PalaceRole {
-    /// 自命起十二职，顺序与 [`Self::index`] 一致，供构造时遍历。
-    pub(crate) const ALL: [Self; 12] = [
+    /// 自命起十二职全集，顺序与 [`Self::index`] 一致（命=0 … 父母=11）。
+    ///
+    /// 绑定层与遍历 API 应使用本常量。
+    pub const ALL: [Self; 12] = [
         Self::Ming,
         Self::XiongDi,
         Self::FuQi,

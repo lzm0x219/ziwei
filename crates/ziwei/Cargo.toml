@@ -7,13 +7,7 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 
-[features]
-default = []
-## 在构造管线的独立波次使用 rayon::join（批量排盘时可开；单盘通常更慢）。
-parallel = ["dep:rayon"]
-
 [dependencies]
-rayon = { version = "1.10", optional = true }
 
 [lints]
 workspace = true

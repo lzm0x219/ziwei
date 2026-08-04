@@ -32,6 +32,7 @@ use super::{
 /// 可供调用者查询的紫微斗数命盘对象（本命真相源）。
 ///
 /// 体积固定、`Copy`，适合按值传递；星位与飞边在构造时算完。
+/// 大限/流年查询一律传入 [`ZiweiView`]，不提供第二份盘或句柄类型。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Ziwei {
     /// 十二本命宫（职/支/干）。
@@ -50,51 +51,10 @@ pub struct Ziwei {
     gender: Gender,
     /// 十八星落宫，下标为 [`Star::index`]。
     star_branches: [Branch; 18],
-    /// 本命宫干飞边，固定 12×4 = 48 条。
+    /// 本命宫干飞边，固定 12×4 = 48 条；布局见 [`Self::flies_from_branch`]。
     flies: [ZiweiFly; 48],
     /// 十二步大限。
     decade_steps: [DecadeStep; 12],
-}
-
-/// `with_view` 返回的薄包装：持有盘引用 + 当前视图，不复制本命数据。
-#[derive(Debug, Clone, Copy)]
-pub struct ZiweiHandle<'a> {
-    /// 底层本命盘。
-    chart: &'a Ziwei,
-    /// 当前查询视图。
-    view: ZiweiView,
-}
-
-impl<'a> ZiweiHandle<'a> {
-    /// 当前视图。
-    pub const fn view(self) -> ZiweiView {
-        self.view
-    }
-
-    /// 底层命盘。
-    pub const fn chart(self) -> &'a Ziwei {
-        self.chart
-    }
-
-    /// 见 [`Ziwei::branch_of_role`]。
-    pub fn branch_of_role(self, role: PalaceRole) -> Option<Branch> {
-        self.chart.branch_of_role(role, self.view)
-    }
-
-    /// 见 [`Ziwei::palace_for_role`]。
-    pub fn palace_for_role(self, role: PalaceRole) -> Option<&'a Palace> {
-        self.chart.palace_for_role(role, self.view)
-    }
-
-    /// 见 [`Ziwei::overlay_transformations`]。
-    pub fn overlay_transformations(self) -> Option<[LayerTransformation; 4]> {
-        self.chart.overlay_transformations(self.view)
-    }
-
-    /// 见 [`Ziwei::flies_from_role`]。
-    pub fn flies_from_role(self, role: PalaceRole) -> impl Iterator<Item = ZiweiFly> + 'a {
-        self.chart.flies_from_role(role, self.view)
-    }
 }
 
 impl Ziwei {
@@ -118,24 +78,21 @@ impl Ziwei {
         Ok(Self::from_validated_input(input, birth.year))
     }
 
-    /// 从原始量构造命盘（**排盘实现主体**）。
+    /// 从已校验的原始量构造命盘（**排盘实现主体**）。
     ///
     /// 年柱已由调用方给出；安宫、安星、飞边、大限均在此路径计算。
     /// 盘内 `birth_year` 取与年柱同甲子的代表年（甲子 = 4），仅服务绝对年序号类 API。
     ///
-    /// # Errors
-    ///
-    /// `ZiweiInput` 已由 [`ZiweiInput::try_new`] 校验，此函数当前总是 `Ok`；
-    /// 保留 `Result` 以便与 `from_birth` 对称及日后扩展。
-    pub fn from_input(input: ZiweiInput) -> Result<Self, ZiweiInputError> {
+    /// 入参须经 [`ZiweiInput::try_new`]；类型已保证合法，故不返回 [`Result`]。
+    /// 需要校验失败路径时用 [`Self::from_birth`] 或先 `try_new`。
+    pub fn from_input(input: ZiweiInput) -> Self {
         let year = representative_year(input.birth_stem(), input.birth_branch());
-        Ok(Self::from_validated_input(input, year))
+        Self::from_validated_input(input, year)
     }
 
     /// 已校验原始量 + 用于时间线的农历年序号 → 命盘（双入口最终实现）。
     ///
-    /// 编排见 [`crate::pipeline`]：Wave1∥ → 早算局 → 拼宫∥正曜 → 合并辅佐 → 飞∥大限。
-    /// 启用 feature `parallel` 时在独立波次使用 `rayon::join`。
+    /// 编排见 [`crate::pipeline`]：Wave1 → 早算局 → 拼宫/正曜 → 合并辅佐 → 飞边/大限。
     fn from_validated_input(input: ZiweiInput, birth_year: i32) -> Self {
         let parts = build_chart_parts(input, birth_year);
         Self {
@@ -282,32 +239,23 @@ impl Ziwei {
     }
 
     /// 本命宫干飞全量边（恰好 48 条）。
+    ///
+    /// 布局：按 [`Branch::index`] 升序，每支连续 4 条，四化顺序与
+    /// [`Transformation::ALL`] 一致（禄→权→科→忌）。
     pub const fn palace_flies(&self) -> &[ZiweiFly; 48] {
         &self.flies
     }
 
-    /// 自某支飞出的边。
-    pub fn flies_from_branch(self, branch: Branch) -> impl Iterator<Item = ZiweiFly> {
-        self.flies
-            .into_iter()
-            .filter(move |fly| fly.source_branch == branch)
+    /// 自某支飞出的四条边（O(1) 切片，不扫描全表）。
+    pub fn flies_from_branch(&self, branch: Branch) -> &[ZiweiFly; 4] {
+        let (chunks, remainder) = self.flies.as_chunks::<4>();
+        debug_assert!(remainder.is_empty(), "flies layout must be 12×4");
+        &chunks[branch.index()]
     }
 
-    /// 视图宫职对应支上的飞边；大限 `step` 越界时迭代为空。
-    pub fn flies_from_role(
-        self,
-        role: PalaceRole,
-        view: ZiweiView,
-    ) -> impl Iterator<Item = ZiweiFly> {
-        let branch = self.branch_of_role(role, view);
-        self.flies
-            .into_iter()
-            .filter(move |fly| branch.is_some_and(|b| fly.source_branch == b))
-    }
-
-    /// 薄视图句柄。
-    pub const fn with_view(&self, view: ZiweiView) -> ZiweiHandle<'_> {
-        ZiweiHandle { chart: self, view }
+    /// 视图宫职对应支上的飞边；大限 `step` 越界时返回 `None`。
+    pub fn flies_from_role(&self, role: PalaceRole, view: ZiweiView) -> Option<&[ZiweiFly; 4]> {
+        Some(self.flies_from_branch(self.branch_of_role(role, view)?))
     }
 
     /// 当前视图下「命」所在地支；大限步越界为 `None`。
@@ -330,14 +278,8 @@ mod tests {
     };
 
     fn sample_birth_march_chen() -> ZiweiBirth {
-        // 三月辰时 → 命子身申；年取甲子年 1984
-        ZiweiBirth {
-            gender: Gender::Yang,
-            year: 1984,
-            month: 2,
-            day: 1,
-            hour: 4,
-        }
+        // 三月辰时 → 命子身申；年取甲子年 1984（经典口诀样例）
+        ZiweiBirth::try_new(Gender::Yang, 1984, 2, 1, 4).expect("样例合法")
     }
 
     #[test]
@@ -390,8 +332,7 @@ mod tests {
             let branch = Branch::from_index(year_stem.index() as u8 % 2);
             let chart = Ziwei::from_input(
                 ZiweiInput::try_new(Gender::Yang, year_stem, branch, 0, 1, 0).unwrap(),
-            )
-            .unwrap();
+            );
             assert_eq!(
                 chart.palace_at(Branch::Yin).stem,
                 yin_stem,
@@ -482,36 +423,196 @@ mod tests {
         ));
     }
 
+    /// 福山堂等口诀源锁定的安命/局/紫微黄金（扩展：身、辅佐、飞边、大限、层四化）。
     #[test]
     fn ziwei_star_goldens_fushantang() {
+        // 己丑年 · 正月 · 廿七 · 戌时 → 命辰、木三、紫微戌
         let chart = Ziwei::from_input(
             ZiweiInput::try_new(Gender::Yang, Stem::Ji, Branch::Chou, 0, 27, 10).unwrap(),
-        )
-        .unwrap();
-        assert_eq!(
-            chart.branch_of_role(PalaceRole::Ming, ZiweiView::Natal),
-            Some(Branch::Chen)
         );
-        assert_eq!(chart.bureau(), FiveElementBureau::WoodThree);
-        assert_eq!(chart.branch_of_star(Star::ZiWei), Branch::Xu);
+        assert_natal_core(
+            &chart,
+            Branch::Chen,
+            Branch::Zi, // 身：(m+h) 寅环 10 → 子
+            FiveElementBureau::WoodThree,
+            Branch::Xu,
+        );
+        assert_eq!(chart.branch_of_star(Star::ZuoFu), Branch::Chen); // 正月左辅辰
+        assert_eq!(chart.branch_of_star(Star::YouBi), Branch::Xu);
+        assert_eq!(chart.branch_of_star(Star::WenChang), Branch::Zi); // 戌时
+        assert_eq!(chart.branch_of_star(Star::WenQu), Branch::Yin);
+        assert_flies_layout(&chart);
+        // 己阴干 + 阳男 → 异性 → 逆行
+        assert_decade_direction(&chart, false);
+        assert_year_hua_stable_under_views(&chart);
 
+        // 甲子年 · 正月 · 十三 · 子时 → 火六、紫微亥（命寅）
         let chart = Ziwei::from_input(
             ZiweiInput::try_new(Gender::Yang, Stem::Jia, Branch::Zi, 0, 13, 0).unwrap(),
-        )
-        .unwrap();
-        assert_eq!(chart.bureau(), FiveElementBureau::FireSix);
-        assert_eq!(chart.branch_of_star(Star::ZiWei), Branch::Hai);
+        );
+        assert_natal_core(
+            &chart,
+            Branch::Yin,
+            Branch::Yin, // m=h=0 → 命身同寅
+            FiveElementBureau::FireSix,
+            Branch::Hai,
+        );
+        assert_eq!(chart.branch_of_star(Star::ZuoFu), Branch::Chen);
+        assert_eq!(chart.branch_of_star(Star::WenChang), Branch::Xu);
+        assert_eq!(chart.branch_of_star(Star::WenQu), Branch::Chen);
+        assert_flies_layout(&chart);
+        assert_decade_direction(&chart, true); // 甲阳 + 阳男 → 顺
+        assert_year_hua_stable_under_views(&chart);
 
+        // 庚子年 · 正月 · 初六 · 辰时 → 命戌、土五、紫微未
         let chart = Ziwei::from_input(
             ZiweiInput::try_new(Gender::Yang, Stem::Geng, Branch::Zi, 0, 6, 4).unwrap(),
-        )
-        .unwrap();
+        );
+        assert_natal_core(
+            &chart,
+            Branch::Xu,
+            Branch::Wu, // m=0,h=4 → 身午
+            FiveElementBureau::EarthFive,
+            Branch::Wei,
+        );
+        assert_flies_layout(&chart);
+        assert_decade_direction(&chart, true); // 庚阳 + 阳男 → 顺
+        assert_year_hua_stable_under_views(&chart);
+
+        // 天府为紫微关于寅申轴的镜像（三例）
+        for input in [
+            ZiweiInput::try_new(Gender::Yang, Stem::Ji, Branch::Chou, 0, 27, 10).unwrap(),
+            ZiweiInput::try_new(Gender::Yang, Stem::Jia, Branch::Zi, 0, 13, 0).unwrap(),
+            ZiweiInput::try_new(Gender::Yang, Stem::Geng, Branch::Zi, 0, 6, 4).unwrap(),
+        ] {
+            let chart = Ziwei::from_input(input);
+            let z = branch_index_to_yin0(chart.branch_of_star(Star::ZiWei).index() as u8);
+            let t = branch_index_to_yin0(chart.branch_of_star(Star::TianFu).index() as u8);
+            assert_eq!(t, twelve_index(-(i32::from(z))));
+        }
+    }
+
+    fn assert_natal_core(
+        chart: &Ziwei,
+        ming: Branch,
+        shen: Branch,
+        bureau: FiveElementBureau,
+        ziwei: Branch,
+    ) {
         assert_eq!(
             chart.branch_of_role(PalaceRole::Ming, ZiweiView::Natal),
-            Some(Branch::Xu)
+            Some(ming)
         );
-        assert_eq!(chart.bureau(), FiveElementBureau::EarthFive);
-        assert_eq!(chart.branch_of_star(Star::ZiWei), Branch::Wei);
+        assert_eq!(chart.shen_branch(), shen);
+        assert_eq!(chart.bureau(), bureau);
+        assert_eq!(chart.branch_of_star(Star::ZiWei), ziwei);
+        // 十四正曜相对紫微/天府的口诀间距
+        let z = branch_index_to_yin0(ziwei.index() as u8);
+        let t = branch_index_to_yin0(chart.branch_of_star(Star::TianFu).index() as u8);
+        assert_eq!(
+            chart.branch_of_star(Star::TianJi),
+            branch_from_yin0(twelve_index(i32::from(z) - 1))
+        );
+        assert_eq!(
+            chart.branch_of_star(Star::TaiYang),
+            branch_from_yin0(twelve_index(i32::from(z) - 3))
+        );
+        assert_eq!(
+            chart.branch_of_star(Star::WuQu),
+            branch_from_yin0(twelve_index(i32::from(z) - 4))
+        );
+        assert_eq!(
+            chart.branch_of_star(Star::TianTong),
+            branch_from_yin0(twelve_index(i32::from(z) - 5))
+        );
+        assert_eq!(
+            chart.branch_of_star(Star::LianZhen),
+            branch_from_yin0(twelve_index(i32::from(z) - 8))
+        );
+        assert_eq!(
+            chart.branch_of_star(Star::TaiYin),
+            branch_from_yin0(twelve_index(i32::from(t) + 1))
+        );
+        assert_eq!(
+            chart.branch_of_star(Star::TanLang),
+            branch_from_yin0(twelve_index(i32::from(t) + 2))
+        );
+        assert_eq!(
+            chart.branch_of_star(Star::JuMen),
+            branch_from_yin0(twelve_index(i32::from(t) + 3))
+        );
+        assert_eq!(
+            chart.branch_of_star(Star::TianXiang),
+            branch_from_yin0(twelve_index(i32::from(t) + 4))
+        );
+        assert_eq!(
+            chart.branch_of_star(Star::TianLiang),
+            branch_from_yin0(twelve_index(i32::from(t) + 5))
+        );
+        assert_eq!(
+            chart.branch_of_star(Star::QiSha),
+            branch_from_yin0(twelve_index(i32::from(t) + 6))
+        );
+        assert_eq!(
+            chart.branch_of_star(Star::PoJun),
+            branch_from_yin0(twelve_index(i32::from(t) + 10))
+        );
+    }
+
+    fn assert_flies_layout(chart: &Ziwei) {
+        assert_eq!(chart.palace_flies().len(), 48);
+        for branch in (0..12u8).map(Branch::from_index) {
+            let chunk = chart.flies_from_branch(branch);
+            assert_eq!(chunk.len(), 4);
+            assert!(chunk.iter().all(|f| f.source_branch == branch));
+            assert_eq!(chunk.map(|f| f.transformation), Transformation::ALL);
+            // 被化星落宫与盘面一致
+            for fly in chunk {
+                assert_eq!(fly.target_branch, chart.branch_of_star(fly.star));
+            }
+        }
+    }
+
+    /// `forward == true` 时第二限 = 命支 +1，否则 −1。
+    fn assert_decade_direction(chart: &Ziwei, forward: bool) {
+        let ming = chart.decade_steps()[0].ming_branch;
+        let step1 = chart.decade_steps()[1].ming_branch;
+        let expected = Branch::from_index(twelve_index(
+            ming.index() as i32 + if forward { 1 } else { -1 },
+        ));
+        assert_eq!(step1, expected, "decade direction mismatch");
+        let n = chart.bureau().number();
+        assert_eq!(chart.decade_steps()[0].age_start, n);
+        assert_eq!(chart.decade_steps()[0].age_end, n + 9);
+        // 大限干 = 该支本命宫干
+        for step in chart.decade_steps() {
+            assert_eq!(step.stem, chart.palace_at(step.ming_branch).stem);
+        }
+    }
+
+    /// 生年四化与来因在视图切换下不变；overlay 不覆盖生年。
+    fn assert_year_hua_stable_under_views(chart: &Ziwei) {
+        let year = chart.year_transformations();
+        let laiyin = chart.laiyin_branch();
+        assert_eq!(year.len(), 4);
+        assert_eq!(laiyin, chart.birth_stem().laiyin_branch());
+        for xf in year {
+            assert_eq!(xf.branch, chart.branch_of_star(xf.star));
+        }
+
+        let decade_view = ZiweiView::Decade { step: 0 };
+        let annual_view = ZiweiView::Annual {
+            year: chart.birth_year(),
+        };
+        assert_eq!(chart.year_transformations(), year);
+        assert_eq!(chart.laiyin_branch(), laiyin);
+        let decade_overlay = chart.overlay_transformations(decade_view).unwrap();
+        let annual_overlay = chart.overlay_transformations(annual_view).unwrap();
+        assert_eq!(decade_overlay.len(), 4);
+        assert_eq!(annual_overlay.len(), 4);
+        // overlay 是层四化，不是替换生年
+        assert_eq!(chart.year_transformations(), year);
+        assert!(chart.overlay_transformations(ZiweiView::Natal).is_none());
     }
 
     #[test]
@@ -526,12 +627,41 @@ mod tests {
     fn assistants_january_and_zi_hour() {
         let chart = Ziwei::from_input(
             ZiweiInput::try_new(Gender::Yang, Stem::Jia, Branch::Zi, 0, 1, 0).unwrap(),
-        )
-        .unwrap();
+        );
         assert_eq!(chart.branch_of_star(Star::ZuoFu), Branch::Chen);
         assert_eq!(chart.branch_of_star(Star::YouBi), Branch::Xu);
         assert_eq!(chart.branch_of_star(Star::WenQu), Branch::Chen);
         assert_eq!(chart.branch_of_star(Star::WenChang), Branch::Xu);
+    }
+
+    /// 十天干 × 阴阳性别：大限顺逆与「同性顺、异性逆」一致。
+    #[test]
+    fn decade_direction_all_stems_and_genders() {
+        for stem in [
+            Stem::Jia,
+            Stem::Yi,
+            Stem::Bing,
+            Stem::Ding,
+            Stem::Wu,
+            Stem::Ji,
+            Stem::Geng,
+            Stem::Xin,
+            Stem::Ren,
+            Stem::Gui,
+        ] {
+            let branch = Branch::from_index(stem.index() as u8 % 2);
+            for gender in [Gender::Yang, Gender::Yin] {
+                let chart =
+                    Ziwei::from_input(ZiweiInput::try_new(gender, stem, branch, 0, 1, 0).unwrap());
+                let stem_yang = matches!(
+                    stem,
+                    Stem::Jia | Stem::Bing | Stem::Wu | Stem::Geng | Stem::Ren
+                );
+                let gender_yang = matches!(gender, Gender::Yang);
+                let forward = stem_yang == gender_yang;
+                assert_decade_direction(&chart, forward);
+            }
+        }
     }
 
     #[test]
@@ -669,18 +799,25 @@ mod tests {
         let natal_ming = chart
             .branch_of_role(PalaceRole::Ming, ZiweiView::Natal)
             .unwrap();
-        let from_role: Vec<_> = chart
+        let from_role = chart
             .flies_from_role(PalaceRole::Ming, ZiweiView::Natal)
-            .collect();
-        let from_branch: Vec<_> = chart.flies_from_branch(natal_ming).collect();
+            .expect("本命命宫应有飞边");
+        let from_branch = chart.flies_from_branch(natal_ming);
         assert_eq!(from_role, from_branch);
         assert_eq!(from_role.len(), 4);
-        assert_eq!(
+        assert!(
             chart
                 .flies_from_role(PalaceRole::Ming, ZiweiView::Decade { step: 99 })
-                .count(),
-            0
+                .is_none()
         );
+
+        // 布局：每支四条，源支与 Branch::index 对齐
+        for branch_index in 0..12usize {
+            let branch = Branch::from_index(branch_index as u8);
+            let chunk = chart.flies_from_branch(branch);
+            assert!(chunk.iter().all(|f| f.source_branch == branch));
+            assert_eq!(chunk.map(|f| f.transformation), Transformation::ALL);
+        }
 
         let _ = flies
             .iter()
@@ -705,8 +842,7 @@ mod tests {
                 birth.hour,
             )
             .unwrap(),
-        )
-        .unwrap();
+        );
 
         for b in 0..12u8 {
             let branch = Branch::from_index(b);
@@ -762,5 +898,129 @@ mod tests {
         assert_eq!(Transformation::QUAN, Transformation::B);
         assert_eq!(Transformation::KE, Transformation::C);
         assert_eq!(Transformation::JI, Transformation::D);
+    }
+
+    /// 十二×十二：命身口诀与辅佐落宫穷举（对照 placement 公式）。
+    #[test]
+    fn ming_shen_and_assistants_all_month_hour() {
+        for month in 0..12u8 {
+            for hour in 0..12u8 {
+                let chart = Ziwei::from_input(
+                    ZiweiInput::try_new(Gender::Yang, Stem::Jia, Branch::Zi, month, 1, hour)
+                        .unwrap(),
+                );
+                let ming = branch_from_yin0(twelve_index(i32::from(month) - i32::from(hour)));
+                let shen = branch_from_yin0(twelve_index(i32::from(month) + i32::from(hour)));
+                assert_eq!(
+                    chart.branch_of_role(PalaceRole::Ming, ZiweiView::Natal),
+                    Some(ming),
+                    "m={month} h={hour}"
+                );
+                assert_eq!(chart.shen_branch(), shen, "m={month} h={hour}");
+                assert_eq!(
+                    chart.branch_of_star(Star::ZuoFu),
+                    branch_from_yin0(twelve_index(2 + i32::from(month)))
+                );
+                assert_eq!(
+                    chart.branch_of_star(Star::YouBi),
+                    branch_from_yin0(twelve_index(8 - i32::from(month)))
+                );
+                assert_eq!(
+                    chart.branch_of_star(Star::WenChang),
+                    branch_from_yin0(twelve_index(8 - i32::from(hour)))
+                );
+                assert_eq!(
+                    chart.branch_of_star(Star::WenQu),
+                    branch_from_yin0(twelve_index(2 + i32::from(hour)))
+                );
+            }
+        }
+    }
+
+    /// 日只影响正曜；宫职/身/局/辅佐/宫干飞源支结构与日无关。
+    #[test]
+    fn day_only_moves_major_stars_not_palaces() {
+        let mk = |day: u8| {
+            Ziwei::from_input(
+                ZiweiInput::try_new(Gender::Yang, Stem::Jia, Branch::Zi, 2, day, 4).unwrap(),
+            )
+        };
+        let base = mk(1);
+        for day in 2..=30u8 {
+            let chart = mk(day);
+            for b in 0..12u8 {
+                let branch = Branch::from_index(b);
+                assert_eq!(chart.palace_at(branch), base.palace_at(branch));
+            }
+            assert_eq!(chart.shen_branch(), base.shen_branch());
+            assert_eq!(chart.bureau(), base.bureau());
+            assert_eq!(
+                chart.branch_of_star(Star::ZuoFu),
+                base.branch_of_star(Star::ZuoFu)
+            );
+            // 飞边源支布局固定；被化目标可能随正曜移动
+            for b in 0..12u8 {
+                let branch = Branch::from_index(b);
+                let a = chart.flies_from_branch(branch);
+                let c = base.flies_from_branch(branch);
+                assert_eq!(a.map(|f| f.source_branch), c.map(|f| f.source_branch));
+                assert_eq!(a.map(|f| f.transformation), c.map(|f| f.transformation));
+                assert_eq!(a.map(|f| f.star), c.map(|f| f.star));
+            }
+            // 至少某一天紫微相对初一会变化（否则日参与公式失效）
+            if day == 15 {
+                // 不强制异于 day1（视局而定），只保证十八星各落一宫
+                assert_eq!(Star::ALL.len(), 18);
+                for star in Star::ALL {
+                    let _ = chart.branch_of_star(star);
+                }
+            }
+        }
+        // 同盘不同日：紫微系应能取到合法支
+        assert_ne!(
+            mk(1).branch_of_star(Star::ZiWei),
+            mk(27).branch_of_star(Star::ZiWei)
+        );
+    }
+
+    /// 经典三月辰时（大纪元/口诀系）：命子身申 + 甲子年干来因戌。
+    #[test]
+    fn classic_march_chen_hour_full_chart_invariants() {
+        let chart = Ziwei::from_birth(sample_birth_march_chen()).unwrap();
+        assert_eq!(
+            chart.branch_of_role(PalaceRole::Ming, ZiweiView::Natal),
+            Some(Branch::Zi)
+        );
+        assert_eq!(chart.shen_branch(), Branch::Shen);
+        assert_eq!(chart.birth_stem(), Stem::Jia);
+        assert_eq!(chart.laiyin_branch(), Branch::Xu);
+        assert_eq!(chart.gender(), Gender::Yang);
+        assert_eq!(chart.birth_year(), 1984);
+
+        // 十二职逆布、飞边、大限起运
+        for role in PalaceRole::ALL {
+            let b = chart.branch_of_role(role, ZiweiView::Natal).unwrap();
+            assert_eq!(chart.palace_at(b).role, role);
+        }
+        assert_flies_layout(&chart);
+        assert_decade_direction(&chart, true);
+        assert_year_hua_stable_under_views(&chart);
+
+        // 流年太岁命与大限 overlay 可叠加查询
+        let annual = ZiweiView::Annual { year: 1996 };
+        assert_eq!(
+            chart.branch_of_role(PalaceRole::Ming, annual),
+            Some(branch_from_year(1996))
+        );
+        assert!(chart.overlay_transformations(annual).is_some());
+    }
+
+    #[test]
+    fn birth_try_new_feeds_from_birth() {
+        let birth = ZiweiBirth::try_new(Gender::Yin, 1990, 5, 15, 8).unwrap();
+        let chart = Ziwei::from_birth(birth).unwrap();
+        assert_eq!(chart.gender(), Gender::Yin);
+        assert_eq!(chart.birth_year(), 1990);
+        assert_eq!(chart.birth_stem(), stem_from_year(1990));
     }
 }

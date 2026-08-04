@@ -51,6 +51,12 @@ impl ZiweiFly {
 }
 
 /// 十二宫干 × 四化 → 恰好 48 条 [`ZiweiFly`]。
+///
+/// # 布局不变量
+///
+/// 下标 `branch.index() * 4 + transformation.index()`：
+/// 先按 [`Branch::index`]（子=0）升序，再按 [`Transformation::ALL`]（禄权科忌）。
+/// [`crate::Ziwei::flies_from_branch`] 依赖此布局做 O(1) 切片。
 pub(crate) fn build_palace_flies(
     palaces: &Palaces,
     star_branches: &[Branch; 18],

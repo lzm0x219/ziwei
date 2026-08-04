@@ -402,29 +402,28 @@
       </div>
       <p class="callout"><strong>要点：</strong>排盘算法只在一处；<code class="inline">from_birth</code> 保留真实农历年给 <code class="inline">years_in_decade</code>；纯 <code class="inline">from_input</code> 用六十甲子代表年。</p>
 
-      <h3>2.2 构造管线（分波 · 逻辑并行）</h3>
-      <p class="callout" style="margin-bottom:14px"><strong>收紧后的 DAG（<code class="inline">pipeline</code>）。</strong>
-        局可在布满十二职<strong>之前</strong>用「命支+该支宫干」算出，从而 <strong>拼宫 ∥ 正曜</strong>。
-        默认顺序求值；feature <code class="inline">parallel</code> 对 Wave1 / 拼宫∥正曜 / 飞∥大限 使用 <code class="inline">rayon::join</code>。</p>
+      <h3>2.2 构造管线（分波 · 顺序求值）</h3>
+      <p class="callout" style="margin-bottom:14px"><strong>依赖 DAG（<code class="inline">pipeline</code>）。</strong>
+        局可在布满十二职<strong>之前</strong>用「命支+该支宫干」算出。
+        单盘一律顺序求值；批量排盘在<strong>盘级</strong>并行多个 <code class="inline">from_birth</code> / <code class="inline">from_input</code>。</p>
       <div class="flow">
-        <div class="step"><strong>W1∥</strong>命身 · 宫干 · 辅佐</div>
+        <div class="step"><strong>W1</strong>命身 · 宫干 · 辅佐</div>
         <span class="chev">→</span>
         <div class="step"><strong>W2a</strong>早算局</div>
         <span class="chev">→</span>
-        <div class="step"><strong>W2b∥3a</strong>拼宫 · 正曜</div>
+        <div class="step"><strong>W2b/3a</strong>拼宫 · 正曜</div>
         <span class="chev">→</span>
         <div class="step"><strong>W3b</strong>⊔辅佐</div>
         <span class="chev">→</span>
-        <div class="step"><strong>W4∥</strong>飞 · 大限</div>
+        <div class="step"><strong>W4</strong>飞 · 大限</div>
       </div>
       <div class="card" style="margin-top:12px">
         <h4>依赖要点</h4>
         <ul>
           <li>宫干只靠年干；辅佐只靠月时</li>
           <li>局 = f(命支, 命宫干)，不依赖十二职表</li>
-          <li>正曜只依赖日+局，可与拼宫并行</li>
-          <li>飞边与大限互不依赖</li>
-          <li>Cargo：<code class="inline">ziwei = { features = ["parallel"] }</code></li>
+          <li>正曜只依赖日+局；飞边与大限互不依赖</li>
+          <li>无盘内 <code class="inline">parallel</code> feature（YAGNI）</li>
         </ul>
       </div>
 
@@ -465,13 +464,15 @@ ziwei = { path = "crates/ziwei" }
     Branch, Gender, PalaceRole, Ziwei, ZiweiBirth, ZiweiView,
 };
 
-let chart = Ziwei::from_birth(ZiweiBirth {
-    gender: Gender::Yang, // 阳/男；阴 = Yin
-    year: 1984,           // 农历年序号
-    month: 2,             // 正月=0 → 三月=2
-    day: 1,               // 初一=1
-    hour: 4,              // 子时=0 → 辰时=4
-})?;
+// 推荐 try_new；字面量亦可（from_birth 仍会校验月日时）
+let birth = ZiweiBirth::try_new(
+    Gender::Yang, // 阳/男；阴 = Yin
+    1984,         // 农历年序号
+    2,            // 正月=0 → 三月=2
+    1,            // 初一=1
+    4,            // 子时=0 → 辰时=4
+)?;
+let chart = Ziwei::from_birth(birth)?;
 
 // 三月辰时：命在子、身在申
 assert_eq!(
@@ -513,19 +514,23 @@ let input = ZiweiInput::try_new(
     1,  // 日
     4,  // 时
 )?;
-let chart = Ziwei::from_input(input)?;
+let chart = Ziwei::from_input(input); // 已校验类型 → 直接 Ziwei
 // birth_year() 为甲子代表年（如 4），非历史公历/农历序号
 // 宫盘与同柱 from_birth 一致；years_in_decade 绝对年可能不同</code></pre>
 
       <h3>3.4 错误处理</h3>
 <pre><code>use ziwei::ZiweiInputError;
 
-match Ziwei::from_birth(birth) {
-    Ok(chart) =&gt; { /* ... */ }
+// 边界错误只出在 try_new / from_birth；from_input 不再返回 Result
+match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
+    Ok(input) =&gt; {
+        let chart = Ziwei::from_input(input);
+        let _ = chart;
+    }
     Err(ZiweiInputError::MonthOutOfRange { value }) =&gt; { /* 0..=11 */ }
     Err(ZiweiInputError::DayOutOfRange { value }) =&gt; { /* 1..=30 */ }
     Err(ZiweiInputError::HourOutOfRange { value }) =&gt; { /* 0..=11 */ }
-    Err(ZiweiInputError::InvalidYearPillar { .. }) =&gt; { /* 仅 from_input 路径 */ }
+    Err(ZiweiInputError::InvalidYearPillar { .. }) =&gt; { /* 干支阴阳不配 */ }
 }</code></pre>
     </section>
 
@@ -543,8 +548,12 @@ match Ziwei::from_birth(birth) {
             <td>年序号→干支→委托实现；保留真实 <code class="inline">birth_year</code></td>
           </tr>
           <tr>
-            <td class="sig">Ziwei::from_input(ZiweiInput) → Result&lt;Ziwei, ZiweiInputError&gt;</td>
-            <td>排盘实现主体；代表年作时间线锚</td>
+            <td class="sig">Ziwei::from_input(ZiweiInput) → Ziwei</td>
+            <td>排盘实现主体；入参已校验，代表年作时间线锚</td>
+          </tr>
+          <tr>
+            <td class="sig">ZiweiBirth::try_new(gender, year, month, day, hour)</td>
+            <td>校验月日时；年任意取模</td>
           </tr>
           <tr>
             <td class="sig">ZiweiInput::try_new(gender, stem, branch, month, day, hour)</td>
@@ -581,18 +590,19 @@ match Ziwei::from_birth(birth) {
           <tr><td class="sig">branch_of_role(role, view) → Option&lt;Branch&gt;</td><td>视图下宫职→支</td></tr>
           <tr><td class="sig">palace_for_role(role, view) → Option&lt;&amp;Palace&gt;</td><td>视图下取本命宫对象</td></tr>
           <tr><td class="sig">overlay_transformations(view) → Option&lt;[…;4]&gt;</td><td>Natal=None；大限/流年层四化</td></tr>
-          <tr><td class="sig">with_view(view) → ZiweiHandle</td><td>薄句柄，绑死当前 view</td></tr>
         </tbody>
       </table>
+      <p class="note">v1 不提供 <code class="inline">with_view</code> / <code class="inline">ZiweiHandle</code>：视图参数一律显式传入。</p>
 
       <h3>4.4 飞宫</h3>
       <table>
         <thead><tr><th>API</th><th>说明</th></tr></thead>
         <tbody>
-          <tr><td class="sig">palace_flies() → &amp;[ZiweiFly; 48]</td><td>全量宫干飞边</td></tr>
-          <tr><td class="sig">flies_from_branch(Branch)</td><td>自某支飞出</td></tr>
-          <tr><td class="sig">flies_from_role(role, view)</td><td>视图职→支后再滤边；越界空</td></tr>
+          <tr><td class="sig">palace_flies() → &amp;[ZiweiFly; 48]</td><td>全量宫干飞边（支序×四化）</td></tr>
+          <tr><td class="sig">flies_from_branch(Branch) → &amp;[ZiweiFly; 4]</td><td>O(1) 切片</td></tr>
+          <tr><td class="sig">flies_from_role(role, view) → Option&lt;&amp;[ZiweiFly; 4]&gt;</td><td>视图职→支再切片；step 越界 None</td></tr>
           <tr><td class="sig">ZiweiFly::self_transformation()</td><td>Out / In / None</td></tr>
+          <tr><td class="sig">Star::ALL / PalaceRole::ALL</td><td>绑定层遍历全集</td></tr>
         </tbody>
       </table>
 
@@ -604,16 +614,15 @@ match Ziwei::from_birth(birth) {
           <tr><td><code class="inline">ZiweiInput</code></td><td>原始量；仅 try_new</td></tr>
           <tr><td><code class="inline">Gender</code></td><td>Yin / Yang</td></tr>
           <tr><td><code class="inline">Branch</code> / <code class="inline">Stem</code></td><td>地支、天干；index 子=0 / 甲=0</td></tr>
-          <tr><td><code class="inline">Palace</code> / <code class="inline">PalaceRole</code></td><td>宫对象与十二职</td></tr>
-          <tr><td><code class="inline">Star</code> / <code class="inline">StarLabel</code></td><td>十八主星与标签</td></tr>
-          <tr><td><code class="inline">Transformation</code></td><td>A–D 与别名 LU/QUAN/KE/JI</td></tr>
+          <tr><td><code class="inline">Palace</code> / <code class="inline">PalaceRole</code></td><td>宫对象与十二职；PalaceRole::ALL</td></tr>
+          <tr><td><code class="inline">Star</code> / <code class="inline">StarLabel</code></td><td>十八主星与标签；Star::ALL</td></tr>
+          <tr><td><code class="inline">Transformation</code></td><td>A–D 与别名 LU/QUAN/KE/JI；ALL</td></tr>
           <tr><td><code class="inline">FiveElementBureau</code></td><td>水二…火六；number()</td></tr>
           <tr><td><code class="inline">ZiweiView</code></td><td>Natal | Decade{step} | Annual{year}</td></tr>
           <tr><td><code class="inline">DecadeStep</code> / <code class="inline">DecadeYear</code></td><td>大限步、限内流年</td></tr>
           <tr><td><code class="inline">LayerTransformation</code></td><td>四化+星+落宫</td></tr>
           <tr><td><code class="inline">ZiweiFly</code> / <code class="inline">SelfTransformation</code></td><td>飞边与自化</td></tr>
           <tr><td><code class="inline">ZiweiInputError</code></td><td>月/日/时/干支对错误</td></tr>
-          <tr><td><code class="inline">ZiweiHandle</code></td><td>with_view 包装</td></tr>
         </tbody>
       </table>
 

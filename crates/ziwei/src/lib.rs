@@ -5,8 +5,8 @@
 //!
 //! ## 构造入口
 //!
-//! - [`Ziwei::from_input`]：实现主体（原始量）。
-//! - [`Ziwei::from_birth`]：年序号 → 年柱 → 委托 `from_input` 路径，并保留真实年。
+//! - [`Ziwei::from_input`]：实现主体（已校验原始量 → `Ziwei`）。
+//! - [`Ziwei::from_birth`]：年序号 → 年柱 → 委托实现，并保留真实年（`Result` 仅此路径）。
 //!
 //! ## 模块结构
 //!
@@ -62,4 +62,4 @@ pub use star::{Star, StarLabel};
 pub use stem::Stem;
 pub use transformation::Transformation;
 pub use view::{DecadeStep, DecadeYear, LayerTransformation, ZiweiView};
-pub use ziwei::{Ziwei, ZiweiHandle};
+pub use ziwei::Ziwei;

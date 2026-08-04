@@ -1,9 +1,9 @@
-//! 命盘构造编排：分波预计算 → 可并行求值 → 拼装。
+//! 命盘构造编排：按依赖波次顺序求值并拼装。
 //!
-//! # 依赖图（收紧后）
+//! # 依赖图
 //!
 //! ```text
-//! Wave1 ∥  命身(m,h)  ·  十二宫干(年干)  ·  辅佐(m,h)
+//! Wave1    命身(m,h)  ·  十二宫干(年干)  ·  辅佐(m,h)
 //!            │                │
 //!            └──────┬─────────┘
 //!                   ▼
@@ -11,7 +11,7 @@
 //!            │
 //!     ┌──────┴──────┐
 //!     ▼             ▼
-//! Wave2b∥3  拼装十二宫职    十四正曜(day,局)
+//! Wave2b/3   拼装十二宫职    十四正曜(day,局)
 //!     │             │
 //!     └──────┬──────┘
 //!            ▼
@@ -19,25 +19,23 @@
 //!            │
 //!     ┌──────┴──────┐
 //!     ▼             ▼
-//! Wave4 ∥    宫干飞边      大限序列
+//! Wave4      宫干飞边      大限序列
 //!     └──────┬──────┘
 //!            ▼
 //!         ChartParts → Ziwei
 //! ```
 //!
-//! 默认顺序求值。启用 crate feature `parallel` 时，在 Wave1 三路、Wave2b∥3、Wave4
-//! 使用 `rayon::join`（适合批量排盘；单盘可能更慢）。
+//! 单盘计算量极小，一律顺序求值。批量排盘请在**盘级**并行（对多个
+//! `from_birth` / `from_input` 调用做并行），勿在盘内微并行。
 
 use super::{
     branch::Branch,
     decade::build_decade_steps,
     fly::{ZiweiFly, build_palace_flies},
     input::{Gender, ZiweiInput},
-    palaces::Palaces,
     placement::{
-        AssistantStars, MingShen, NatalLayout, assemble_palaces, bureau_from_ming_stems,
-        compute_ming_shen, compute_palace_stems, merge_assistants, place_assistants,
-        place_major_stars,
+        NatalLayout, assemble_palaces, bureau_from_ming_stems, compute_ming_shen,
+        compute_palace_stems, merge_assistants, place_assistants, place_major_stars,
     },
     stem::Stem,
     view::DecadeStep,
@@ -70,15 +68,18 @@ pub(crate) fn build_chart_parts(input: ZiweiInput, birth_year: i32) -> ChartPart
     let day = input.day();
     let hour = input.hour();
 
-    // —— Wave 1：三路独立 ——
-    let (ming_shen, palace_stems, assistants) = wave1(birth_stem, month, hour);
+    // —— Wave 1：三路独立（顺序求值）——
+    let ming_shen = compute_ming_shen(month, hour);
+    let palace_stems = compute_palace_stems(birth_stem);
+    let assistants = place_assistants(month, hour);
 
     // —— Wave 2a：局只依赖命支 + 命宫干 ——
     let bureau = bureau_from_ming_stems(ming_shen.ming, &palace_stems);
     let bureau_n = bureau.number();
 
-    // —— Wave 2b ∥ Wave 3a：拼宫与正曜 ——
-    let (palaces, majors) = wave2b_and_majors(ming_shen, &palace_stems, day, bureau_n);
+    // —— Wave 2b / 3a：拼宫与正曜 ——
+    let palaces = assemble_palaces(ming_shen, &palace_stems);
+    let majors = place_major_stars(day, bureau_n);
 
     let layout = NatalLayout {
         palaces,
@@ -87,17 +88,17 @@ pub(crate) fn build_chart_parts(input: ZiweiInput, birth_year: i32) -> ChartPart
         bureau,
     };
 
-    // —— Wave 3b：合并辅佐（廉价） ——
+    // —— Wave 3b：合并辅佐 ——
     let star_branches = merge_assistants(majors, assistants);
 
-    // —— Wave 4：飞边 ∥ 大限 ——
-    let (flies, decade_steps) = wave4_flies_and_decade(
+    // —— Wave 4：飞边与大限 ——
+    let flies = build_palace_flies(&layout.palaces, &star_branches);
+    let decade_steps = build_decade_steps(
         gender,
         birth_stem,
         layout.ming_branch,
         bureau_n,
         &layout.palaces,
-        &star_branches,
     );
 
     ChartParts {
@@ -108,78 +109,5 @@ pub(crate) fn build_chart_parts(input: ZiweiInput, birth_year: i32) -> ChartPart
         birth_stem,
         gender,
         birth_year,
-    }
-}
-
-/// Wave1：命身 / 宫干 / 辅佐。
-fn wave1(birth_stem: Stem, month: u8, hour: u8) -> (MingShen, [Stem; 12], AssistantStars) {
-    #[cfg(feature = "parallel")]
-    {
-        let ((ming_shen, palace_stems), assistants) = rayon::join(
-            || {
-                rayon::join(
-                    || compute_ming_shen(month, hour),
-                    || compute_palace_stems(birth_stem),
-                )
-            },
-            || place_assistants(month, hour),
-        );
-        (ming_shen, palace_stems, assistants)
-    }
-    #[cfg(not(feature = "parallel"))]
-    {
-        (
-            compute_ming_shen(month, hour),
-            compute_palace_stems(birth_stem),
-            place_assistants(month, hour),
-        )
-    }
-}
-
-/// Wave2b ∥ 3a：十二宫职拼装与十四正曜。
-fn wave2b_and_majors(
-    ming_shen: MingShen,
-    palace_stems: &[Stem; 12],
-    day: u8,
-    bureau_n: u8,
-) -> (Palaces, [Branch; 18]) {
-    #[cfg(feature = "parallel")]
-    {
-        rayon::join(
-            || assemble_palaces(ming_shen, palace_stems),
-            || place_major_stars(day, bureau_n),
-        )
-    }
-    #[cfg(not(feature = "parallel"))]
-    {
-        (
-            assemble_palaces(ming_shen, palace_stems),
-            place_major_stars(day, bureau_n),
-        )
-    }
-}
-
-/// Wave4：飞边 ∥ 大限。
-fn wave4_flies_and_decade(
-    gender: Gender,
-    birth_stem: Stem,
-    ming_branch: Branch,
-    bureau_n: u8,
-    palaces: &Palaces,
-    star_branches: &[Branch; 18],
-) -> ([ZiweiFly; 48], [DecadeStep; 12]) {
-    #[cfg(feature = "parallel")]
-    {
-        rayon::join(
-            || build_palace_flies(palaces, star_branches),
-            || build_decade_steps(gender, birth_stem, ming_branch, bureau_n, palaces),
-        )
-    }
-    #[cfg(not(feature = "parallel"))]
-    {
-        (
-            build_palace_flies(palaces, star_branches),
-            build_decade_steps(gender, birth_stem, ming_branch, bureau_n, palaces),
-        )
     }
 }

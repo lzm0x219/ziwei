@@ -29,6 +29,9 @@ impl Gender {
 /// 供 `from_birth` 使用的农历出生资料（打平字段，无嵌套日期对象）。
 ///
 /// 月以正月为 0，时辰以子时为 0，日以初一为 1；历法换算与闰月/晚子时由调用方消解。
+///
+/// 字段保持公开便于字面量与绑定层映射；**优先**用 [`Self::try_new`] 在边界完成校验。
+/// [`crate::Ziwei::from_birth`] 仍会再次校验月/日/时（字面量直构非法值时失败）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ZiweiBirth {
     /// 命主的性别。
@@ -41,6 +44,32 @@ pub struct ZiweiBirth {
     pub day: u8,
     /// 时辰，`0..=11`，子时 = 0。
     pub hour: u8,
+}
+
+impl ZiweiBirth {
+    /// 创建月/日/时已校验的农历出生资料。
+    ///
+    /// `year` 任意 `i32` 皆可（年干支由公式取模，无越界错误）。
+    ///
+    /// # Errors
+    ///
+    /// 月不在 `0..=11`、日不在 `1..=30`、时不在 `0..=11` 时返回 [`ZiweiInputError`]。
+    pub fn try_new(
+        gender: Gender,
+        year: i32,
+        month: u8,
+        day: u8,
+        hour: u8,
+    ) -> Result<Self, ZiweiInputError> {
+        validate_month_day_hour(month, day, hour)?;
+        Ok(Self {
+            gender,
+            year,
+            month,
+            day,
+            hour,
+        })
+    }
 }
 
 /// `from_input` 的原始量捷径：性别、年干支、月/日/时。
@@ -240,19 +269,31 @@ mod tests {
 
     #[test]
     fn ziwei_birth_holds_flat_lunar_fields() {
-        let birth = ZiweiBirth {
-            gender: Gender::Yang,
-            year: 2024,
-            month: 0,
-            day: 1,
-            hour: 0,
-        };
+        let birth = ZiweiBirth::try_new(Gender::Yang, 2024, 0, 1, 0).expect("合法出生");
 
         assert_eq!(birth.gender, Gender::Yang);
         assert_eq!(birth.year, 2024);
         assert_eq!(birth.month, 0);
         assert_eq!(birth.day, 1);
         assert_eq!(birth.hour, 0);
+    }
+
+    #[test]
+    fn birth_try_new_rejects_out_of_range_fields() {
+        assert_eq!(
+            ZiweiBirth::try_new(Gender::Yang, 2000, 12, 1, 0),
+            Err(ZiweiInputError::MonthOutOfRange { value: 12 })
+        );
+        assert_eq!(
+            ZiweiBirth::try_new(Gender::Yang, 2000, 0, 0, 0),
+            Err(ZiweiInputError::DayOutOfRange { value: 0 })
+        );
+        assert_eq!(
+            ZiweiBirth::try_new(Gender::Yang, 2000, 0, 1, 12),
+            Err(ZiweiInputError::HourOutOfRange { value: 12 })
+        );
+        // 年序号任意取模，不报错
+        assert!(ZiweiBirth::try_new(Gender::Yin, -100, 0, 1, 0).is_ok());
     }
 
     #[test]

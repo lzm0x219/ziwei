@@ -56,8 +56,10 @@ pub struct StarLabel {
 }
 
 impl Star {
-    /// 十八星全集，顺序与 [`Self::index`] 一致，供 `stars_at` 遍历。
-    pub(crate) const ALL: [Self; 18] = [
+    /// 十八星全集，顺序与内部落宫数组下标一致（紫微系→天府系→辅佐）。
+    ///
+    /// 绑定层与遍历 API 应使用本常量，勿依赖枚举变体的声明顺序。
+    pub const ALL: [Self; 18] = [
         Self::ZiWei,
         Self::TianJi,
         Self::TaiYang,
