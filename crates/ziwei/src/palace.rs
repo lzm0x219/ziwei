@@ -1,6 +1,6 @@
 //! 宫位领域类型：十二宫职与宫对象。
 //!
-//! 本命宫职由命宫起**逆布**（命→兄→夫→…→父）。`Palace.role` 始终是本命宫职；
+//! 本命宫职由命宫起**逆布**（命→兄→夫→…→父）。[`Palace::role`] 始终是本命宫职；
 //! 大限/流年宫职只通过带 [`crate::ZiweiView`] 的查询得到，不改写本字段。
 
 use super::{branch::Branch, stem::Stem};
@@ -222,14 +222,39 @@ impl PalaceRole {
 /// 命盘中的一个宫：本命宫职 + 地支 + 宫干（五虎遁）。
 ///
 /// 星曜不存在本结构上，而通过 [`crate::Ziwei::stars_at`] 按支查询。
+///
+/// 字段私有：宫职、宫支、宫干由安宫/五虎遁共同决定，外部不可伪造组合。
+/// 只读访问见 [`Self::role`] / [`Self::branch`] / [`Self::stem`]。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Palace {
     /// 本命宫职（视图切换不改此字段）。
-    pub role: PalaceRole,
+    role: PalaceRole,
     /// 宫支。
-    pub branch: Branch,
+    branch: Branch,
     /// 宫干（本命固定；飞宫与大限干均据此）。
-    pub stem: Stem,
+    stem: Stem,
+}
+
+impl Palace {
+    /// 由引擎管线装配一宫（外部不可调用）。
+    pub(crate) const fn new(role: PalaceRole, branch: Branch, stem: Stem) -> Self {
+        Self { role, branch, stem }
+    }
+
+    /// 本命宫职（视图切换不改）。
+    pub const fn role(self) -> PalaceRole {
+        self.role
+    }
+
+    /// 宫支。
+    pub const fn branch(self) -> Branch {
+        self.branch
+    }
+
+    /// 宫干（本命固定；飞宫与大限干均据此）。
+    pub const fn stem(self) -> Stem {
+        self.stem
+    }
 }
 
 #[cfg(test)]
@@ -239,15 +264,11 @@ mod tests {
 
     #[test]
     fn palace_contains_role_branch_and_stem() {
-        let palace = Palace {
-            role: PalaceRole::Ming,
-            branch: Branch::Zi,
-            stem: Stem::Jia,
-        };
+        let palace = Palace::new(PalaceRole::Ming, Branch::Zi, Stem::Jia);
 
-        assert_eq!(palace.role, PalaceRole::Ming);
-        assert_eq!(palace.branch, Branch::Zi);
-        assert_eq!(palace.stem, Stem::Jia);
+        assert_eq!(palace.role(), PalaceRole::Ming);
+        assert_eq!(palace.branch(), Branch::Zi);
+        assert_eq!(palace.stem(), Stem::Jia);
     }
 
     #[test]

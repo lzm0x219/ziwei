@@ -51,7 +51,7 @@ These are **secondary** but carry the full 起例口诀 chain used by modern man
 | -------------------------------------------- | --------------------------------------------------------------------- |
 | `Star` in `crates/ziwei/src/star.rs`         | v1 eighteen-star catalog                                              |
 | `PalaceRole` in `crates/ziwei/src/palace.rs` | 十二宫职 order & labels（交友 = 仆役别名）                            |
-| `Palace { role, branch, stem }`              | 宫职 + 宫支 + 宫干 fields                                             |
+| `Palace` (`role()` / `branch()` / `stem()`)  | 宫职 + 宫支 + 宫干只读结果                                            |
 | `ZiweiInput` in `crates/ziwei/src/input.rs`  | Preprocessed path: gender, 年干支, 月位, 时位, **命宫位**, **紫微位** |
 | `FiveElementBureau::from_ming_palace`        | 命宫干支 → 五行局（纳音局数表）                                       |
 | `Stem::transformation_star`                  | 生年干四化表（与 §7 冲突注记对照）                                    |
@@ -172,7 +172,7 @@ Naming alias: classical 奴仆/仆役 = repo `JiaoYou`（交友）; 官禄 aka �
 
 Wikipedia alternate wording「年干数×2+1 为寅宫干」与五虎遁 **结果一致**（在甲=1…癸=10 编号下）。
 
-**Repo:** `Palace.stem` is exactly this 宫干; it is the base for later 自化（map #242）and for 命宫五行局.
+**Repo:** `Palace::stem()` is exactly this 宫干; it is the base for later 自化（map #242）and for 命宫五行局.
 
 ### Step D — 定命宫五行局
 
@@ -354,7 +354,7 @@ Course history: user defined precomputed path as「命盘各宫位置、紫微�
 | **命宫**                | **Must compute** (Step A)               | Currently **inject**         | Prefer always compute when \(m,h\) present; if inject, **validate** equals \((m-h)\bmod 12\)                                                               |
 | **身宫**                | **Must compute**                        | Missing                      | Always compute; do not inject                                                                                                                              |
 | **十二宫职**            | **Must compute** from 命                | Always derive                | Always compute; never inject full role map as source of truth                                                                                              |
-| **十二宫干**            | **Must compute** (五虎遁)               | Derive from `birth_stem`     | Always compute; `Palace.stem` is output                                                                                                                    |
+| **十二宫干**            | **Must compute** (五虎遁)               | Derive from `birth_stem`     | Always compute; `Palace::stem()` is output                                                                                                                 |
 | **五行局**              | **Must compute**                        | Derive via existing API      | Always compute; optional inject only if cross-checked                                                                                                      |
 | **农历日 \(d\)**        | Required for 紫微                       | **Missing today**            | `from_birth` must supply day; consider adding to input path if verification desired                                                                        |
 | **紫微**                | **Must compute** (needs \(d,n\))        | Currently **inject**         | `from_birth`: always compute. `from_input`: inject allowed for fixtures, but **prefer recompute** when day is available; otherwise document trust boundary |
@@ -415,8 +415,8 @@ Do **not** implement here; use as future property/fixture checklist:
 | Step       | Likely home (per course architecture notes) | Existing hooks                           |
 | ---------- | ------------------------------------------- | ---------------------------------------- |
 | A 命身     | `rules` natal palace                        | `ZiweiInput` month/hour; `twelve_index`  |
-| B 十二职   | `rules` → fill `Palace.role`                | `PalaceRole`                             |
-| C 宫干     | `rules` 五虎遁                              | `Stem`, `Palace.stem`                    |
+| B 十二职   | `rules` → fill `Palace::role()`             | `PalaceRole`                             |
+| C 宫干     | `rules` 五虎遁                              | `Stem`, `Palace::stem()`                 |
 | D 局       | already pure fn                             | `FiveElementBureau`                      |
 | E 紫微     | `rules`                                     | inject field today; need day for compute |
 | F–G 十四曜 | `rules` star placement                      | `Star`                                   |
