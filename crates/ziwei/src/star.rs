@@ -1,6 +1,11 @@
-//! 第一版十八星的身份与显示文本。
+//! 默认十八主星目录与显示文本。
+//!
+//! v1 集合：十四正曜（紫微系 + 天府系）+ 左辅、右弼、文昌、文曲。
+//! 落宫由排盘管线计算；本模块只定义身份、内部下标与中文标签。
 
 /// 第一版星曜集合中的一颗星。
+///
+/// 枚举变体顺序不必与 [`Self::index`] 相同；存放落宫数组时一律用 `index()`。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Star {
     /// 紫微。
@@ -51,6 +56,7 @@ pub struct StarLabel {
 }
 
 impl Star {
+    /// 十八星全集，顺序与 [`Self::index`] 一致，供 `stars_at` 遍历。
     pub(crate) const ALL: [Self; 18] = [
         Self::ZiWei,
         Self::TianJi,
@@ -72,6 +78,7 @@ impl Star {
         Self::WenQu,
     ];
 
+    /// 落宫数组下标 0..=17（与 [`Self::ALL`] 顺序一致）。
     pub(crate) const fn index(self) -> usize {
         match self {
             Self::ZiWei => 0,

@@ -1,6 +1,12 @@
 //! 四化象的身份与显示文本。
+//!
+//! 引擎内部与表下标使用 `A/B/C/D` 对应禄/权/科/忌；显示名由
+//! [`Transformation::simplified_chinese`] / [`Transformation::traditional_chinese`] 提供。
+//! 具体「某干化哪颗星」见 [`crate::Stem::transformation_star`]。
 
 /// 紫微斗数中的一种四化象。
+///
+/// 变体字母与历史表下标对齐：`A=禄(0)、B=权(1)、C=科(2)、D=忌(3)`。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Transformation {
     /// A，显示为禄／祿。
@@ -14,7 +20,7 @@ pub enum Transformation {
 }
 
 impl Transformation {
-    /// 禄、权、科、忌（与表下标 0..=3 一致）。
+    /// 禄、权、科、忌（与表下标 0..=3 一致），便于 `map` 遍历四化。
     pub const ALL: [Self; 4] = [Self::A, Self::B, Self::C, Self::D];
 
     /// 返回简体中文的四化象文本。
@@ -37,6 +43,7 @@ impl Transformation {
         }
     }
 
+    /// 表下标：禄=0 … 忌=3。
     pub(crate) const fn index(self) -> usize {
         match self {
             Self::A => 0,
@@ -51,6 +58,7 @@ impl Transformation {
 mod tests {
     use super::*;
 
+    /// 锁定四化中英文标签与下标，防止显示与表映射错位。
     #[test]
     fn labels_match_the_confirmed_four_transformations() {
         let expected = [

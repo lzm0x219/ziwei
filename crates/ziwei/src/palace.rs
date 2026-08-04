@@ -1,8 +1,13 @@
-//! 宫位领域类型。
+//! 宫位领域类型：十二宫职与宫对象。
+//!
+//! 本命宫职由命宫起**逆布**（命→兄→夫→…→父）。`Palace.role` 始终是本命宫职；
+//! 大限/流年宫职只通过带 [`crate::ZiweiView`] 的查询得到，不改写本字段。
 
 use super::{branch::Branch, stem::Stem};
 
-/// 十二宫的宫职。
+/// 十二宫的宫职（自命起的经典顺序）。
+///
+/// 交友 = 古典仆役/奴仆别名；官禄亦称事业。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PalaceRole {
     /// 命宫。
@@ -31,18 +36,19 @@ pub enum PalaceRole {
     FuMu,
 }
 
-/// 一个宫职的显示文本。
+/// 一个宫职的显示文本（本命名 / 大限简称 / 流年简称）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PalaceRoleLabel {
-    /// 宫职名称。
+    /// 宫职名称（如「命宫」「兄弟」）。
     pub name: &'static str,
-    /// 十年显示简称。
+    /// 大限显示简称（如「大命」）。
     pub decade: &'static str,
-    /// 年份显示简称。
+    /// 流年显示简称（如「流命」）。
     pub yearly: &'static str,
 }
 
 impl PalaceRole {
+    /// 自命起十二职，顺序与 [`Self::index`] 一致，供构造时遍历。
     pub(crate) const ALL: [Self; 12] = [
         Self::Ming,
         Self::XiongDi,
@@ -59,6 +65,8 @@ impl PalaceRole {
     ];
 
     /// 自命起的宫职下标：命=0 … 父母=11。
+    ///
+    /// 落宫支：`branch = (ming_branch_index - index) mod 12`（逆布）。
     pub const fn index(self) -> usize {
         match self {
             Self::Ming => 0,
@@ -209,14 +217,16 @@ impl PalaceRole {
     }
 }
 
-/// 命盘中的一个宫。
+/// 命盘中的一个宫：本命宫职 + 地支 + 宫干（五虎遁）。
+///
+/// 星曜不存在本结构上，而通过 [`crate::Ziwei::stars_at`] 按支查询。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Palace {
-    /// 宫职。
+    /// 本命宫职（视图切换不改此字段）。
     pub role: PalaceRole,
     /// 宫支。
     pub branch: Branch,
-    /// 宫干。
+    /// 宫干（本命固定；飞宫与大限干均据此）。
     pub stem: Stem,
 }
 

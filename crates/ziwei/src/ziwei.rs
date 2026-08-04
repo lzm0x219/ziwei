@@ -1,4 +1,16 @@
 //! 命盘对象、构造管线与查询面。
+//!
+//! # 构造管线（双入口汇合后）
+//!
+//! 1. 安命宫、身宫（寅环：月顺、命逆时、身顺时）
+//! 2. 逆布十二宫职 + 五虎遁十二宫干
+//! 3. 命宫干支 → 五行局
+//! 4. 定紫微 → 天府镜像 → 十四正曜 → 辅弼昌曲
+//! 5. 生年相关：来因/四化在查询时由表得出；飞边与大限序列物化进盘
+//!
+//! # 查询原则（ADR-0004）
+//!
+//! 本命盘固定；[`ZiweiView`] 只改宫职贴标与层四化 overlay。
 
 use super::{
     branch::Branch,
@@ -16,42 +28,55 @@ use super::{
     view::{DecadeStep, DecadeYear, LayerTransformation, ZiweiView},
 };
 
-/// 十二宫集合，按下标 = [`Branch::index`]。
+/// 十二宫集合，数组下标 = [`Branch::index`]（子=0）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct Palaces([Palace; 12]);
 
 impl Palaces {
+    /// 按宫支取宫（按值拷贝；`Palace` 为 `Copy`）。
     const fn get(self, branch: Branch) -> Palace {
         self.0[branch.index()]
     }
 
-    /// 由构造管线填满十二支后装配；支不重复是调用方不变量。
+    /// 由构造管线填满十二支后装配；支互异是调用方不变量。
     const fn from_filled(palaces: [Palace; 12]) -> Self {
         Self(palaces)
     }
 }
 
-/// 可供调用者查询的紫微斗数命盘对象。
+/// 可供调用者查询的紫微斗数命盘对象（本命真相源）。
+///
+/// 体积固定、`Copy`，适合按值传递；星位与飞边在构造时算完。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Ziwei {
+    /// 十二本命宫（职/支/干）。
     palaces: Palaces,
+    /// 命宫地支（缓存，避免按 role 扫描）。
     ming_branch: Branch,
+    /// 身宫叠落的地支（非第十三宫职）。
     shen_branch: Branch,
+    /// 命宫五行局。
     bureau: FiveElementBureau,
+    /// 农历出生年序号；`from_input` 时为甲子代表年。
     birth_year: i32,
+    /// 生年天干。
     birth_stem: Stem,
+    /// 命主性别（大限顺逆）。
     gender: Gender,
     /// 十八星落宫，下标为 [`Star::index`]。
     star_branches: [Branch; 18],
     /// 本命宫干飞边，固定 12×4 = 48 条。
     flies: [ZiweiFly; 48],
+    /// 十二步大限。
     decade_steps: [DecadeStep; 12],
 }
 
-/// `with_view` 返回的薄包装，内部仍指向同一 `Ziwei`。
+/// `with_view` 返回的薄包装：持有盘引用 + 当前视图，不复制本命数据。
 #[derive(Debug, Clone, Copy)]
 pub struct ZiweiHandle<'a> {
+    /// 底层本命盘。
     chart: &'a Ziwei,
+    /// 当前查询视图。
     view: ZiweiView,
 }
 
@@ -124,6 +149,9 @@ impl Ziwei {
         ))
     }
 
+    /// 双入口共享的排盘实现（输入已合法）。
+    ///
+    /// `month` 正月=0，`hour` 子时=0，`day` 初一=1；`birth_year` 仅服务绝对年序号 API。
     fn build(
         gender: Gender,
         birth_stem: Stem,
@@ -132,11 +160,14 @@ impl Ziwei {
         hour: u8,
         birth_year: i32,
     ) -> Self {
+        // —— Step A：安命身（寅环）——
+        // 寅起正月：月位 m 即月宫 yin0；命 = (m−h) mod 12，身 = (m+h) mod 12。
         let ming_yin0 = twelve_index(month as i32 - hour as i32);
         let shen_yin0 = twelve_index(month as i32 + hour as i32);
         let ming_branch = branch_from_yin0(ming_yin0);
         let shen_branch = branch_from_yin0(shen_yin0);
 
+        // —— Step B+C：十二职逆布 + 五虎遁宫干顺布 ——
         let yin_head = birth_stem.yin_head_stem();
         let mut raw = [Palace {
             role: PalaceRole::Ming,
@@ -145,9 +176,11 @@ impl Ziwei {
         }; 12];
 
         for role in PalaceRole::ALL {
+            // 职 r 落在 (命支下标 − r) mod 12（逆行）。
             let branch_index =
                 twelve_index(ming_branch.index() as i32 - role.index() as i32) as usize;
             let branch = Branch::from_index(branch_index as u8);
+            // 宫干：寅首干起，按该支的 yin0 顺加。
             let yin0 = branch_index_to_yin0(branch_index as u8);
             let stem = Stem::from_index((yin_head.index() as u8 + yin0) % 10);
             raw[branch_index] = Palace { role, branch, stem };
@@ -155,9 +188,13 @@ impl Ziwei {
 
         let palaces = Palaces::from_filled(raw);
         let ming_palace = palaces.get(ming_branch);
+
+        // —— Step D：命宫五行局 ——
         let bureau = FiveElementBureau::from_ming_palace(ming_palace.stem, ming_palace.branch);
 
+        // —— Steps E–H：紫微系/天府系/辅弼昌曲 ——
         let star_branches = place_eighteen_stars(month, hour, day, bureau.number());
+        // 宫干飞边（≤48，此处恰 48）与大限十二步一并物化。
         let flies = build_flies(&palaces, &star_branches);
         let decade_steps =
             build_decade_steps(gender, birth_stem, ming_branch, bureau.number(), &palaces);
@@ -327,45 +364,61 @@ impl Ziwei {
         ZiweiHandle { chart: self, view }
     }
 
+    /// 当前视图下「命」所在地支。
     fn view_ming_branch(self, view: ZiweiView) -> Branch {
         match view {
             ZiweiView::Natal => self.ming_branch,
             ZiweiView::Decade { step } => {
                 debug_assert!(step < 12, "decade step must be within 0..=11");
+                // 越界时回退第一限，避免 release 静默环绕成错误限。
                 self.decade_steps
                     .get(step as usize)
                     .map(|s| s.ming_branch)
                     .unwrap_or(self.decade_steps[0].ming_branch)
             }
+            // 流年命 = 太岁 = 该农历年年支。
             ZiweiView::Annual { year } => branch_from_year(year),
         }
     }
 }
 
+// —— 内部坐标与安星辅助 ——
+
+/// 寅环下标 → [`Branch`]。
 const fn branch_from_yin0(yin0: u8) -> Branch {
     Branch::from_index(yin0_to_branch_index(yin0))
 }
 
+/// 将 `star` 写入落宫表的 `yin0` 位置（先转成 `Branch`）。
 const fn set_star_at_yin0(out: &mut [Branch; 18], star: Star, yin0: u8) {
     out[star.index()] = branch_from_yin0(yin0);
 }
 
+/// 安十八主星（research Steps E–H）。
+///
+/// 定紫微：福山堂形式  
+/// \(q=\lceil d/n\rceil\)，\(e=q\cdot n-d\)；e=0 不移，奇退偶进。  
+/// 天府：关于寅–申轴镜像 `tianfu = (-ziwei) mod 12`（寅环）。
 fn place_eighteen_stars(month: u8, hour: u8, day: u8, bureau_n: u8) -> [Branch; 18] {
     let n = i32::from(bureau_n);
     let d = i32::from(day);
+    // 向上取整除法：ceil(d/n) = (d + n - 1) / n（正整数）。
     let q = (d + n - 1) / n;
     let e = q * n - d;
+    // 奇退（负方向）、偶进（正方向）；整除则 e=0。
     let signed = match e {
         0 => 0,
         e if e % 2 == 1 => -e,
         e => e,
     };
+    // 寅为第 1 步：落点 yin0 = (q-1) + signed。
     let ziwei_yin0 = twelve_index((q - 1) + signed);
+    // 天府与紫微关于寅申对称。
     let tianfu_yin0 = twelve_index(-(i32::from(ziwei_yin0)));
 
     let mut out = [Branch::Zi; 18];
 
-    // 紫微系：从紫微逆行
+    // 紫微系：从紫微逆行的相对步数（空位跳过不写星）。
     for (star, back) in [
         (Star::ZiWei, 0),
         (Star::TianJi, 1),
@@ -377,7 +430,7 @@ fn place_eighteen_stars(month: u8, hour: u8, day: u8, bureau_n: u8) -> [Branch; 
         set_star_at_yin0(&mut out, star, twelve_index(i32::from(ziwei_yin0) - back));
     }
 
-    // 天府系：从天府顺行
+    // 天府系：从天府顺行。
     for (star, forward) in [
         (Star::TianFu, 0),
         (Star::TaiYin, 1),
@@ -395,7 +448,7 @@ fn place_eighteen_stars(month: u8, hour: u8, day: u8, bureau_n: u8) -> [Branch; 
         );
     }
 
-    // 辅佐
+    // 辅佐：左辅/右弼依月，文曲/文昌依时（辰/戌起正月或子时）。
     set_star_at_yin0(&mut out, Star::ZuoFu, twelve_index(2 + i32::from(month)));
     set_star_at_yin0(&mut out, Star::YouBi, twelve_index(8 - i32::from(month)));
     set_star_at_yin0(&mut out, Star::WenQu, twelve_index(2 + i32::from(hour)));
@@ -404,6 +457,7 @@ fn place_eighteen_stars(month: u8, hour: u8, day: u8, bureau_n: u8) -> [Branch; 
     out
 }
 
+/// 单干层四化：四象 → 星 → 本命落宫。
 fn stem_layer_transformations(
     stem: Stem,
     star_branches: &[Branch; 18],
@@ -418,6 +472,7 @@ fn stem_layer_transformations(
     })
 }
 
+/// 十二宫干 × 四化 → 48 条 [`ZiweiFly`]。
 fn build_flies(palaces: &Palaces, star_branches: &[Branch; 18]) -> [ZiweiFly; 48] {
     let mut edges = [ZiweiFly {
         source_branch: Branch::Zi,
@@ -444,6 +499,9 @@ fn build_flies(palaces: &Palaces, star_branches: &[Branch; 18]) -> [ZiweiFly; 48
     edges
 }
 
+/// 十二步大限：第一限在命；阳干阳人/阴干阴人顺行，否则逆行。
+///
+/// 顺：子序支 +1/步；逆：−1/步。起运虚岁 = 局数，每限 10 年。
 fn build_decade_steps(
     gender: Gender,
     birth_stem: Stem,
@@ -451,6 +509,7 @@ fn build_decade_steps(
     bureau_number: u8,
     palaces: &Palaces,
 ) -> [DecadeStep; 12] {
+    // 年干阴阳与性别同性 → 顺行。
     let forward = birth_stem.is_yang() == gender.is_yang();
     let mut steps = [DecadeStep {
         step: 0,
@@ -467,12 +526,14 @@ fn build_decade_steps(
             -i32::from(step)
         };
         let ming = Branch::from_index(twelve_index(ming_branch.index() as i32 + offset));
+        // saturating：局数与步序均小，正常路径不会饱和。
         let age_start = bureau_number.saturating_add(10u8.saturating_mul(step));
         steps[step as usize] = DecadeStep {
             step,
             ming_branch: ming,
             age_start,
             age_end: age_start.saturating_add(9),
+            // 大限干 = 该限命支上的本命宫干。
             stem: palaces.get(ming).stem,
         };
     }

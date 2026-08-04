@@ -1,6 +1,11 @@
 //! 地支及其在十二宫中的顺序。
+//!
+//! 对外一律使用本枚举与「子=0」下标（ADR-0007）；排盘规则内部的寅起环
+//! 见 [`crate::position`] 中的换算函数，不把裸宫位整数泄漏到公共 API。
 
 /// 十二地支中的一个位置。
+///
+/// 变体顺序与 [`Self::index`] 一致：子、丑、寅…亥。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Branch {
     /// 子。
@@ -30,7 +35,9 @@ pub enum Branch {
 }
 
 impl Branch {
-    /// 子=0 … 亥=11 的公开下标。
+    /// 返回子=0 … 亥=11 的公开下标。
+    ///
+    /// 这是对外坐标零点；与口诀「寅起正月」的寅环下标不同，换算见 `position`。
     pub const fn index(self) -> usize {
         match self {
             Self::Zi => 0,
@@ -48,7 +55,9 @@ impl Branch {
         }
     }
 
+    /// 由子序下标还原地支；`index` 会先对 12 取模，故任意 `u8` 皆安全。
     pub(crate) const fn from_index(index: u8) -> Self {
+        // `% 12` 保证落入 0..=11；`_` 分支对应 11（亥）。
         match index % 12 {
             0 => Self::Zi,
             1 => Self::Chou,
@@ -65,8 +74,10 @@ impl Branch {
         }
     }
 
-    /// 对宫（相隔六支）。
+    /// 对宫：相隔六支（子↔午、丑↔未、…）。
+    ///
+    /// 飞宫自化「入」判定：目标落在源支的对宫。
     pub(crate) const fn opposite(self) -> Self {
-        Self::from_index((self.index() as u8 + 6) % 12)
+        Self::from_index((self.index() as u8).wrapping_add(6) % 12)
     }
 }
