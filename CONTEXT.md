@@ -71,3 +71,7 @@ _Avoid_: ChartView、整盘快照、可变的第二份 Ziwei、ZiweiHandle / wit
 **Palace / DecadeStep / LayerTransformation / DecadeYear**:
 引擎产出的多字段结果类型；字段私有，对外只读 `const` getter，不可外部拼装（ADR-0010）。`PalaceRoleLabel` / `StarLabel` 等纯显示标签除外。
 _Avoid_: 公开结果字段字面量、对显示标签做无意义封装
+
+**JavaScript 语言绑定**:
+`@ziweijs/core`（Node NAPI）与 `@ziweijs/core-wasm`（浏览器 WebAssembly）共享同一领域 interface。首个纵向切片只暴露同步 `Ziwei.fromBirth(birth)`，返回由各运行时 GC 管理的不透明只读 `Ziwei`；WASM 包须先显式异步初始化。`ZiweiBirth` 是 plain object，字段名、枚举值和数值语义与 Rust core 一致（ADR-0011）。
+_Avoid_: `createChart` 快照、首版 `fromInput`、运行时枚举对象、标签目录、`toJSON`、绑定层重算领域规则

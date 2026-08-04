@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "bindings:types": "node scripts/build-binding-types.mjs",
     "prepare": "lefthook install",
     "ts:lint": "oxlint",
     "ts:lint:fix": "oxlint --fix",

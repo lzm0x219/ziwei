@@ -1,67 +1,192 @@
-//! Ziwei 的语言绑定层（NAPI/TS 等）。
+//! JavaScript adapters for the `ziwei` core.
 //!
-//! 绑定 API 尚未开始实现；当前只**重新导出**核心领域类型，保持依赖方向：
-//! `ziwei_binding` → `ziwei`，避免核心反向依赖绑定。
-//!
-//! 待 Rust 核心公共面稳定后再在此增加真正的 NAPI 导出（见延后票 #248）。
+//! The native build exports a napi-rs class for `@ziweijs/core`; the
+//! `wasm32-unknown-unknown` build exports the equivalent wasm-bindgen class for
+//! `@ziweijs/core-wasm`. Both adapters expose only `Ziwei.fromBirth()` and keep
+//! the domain model in the `ziwei` crate.
 
-// 核心领域类型的透传，便于绑定 crate 作为统一入口。
-pub use ziwei::{
-    Branch, DecadeIndex, DecadeIndexError, DecadeStep, DecadeYear, DecadeYearsError,
-    FiveElementBureau, Gender, LayerTransformation, Palace, PalaceRole, PalaceRoleLabel,
-    SelfTransformation, Star, StarLabel, Stem, Transformation, Ziwei, ZiweiBirth, ZiweiFly,
-    ZiweiInput, ZiweiInputError, ZiweiView,
-};
+#![deny(clippy::all)]
+
+use ziwei::{Gender, Ziwei as CoreZiwei, ZiweiBirth as CoreZiweiBirth};
+
+#[derive(Debug)]
+#[cfg_attr(target_arch = "wasm32", derive(serde::Deserialize))]
+struct BirthInput {
+    gender: String,
+    year: f64,
+    month: f64,
+    day: f64,
+    hour: f64,
+}
+
+fn chart_from_birth(input: BirthInput) -> Result<CoreZiwei, String> {
+    let gender = match input.gender.as_str() {
+        "Yin" => Gender::Yin,
+        "Yang" => Gender::Yang,
+        value => return Err(format!("gender must be \"Yin\" or \"Yang\", got {value:?}")),
+    };
+    let year = integer_i32("year", input.year)?;
+    let month = integer_u8("month", input.month)?;
+    let day = integer_u8("day", input.day)?;
+    let hour = integer_u8("hour", input.hour)?;
+    let birth = CoreZiweiBirth::try_new(gender, year, month, day, hour)
+        .map_err(|error| error.to_string())?;
+
+    Ok(CoreZiwei::from_birth(birth))
+}
+
+fn integer_i32(field: &str, value: f64) -> Result<i32, String> {
+    if !value.is_finite()
+        || value.fract() != 0.0
+        || value < f64::from(i32::MIN)
+        || value > f64::from(i32::MAX)
+    {
+        return Err(format!(
+            "{field} must be a finite integer within {}..={}, got {value}",
+            i32::MIN,
+            i32::MAX
+        ));
+    }
+
+    Ok(value as i32)
+}
+
+fn integer_u8(field: &str, value: f64) -> Result<u8, String> {
+    if !value.is_finite()
+        || value.fract() != 0.0
+        || value < f64::from(u8::MIN)
+        || value > f64::from(u8::MAX)
+    {
+        return Err(format!(
+            "{field} must be a finite integer within {}..={}, got {value}",
+            u8::MIN,
+            u8::MAX
+        ));
+    }
+
+    Ok(value as u8)
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+mod node {
+    use super::{BirthInput, chart_from_birth};
+    use napi::{Error, Status, bindgen_prelude::Result};
+    use napi_derive::napi;
+    use ziwei::Ziwei as CoreZiwei;
+
+    /// Plain JavaScript representation of the core `ZiweiBirth` fields.
+    #[napi(object, object_to_js = false)]
+    pub struct NapiZiweiBirth {
+        /// `Yin` or `Yang`.
+        pub gender: String,
+        /// Lunar year number.
+        pub year: f64,
+        /// Lunar month index, `0..=11`.
+        pub month: f64,
+        /// Lunar day, `1..=30`.
+        pub day: f64,
+        /// Hour-branch index, `0..=11`.
+        pub hour: f64,
+    }
+
+    impl From<NapiZiweiBirth> for BirthInput {
+        fn from(value: NapiZiweiBirth) -> Self {
+            Self {
+                gender: value.gender,
+                year: value.year,
+                month: value.month,
+                day: value.day,
+                hour: value.hour,
+            }
+        }
+    }
+
+    /// Native handle owned by the public JavaScript `Ziwei` facade.
+    #[napi]
+    pub struct NativeZiwei {
+        _inner: CoreZiwei,
+    }
+
+    #[napi]
+    impl NativeZiwei {
+        /// Construct a chart from validated lunar birth fields.
+        #[napi(factory)]
+        pub fn from_birth(birth: NapiZiweiBirth) -> Result<Self> {
+            chart_from_birth(birth.into())
+                .map(|inner| Self { _inner: inner })
+                .map_err(|message| Error::new(Status::InvalidArg, message))
+        }
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+mod browser {
+    use super::{BirthInput, chart_from_birth};
+    use wasm_bindgen::{JsError, JsValue, prelude::wasm_bindgen};
+    use ziwei::Ziwei as CoreZiwei;
+
+    /// WebAssembly handle owned by the public JavaScript `Ziwei` facade.
+    #[wasm_bindgen]
+    pub struct NativeZiwei {
+        _inner: CoreZiwei,
+    }
+
+    #[wasm_bindgen]
+    impl NativeZiwei {
+        /// Construct a chart from validated lunar birth fields.
+        #[wasm_bindgen(js_name = fromBirth)]
+        pub fn from_birth(birth: JsValue) -> Result<NativeZiwei, JsError> {
+            let birth: BirthInput = serde_wasm_bindgen::from_value(birth)
+                .map_err(|_| JsError::new("invalid ZiweiBirth object"))?;
+
+            chart_from_birth(birth)
+                .map(|inner| Self { _inner: inner })
+                .map_err(|message| JsError::new(&message))
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn reexports_explicit_birth_year_capability() {
-        let input = ZiweiInput::try_new(Gender::Yang, Stem::Jia, Branch::Zi, 0, 1, 0)
-            .expect("绑定层样例输入合法");
-        let chart = Ziwei::from_input(input);
+    fn valid_birth() -> BirthInput {
+        BirthInput {
+            gender: "Yang".to_owned(),
+            year: 1984.0,
+            month: 2.0,
+            day: 1.0,
+            hour: 4.0,
+        }
+    }
 
-        assert_eq!(chart.birth_year(), None);
+    #[test]
+    fn from_birth_preserves_the_real_lunar_year() {
+        let chart = chart_from_birth(valid_birth()).expect("valid birth should build a chart");
+
+        assert_eq!(chart.birth_year(), Some(1984));
+    }
+
+    #[test]
+    fn invalid_gender_is_rejected_before_entering_the_core() {
+        let mut birth = valid_birth();
+        birth.gender = "Male".to_owned();
+
         assert_eq!(
-            chart.years_in_decade(DecadeIndex::FIRST),
-            Err(DecadeYearsError::BirthYearUnavailable)
+            chart_from_birth(birth).expect_err("invalid gender should fail"),
+            "gender must be \"Yin\" or \"Yang\", got \"Male\""
         );
     }
 
     #[test]
-    fn reexports_result_type_read_getters() {
-        let birth = ZiweiBirth::try_new(Gender::Yang, 1984, 2, 1, 4).expect("绑定层样例合法");
-        let chart = Ziwei::from_birth(birth);
+    fn numeric_representation_is_checked_before_core_validation() {
+        let mut birth = valid_birth();
+        birth.year = f64::NAN;
 
-        let palace = chart.palace_at(Branch::Zi);
-        let _ = (palace.role(), palace.branch(), palace.stem());
-
-        let fly = chart.flies_from_branch(Branch::Zi)[0];
-        let _ = (
-            fly.source_branch(),
-            fly.transformation(),
-            fly.target_branch(),
-            fly.star(),
-            fly.self_transformation(),
+        assert!(
+            chart_from_birth(birth)
+                .expect_err("NaN year should fail")
+                .starts_with("year must be a finite integer")
         );
-
-        let step = chart.decade_step(DecadeIndex::FIRST);
-        let _ = (
-            step.step(),
-            step.ming_branch(),
-            step.age_start(),
-            step.age_end(),
-            step.stem(),
-        );
-
-        let xf = chart.year_transformations()[0];
-        let _ = (xf.transformation(), xf.star(), xf.branch());
-
-        let year = chart
-            .years_in_decade(DecadeIndex::FIRST)
-            .expect("from_birth 具备真实年")[0];
-        let _ = (year.lunar_year(), year.virtual_age());
     }
 }

@@ -1,6 +1,7 @@
 [package]
 name = "ziwei_binding"
 version = "0.1.0"
+description = "JavaScript bindings for the Ziwei chart engine"
 publish = false
 
 edition.workspace = true
@@ -8,8 +9,23 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [dependencies]
 ziwei.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+napi = "3"
+napi-derive = "3"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde-wasm-bindgen = "0.6"
+wasm-bindgen = "0.2"
+
+[build-dependencies]
+napi-build = "2"
 
 [lints]
 workspace = true

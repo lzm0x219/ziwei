@@ -293,7 +293,7 @@
     <!-- ========== 架构 ========== -->
     <section id="arch">
       <h2>1. 架构</h2>
-      <p class="sub">工作区双 crate：领域核心 <code class="inline">ziwei</code> + 绑定壳 <code class="inline">ziwei_binding</code>（NAPI 延后）。核心对外只暴露 crate 根 re-export。</p>
+      <p class="sub">工作区双 crate：领域核心 <code class="inline">ziwei</code> + JavaScript 双后端适配层 <code class="inline">ziwei_binding</code>。核心对外只暴露 crate 根 re-export；<code class="inline">@ziweijs/core</code> 与 <code class="inline">@ziweijs/core-wasm</code> 首版只绑定 <code class="inline">Ziwei.fromBirth</code>。</p>
 
       <div class="arch">
         <div class="lane-label">调用方 / 适配层（引擎外）</div>
@@ -309,9 +309,9 @@
             <div class="desc">UI、批命、业务规则包（v1 外）</div>
           </div>
           <div class="node">
-            <div class="kicker">Future</div>
+            <div class="kicker">NAPI / WASM</div>
             <div class="title">ziwei_binding</div>
-            <div class="desc">当前 re-export；正式 NAPI 待 core 稳定</div>
+            <div class="desc">同步 fromBirth：ZiweiBirth → 不透明 Ziwei</div>
           </div>
         </div>
 
@@ -659,7 +659,7 @@ match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
           <tr><td><code class="inline">palaces.rs</code></td><td>十二宫数组</td><td>crate</td></tr>
           <tr><td><code class="inline">view.rs</code></td><td>View/DecadeStep/层四化类型</td><td>pub</td></tr>
           <tr><td><code class="inline">stem / branch / star / palace / transformation / five_element_bureau / position</code></td><td>表与坐标</td><td>混合</td></tr>
-          <tr><td><code class="inline">ziwei_binding</code></td><td>re-export 占位</td><td>binding crate</td></tr>
+          <tr><td><code class="inline">ziwei_binding</code></td><td>NAPI / WASM 的最小 fromBirth Adapter</td><td>binding crate</td></tr>
         </tbody>
       </table>
     </section>
@@ -684,7 +684,7 @@ match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
             <li>引擎内公历/真太阳时</li>
             <li>杂曜全集、小限、批命文案</li>
             <li>多跳飞串、三爻变</li>
-            <li>结果注入；NAPI 正式包（延后）</li>
+            <li>结果注入</li>
           </ul>
         </div>
       </div>

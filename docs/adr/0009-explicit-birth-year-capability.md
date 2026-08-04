@@ -1,6 +1,6 @@
 # 显式表达真实出生年能力
 
-`Ziwei` 只在 `from_birth` 路径保存真实农历出生年；`from_input` 保留生年干支，但不再用六十甲子合成代表年。两条路径都可查询生年干支，只有前者的 `birth_year() -> Option<i32>` 为 `Some`；`years_in_decade(...) -> Result<_, DecadeYearsError>` 区分出生年缺失与年份溢出。这样 Rust 调用方与未来 TypeScript binding 都不会把推造值当成历史事实。
+`Ziwei` 只在 `from_birth` 路径保存真实农历出生年；`from_input` 保留生年干支，但不再用六十甲子合成代表年。两条路径都可查询生年干支，只有前者的 `birth_year() -> Option<i32>` 为 `Some`；`years_in_decade(...) -> Result<_, DecadeYearsError>` 区分出生年缺失与年份溢出。这样 Rust 调用方与 JavaScript 语言绑定（首个纵向切片只暴露 `fromBirth`；见 ADR-0011）都不会把推造值当成历史事实。
 
 ## Considered Options
 
