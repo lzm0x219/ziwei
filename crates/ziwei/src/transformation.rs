@@ -14,6 +14,9 @@ pub enum Transformation {
 }
 
 impl Transformation {
+    /// 禄、权、科、忌（与表下标 0..=3 一致）。
+    pub const ALL: [Self; 4] = [Self::A, Self::B, Self::C, Self::D];
+
     /// 返回简体中文的四化象文本。
     pub const fn simplified_chinese(self) -> &'static str {
         match self {

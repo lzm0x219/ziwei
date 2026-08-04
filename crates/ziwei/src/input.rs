@@ -68,6 +68,7 @@ impl ZiweiInput {
         hour: u8,
     ) -> Result<Self, ZiweiInputError> {
         validate_month_day_hour(month, day, hour)?;
+        validate_year_pillar(birth_stem, birth_branch)?;
         Ok(Self {
             gender,
             birth_stem,
@@ -121,6 +122,13 @@ pub enum ZiweiInputError {
         /// 不合法的值。
         value: u8,
     },
+    /// 年干与年支不能组成六十甲子（阴阳不配）。
+    InvalidYearPillar {
+        /// 年干。
+        stem: Stem,
+        /// 年支。
+        branch: Branch,
+    },
 }
 
 impl fmt::Display for ZiweiInputError {
@@ -134,6 +142,14 @@ impl fmt::Display for ZiweiInputError {
             }
             Self::HourOutOfRange { value } => {
                 write!(formatter, "hour must be within 0..=11, got {value}")
+            }
+            Self::InvalidYearPillar { stem, branch } => {
+                write!(
+                    formatter,
+                    "year stem and branch do not form a sexagenary pair (stem index {}, branch index {})",
+                    stem.index(),
+                    branch.index()
+                )
             }
         }
     }
@@ -154,12 +170,37 @@ pub(crate) fn validate_month_day_hour(month: u8, day: u8, hour: u8) -> Result<()
     Ok(())
 }
 
+/// 六十甲子要求干支下标同奇偶。
+pub(crate) fn validate_year_pillar(stem: Stem, branch: Branch) -> Result<(), ZiweiInputError> {
+    if stem.index() % 2 == branch.index() % 2 {
+        Ok(())
+    } else {
+        Err(ZiweiInputError::InvalidYearPillar { stem, branch })
+    }
+}
+
 const fn ring_position_is_valid(position: u8) -> bool {
     twelve_index(position as i32) == position
 }
 
-/// 由年干支还原一个六十甲子内的代表农历年序号（甲子 = 4）。
+/// 农历年序号 → 年干（`(year - 4).rem_euclid(10)`）。
+pub(crate) const fn stem_from_year(year: i32) -> Stem {
+    Stem::from_index((year - 4).rem_euclid(10) as u8)
+}
+
+/// 农历年序号 → 年支（`(year - 4).rem_euclid(12)`）。
+pub(crate) const fn branch_from_year(year: i32) -> Branch {
+    Branch::from_index((year - 4).rem_euclid(12) as u8)
+}
+
+/// 由合法年干支还原六十甲子内的代表农历年序号（甲子 = 4）。
+///
+/// 调用前须通过 [`validate_year_pillar`]；非法组合在 debug 下断言失败，release 回退甲子年。
 pub(crate) fn representative_year(stem: Stem, branch: Branch) -> i32 {
+    debug_assert!(
+        validate_year_pillar(stem, branch).is_ok(),
+        "representative_year requires a sexagenary stem/branch pair"
+    );
     let stem_i = stem.index() as i32;
     let branch_i = branch.index() as i32;
     for n in 0..60 {
@@ -167,7 +208,6 @@ pub(crate) fn representative_year(stem: Stem, branch: Branch) -> i32 {
             return 4 + n;
         }
     }
-    // 合法干支对必能命中；若传入非法组合则退回甲子年。
     4
 }
 
@@ -221,6 +261,19 @@ mod tests {
         assert_eq!(
             ZiweiInput::try_new(Gender::Yang, Stem::Jia, Branch::Zi, 0, 1, 12),
             Err(ZiweiInputError::HourOutOfRange { value: 12 })
+        );
+    }
+
+    #[test]
+    fn try_new_rejects_invalid_year_pillar() {
+        // 甲寅：干支下标 0 与 2 同偶，合法；甲丑：0 与 1 奇偶不同，非法
+        assert!(ZiweiInput::try_new(Gender::Yang, Stem::Jia, Branch::Yin, 0, 1, 0).is_ok());
+        assert_eq!(
+            ZiweiInput::try_new(Gender::Yang, Stem::Jia, Branch::Chou, 0, 1, 0),
+            Err(ZiweiInputError::InvalidYearPillar {
+                stem: Stem::Jia,
+                branch: Branch::Chou,
+            })
         );
     }
 
