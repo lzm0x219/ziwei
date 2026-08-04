@@ -7,7 +7,7 @@
 
 // 核心领域类型的透传，便于绑定 crate 作为统一入口。
 pub use ziwei::{
-    Branch, DecadeStep, DecadeYear, FiveElementBureau, Gender, LayerTransformation, Palace,
-    PalaceRole, PalaceRoleLabel, SelfTransformation, Star, StarLabel, Stem, Transformation, Ziwei,
-    ZiweiBirth, ZiweiFly, ZiweiInput, ZiweiInputError, ZiweiView,
+    Branch, DecadeIndex, DecadeIndexError, DecadeStep, DecadeYear, FiveElementBureau, Gender,
+    LayerTransformation, Palace, PalaceRole, PalaceRoleLabel, SelfTransformation, Star, StarLabel,
+    Stem, Transformation, Ziwei, ZiweiBirth, ZiweiFly, ZiweiInput, ZiweiInputError, ZiweiView,
 };

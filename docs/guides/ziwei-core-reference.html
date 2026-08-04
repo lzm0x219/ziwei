@@ -442,7 +442,7 @@
           <h4>随 ZiweiView 变</h4>
           <ul>
             <li><code class="inline">Natal</code>：本命职贴标；无 overlay</li>
-            <li><code class="inline">Decade { step }</code>：大限命支起逆布职；层干四化</li>
+            <li><code class="inline">Decade(index)</code>：大限命支起逆布职；层干四化</li>
             <li><code class="inline">Annual { year }</code>：太岁为命；年干四化</li>
           </ul>
         </div>
@@ -461,10 +461,10 @@ ziwei = { path = "crates/ziwei" }
 
       <h3>3.2 from_birth（推荐权威路径）</h3>
 <pre><code>use ziwei::{
-    Branch, Gender, PalaceRole, Ziwei, ZiweiBirth, ZiweiView,
+    Branch, DecadeIndex, Gender, PalaceRole, Ziwei, ZiweiBirth, ZiweiView,
 };
 
-// 推荐 try_new；字面量亦可（from_birth 仍会校验月日时）
+// 在输入边界完成校验；from_birth 接受已校验值
 let birth = ZiweiBirth::try_new(
     Gender::Yang, // 阳/男；阴 = Yin
     1984,         // 农历年序号
@@ -472,12 +472,12 @@ let birth = ZiweiBirth::try_new(
     1,            // 初一=1
     4,            // 子时=0 → 辰时=4
 )?;
-let chart = Ziwei::from_birth(birth)?;
+let chart = Ziwei::from_birth(birth);
 
 // 三月辰时：命在子、身在申
 assert_eq!(
     chart.branch_of_role(PalaceRole::Ming, ZiweiView::Natal),
-    Some(Branch::Zi)
+    Branch::Zi
 );
 assert_eq!(chart.shen_branch(), Branch::Shen);
 
@@ -491,7 +491,7 @@ let year_hua = chart.year_transformations(); // [禄权科忌]
 let step1 = chart.decade_steps()[1];
 let decade_ming = chart.branch_of_role(
     PalaceRole::Ming,
-    ZiweiView::Decade { step: 1 },
+    ZiweiView::Decade(DecadeIndex::try_new(1)?),
 );
 let annual_ming = chart.branch_of_role(
     PalaceRole::Ming,
@@ -584,11 +584,11 @@ match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
         <thead><tr><th>API</th><th>说明</th></tr></thead>
         <tbody>
           <tr><td class="sig">decade_steps() → &amp;[DecadeStep; 12]</td><td>十二步大限</td></tr>
-          <tr><td class="sig">decade_step(step) → Option&lt;&amp;DecadeStep&gt;</td><td>0..=11，越界 None</td></tr>
-          <tr><td class="sig">decade_step_for_age(virtual_age) → Option&lt;u8&gt;</td><td>虚岁落在哪一步</td></tr>
-          <tr><td class="sig">years_in_decade(step) → Option&lt;[DecadeYear; 10]&gt;</td><td>该限十年流年</td></tr>
-          <tr><td class="sig">branch_of_role(role, view) → Option&lt;Branch&gt;</td><td>视图下宫职→支</td></tr>
-          <tr><td class="sig">palace_for_role(role, view) → Option&lt;&amp;Palace&gt;</td><td>视图下取本命宫对象</td></tr>
+          <tr><td class="sig">decade_step(index) → &amp;DecadeStep</td><td>index 已保证为 0..=11</td></tr>
+          <tr><td class="sig">decade_step_for_age(virtual_age) → Option&lt;DecadeIndex&gt;</td><td>虚岁落在哪一步</td></tr>
+          <tr><td class="sig">years_in_decade(index) → Option&lt;[DecadeYear; 10]&gt;</td><td>None 仅表示年份溢出</td></tr>
+          <tr><td class="sig">branch_of_role(role, view) → Branch</td><td>视图下宫职→支</td></tr>
+          <tr><td class="sig">palace_for_role(role, view) → &amp;Palace</td><td>视图下取本命宫对象</td></tr>
           <tr><td class="sig">overlay_transformations(view) → Option&lt;[…;4]&gt;</td><td>Natal=None；大限/流年层四化</td></tr>
         </tbody>
       </table>
@@ -600,7 +600,7 @@ match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
         <tbody>
           <tr><td class="sig">palace_flies() → &amp;[ZiweiFly; 48]</td><td>全量宫干飞边（支序×四化）</td></tr>
           <tr><td class="sig">flies_from_branch(Branch) → &amp;[ZiweiFly; 4]</td><td>O(1) 切片</td></tr>
-          <tr><td class="sig">flies_from_role(role, view) → Option&lt;&amp;[ZiweiFly; 4]&gt;</td><td>视图职→支再切片；step 越界 None</td></tr>
+          <tr><td class="sig">flies_from_role(role, view) → &amp;[ZiweiFly; 4]</td><td>视图职→支再切片</td></tr>
           <tr><td class="sig">ZiweiFly::self_transformation()</td><td>Out / In / None</td></tr>
           <tr><td class="sig">Star::ALL / PalaceRole::ALL</td><td>绑定层遍历全集</td></tr>
         </tbody>
@@ -618,7 +618,8 @@ match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
           <tr><td><code class="inline">Star</code> / <code class="inline">StarLabel</code></td><td>十八主星与标签；Star::ALL</td></tr>
           <tr><td><code class="inline">Transformation</code></td><td>A–D 与别名 LU/QUAN/KE/JI；ALL</td></tr>
           <tr><td><code class="inline">FiveElementBureau</code></td><td>水二…火六；number()</td></tr>
-          <tr><td><code class="inline">ZiweiView</code></td><td>Natal | Decade{step} | Annual{year}</td></tr>
+          <tr><td><code class="inline">ZiweiView</code></td><td>Natal | Decade(index) | Annual{year}</td></tr>
+          <tr><td><code class="inline">DecadeIndex</code></td><td>经 try_new 校验的 0..=11 大限序号</td></tr>
           <tr><td><code class="inline">DecadeStep</code> / <code class="inline">DecadeYear</code></td><td>大限步、限内流年</td></tr>
           <tr><td><code class="inline">LayerTransformation</code></td><td>四化+星+落宫</td></tr>
           <tr><td><code class="inline">ZiweiFly</code> / <code class="inline">SelfTransformation</code></td><td>飞边与自化</td></tr>

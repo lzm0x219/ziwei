@@ -6,7 +6,7 @@
 
 ```text
 ZiweiView::Natal
-ZiweiView::Decade { step: u8 }    // 0 = 第一大限
+ZiweiView::Decade(DecadeIndex)    // 0 = 第一大限；构造时校验 0..=11
 ZiweiView::Annual { year: i32 }   // 农历年序号，语义同 ZiweiBirth.year
 ```
 
@@ -25,12 +25,13 @@ year_transformations() -> …          // 生年四化，固定
 
 // 大限序列与叠层四化
 decade_steps() -> …
+decade_step(index: DecadeIndex) -> &DecadeStep
 overlay_transformations(view) -> …   // Natal 空；Decade/Annual 为该层四化
 
 // 飞宫（边集固定；view 只影响按宫职索引）
 palace_flies() -> &[ZiweiFly; 48]           // 布局：支序 × Transformation::ALL
 flies_from_branch(branch) -> &[ZiweiFly; 4] // O(1) 切片
-flies_from_role(role, view) -> Option<&[ZiweiFly; 4]>  // 大限 step 越界 → None
+flies_from_role(role, view) -> &[ZiweiFly; 4]
 ```
 
 ## 不变式
@@ -42,7 +43,7 @@ flies_from_role(role, view) -> Option<&[ZiweiFly; 4]>  // 大限 step 越界 →
 ## 必过场景
 
 1. 本命：来因 + 生年四化 + `palace_at` + 命宫飞边。
-2. `Decade { step: 1 }`：大限「命」落支变化；生年四化不变；overlay 为大限四化。
+2. `Decade(DecadeIndex::try_new(1)?)`：大限「命」落支变化；生年四化不变；overlay 为大限四化。
 3. `Annual { year }`：流年宫职 + 流年四化叠加；`palace_flies` 条数仍 ≤48。
 
 ## 明确不做

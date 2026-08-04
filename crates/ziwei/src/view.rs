@@ -3,7 +3,68 @@
 //! 视图只改变「宫职→地支」贴标与层四化 overlay，不复制整盘、不重算
 //! 星位 / 宫干 / 飞边 / 生年四化 / 来因。
 
+use core::fmt;
+
 use super::{branch::Branch, star::Star, stem::Stem, transformation::Transformation};
+
+/// 十二步大限的零基序号（`0..=11`）。
+///
+/// 字段私有，只能经 [`Self::try_new`] 或 [`TryFrom`] 构造，保证序号始终可用于
+/// [`crate::Ziwei::decade_step`]、[`crate::Ziwei::years_in_decade`] 与 [`ZiweiView::Decade`]。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct DecadeIndex(u8);
+
+impl DecadeIndex {
+    /// 第一大限的序号。
+    pub const FIRST: Self = Self(0);
+
+    /// 创建合法的大限序号。
+    ///
+    /// # Errors
+    ///
+    /// `value` 不在 `0..=11` 时返回 [`DecadeIndexError`]。
+    pub const fn try_new(value: u8) -> Result<Self, DecadeIndexError> {
+        if value <= 11 {
+            Ok(Self(value))
+        } else {
+            Err(DecadeIndexError { value })
+        }
+    }
+
+    /// 取得零基序号。
+    pub const fn get(self) -> u8 {
+        self.0
+    }
+}
+
+impl TryFrom<u8> for DecadeIndex {
+    type Error = DecadeIndexError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        Self::try_new(value)
+    }
+}
+
+/// 大限序号不在 `0..=11`。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DecadeIndexError {
+    value: u8,
+}
+
+impl DecadeIndexError {
+    /// 不合法的原始序号。
+    pub const fn value(self) -> u8 {
+        self.value
+    }
+}
+
+impl fmt::Display for DecadeIndexError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "大限序号须为 0..=11，实际为 {}", self.value)
+    }
+}
+
+impl std::error::Error for DecadeIndexError {}
 
 /// 查询用的轻量视图：本命、第几步大限、或某农历年流年。
 ///
@@ -12,11 +73,8 @@ use super::{branch::Branch, star::Star, stem::Stem, transformation::Transformati
 pub enum ZiweiView {
     /// 本命：宫职用本命十二职，无层四化 overlay。
     Natal,
-    /// 第 `step` 步大限（0 = 第一大限，须为 `0..=11`）。
-    Decade {
-        /// 大限步序，0 = 第一限。
-        step: u8,
-    },
+    /// 第 `index` 步大限（0 = 第一大限）。
+    Decade(DecadeIndex),
     /// 农历年序号流年（语义同 [`crate::ZiweiBirth::year`]）。
     ///
     /// 流年命坐该年年支（太岁），十二职自该支逆布。
@@ -33,7 +91,7 @@ pub enum ZiweiView {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DecadeStep {
     /// 步序，0 = 第一限。
-    pub step: u8,
+    pub step: DecadeIndex,
     /// 大限命所在支。
     pub ming_branch: Branch,
     /// 虚岁起（含）；第一限等于局数。
@@ -81,4 +139,31 @@ pub struct DecadeYear {
     pub lunar_year: i32,
     /// 虚岁（由调用方理解；core 不收公历 Date）。
     pub virtual_age: u8,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn decade_index_accepts_only_twelve_steps() {
+        assert_eq!(DecadeIndex::try_new(0), Ok(DecadeIndex::FIRST));
+        assert_eq!(DecadeIndex::try_from(11).map(DecadeIndex::get), Ok(11));
+        assert_eq!(
+            DecadeIndex::try_new(12),
+            Err(DecadeIndexError { value: 12 })
+        );
+        assert_eq!(
+            DecadeIndex::try_new(u8::MAX),
+            Err(DecadeIndexError { value: u8::MAX })
+        );
+    }
+
+    #[test]
+    fn decade_index_error_exposes_invalid_value() {
+        let error = DecadeIndex::try_new(12).expect_err("第十三步应被拒绝");
+
+        assert_eq!(error.value(), 12);
+        assert_eq!(error.to_string(), "大限序号须为 0..=11，实际为 12");
+    }
 }

@@ -61,5 +61,7 @@ pub use palace::{Palace, PalaceRole, PalaceRoleLabel};
 pub use star::{Star, StarLabel};
 pub use stem::Stem;
 pub use transformation::Transformation;
-pub use view::{DecadeStep, DecadeYear, LayerTransformation, ZiweiView};
+pub use view::{
+    DecadeIndex, DecadeIndexError, DecadeStep, DecadeYear, LayerTransformation, ZiweiView,
+};
 pub use ziwei::Ziwei;

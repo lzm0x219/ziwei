@@ -13,7 +13,7 @@ ZiweiFly { source_branch, transformation, target_branch, star }
 palace_flies() -> &[ZiweiFly; 48]              // 全量，只来自本命宫干
 // 布局：Branch::index 升序，每支 4 条，四化序 = Transformation::ALL
 flies_from_branch(branch) -> &[ZiweiFly; 4]    // O(1) 切片
-flies_from_role(role, view) -> Option<&[ZiweiFly; 4]>  // 先贴标再切片
+flies_from_role(role, view) -> &[ZiweiFly; 4]  // 先贴标再切片
 
 stem_transformations(stem)      // 层用干 → 四星落宫
 ```

@@ -13,7 +13,7 @@ shen_branch() -> Branch
 
 ```text
 DecadeStep {
-  step: u8,              // 0 = 第一限
+  step: DecadeIndex,     // 0 = 第一限；合法范围 0..=11
   ming_branch: Branch,   // 大限命所在支
   age_start: u8,         // 虚岁起 = 局数 + 10*step
   age_end: u8,           // age_start + 9
@@ -21,7 +21,7 @@ DecadeStep {
 }
 
 decade_steps() -> [DecadeStep; 12]  // 或等价序列
-decade_step_for_age(virtual_age: u8) -> Option<u8>
+decade_step_for_age(virtual_age: u8) -> Option<DecadeIndex>
 // 虚岁由调用方提供（农历年 − 生年 + 1）；core 不收公历 Date
 ```
 
@@ -32,9 +32,10 @@ decade_step_for_age(virtual_age: u8) -> Option<u8>
 用户选中某步大限时，必须能列出该限覆盖的**十个流年**（按需生成，不强制预存进 `Ziwei`）：
 
 ```text
-years_in_decade(step) -> [(lunar_year, virtual_age); 10]
+years_in_decade(index: DecadeIndex) -> Option<[(lunar_year, virtual_age); 10]>
 // virtual_age 从 age_start 到 age_end
 // lunar_year = birth_lunar_year + virtual_age - 1
+// None 仅表示 lunar_year 超出 i32，不表示大限序号越界
 ```
 
 与 `ZiweiView::Annual { year }` 衔接：列表中的 `lunar_year` 可直接作为 Annual 视图参数。
