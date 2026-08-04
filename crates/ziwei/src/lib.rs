@@ -5,8 +5,9 @@
 //!
 //! ## 模块结构
 //!
-//! 内部 module 保持私有；公共类型经 crate 根统一 `pub use` 导出，避免调用方
-//! 依赖不稳定的内部路径。
+//! 内部 module 保持私有；公共类型经 crate 根统一 `pub use` 导出。
+//! 构造拆为 `placement`（安宫安星）、`decade`（大限）、`fly`（飞边），
+//! `ziwei` 只做编排与查询面。
 //!
 //! ## 权威契约
 //!
@@ -16,14 +17,20 @@
 
 /// 地支枚举与子=0 下标。
 mod branch;
+/// 大限序列构造。
+mod decade;
 /// 命宫干支 → 五行局。
 mod five_element_bureau;
-/// 飞宫单跳边与自化标注。
+/// 飞宫单跳边、自化与边集构造。
 mod fly;
 /// 出生/原始量输入与校验。
 mod input;
 /// 十二宫职与 `Palace`。
 mod palace;
+/// 十二宫内部存储。
+mod palaces;
+/// 本命安宫与安星（Steps A–H）。
+mod placement;
 /// 十二环折叠与寅环/子序换算。
 mod position;
 /// 默认十八主星目录。
@@ -34,7 +41,7 @@ mod stem;
 mod transformation;
 /// 视图、大限步、层四化结果类型。
 mod view;
-/// 命盘构造管线与公开查询 API。
+/// 命盘编排与公开查询 API。
 mod ziwei;
 
 // —— 公共 API 表面 ——

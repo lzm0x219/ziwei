@@ -5,7 +5,7 @@
 //!
 //! 自化不单独存储：由源支与目标支的几何关系派生（本宫=出，对宫=入）。
 
-use super::{branch::Branch, star::Star, transformation::Transformation};
+use super::{branch::Branch, palaces::Palaces, star::Star, transformation::Transformation};
 
 /// 本命宫干飞出的一条单跳边。
 ///
@@ -48,4 +48,34 @@ impl ZiweiFly {
             SelfTransformation::None
         }
     }
+}
+
+/// 十二宫干 × 四化 → 恰好 48 条 [`ZiweiFly`]。
+pub(crate) fn build_palace_flies(
+    palaces: &Palaces,
+    star_branches: &[Branch; 18],
+) -> [ZiweiFly; 48] {
+    let mut edges = [ZiweiFly {
+        source_branch: Branch::Zi,
+        transformation: Transformation::A,
+        target_branch: Branch::Zi,
+        star: Star::ZiWei,
+    }; 48];
+    let mut i = 0;
+    for branch_index in 0..12u8 {
+        let source = Branch::from_index(branch_index);
+        let stem = palaces.get(source).stem;
+        for transformation in Transformation::ALL {
+            let star = stem.transformation_star(transformation);
+            edges[i] = ZiweiFly {
+                source_branch: source,
+                transformation,
+                target_branch: star_branches[star.index()],
+                star,
+            };
+            i += 1;
+        }
+    }
+    debug_assert_eq!(i, 48);
+    edges
 }

@@ -57,6 +57,21 @@ pub struct LayerTransformation {
     pub branch: Branch,
 }
 
+/// 单干层四化：四象 → 星 → 本命落宫。
+pub(crate) fn stem_layer_transformations(
+    stem: Stem,
+    star_branches: &[Branch; 18],
+) -> [LayerTransformation; 4] {
+    Transformation::ALL.map(|transformation| {
+        let star = stem.transformation_star(transformation);
+        LayerTransformation {
+            transformation,
+            star,
+            branch: star_branches[star.index()],
+        }
+    })
+}
+
 /// 大限一步内的一个流年项。
 ///
 /// `lunar_year = birth_lunar_year + virtual_age - 1`（ADR-0008）。

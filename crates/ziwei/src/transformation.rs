@@ -23,6 +23,15 @@ impl Transformation {
     /// 禄、权、科、忌（与表下标 0..=3 一致），便于 `map` 遍历四化。
     pub const ALL: [Self; 4] = [Self::A, Self::B, Self::C, Self::D];
 
+    /// 禄（同 [`Self::A`]）。
+    pub const LU: Self = Self::A;
+    /// 权（同 [`Self::B`]）。
+    pub const QUAN: Self = Self::B;
+    /// 科（同 [`Self::C`]）。
+    pub const KE: Self = Self::C;
+    /// 忌（同 [`Self::D`]）。
+    pub const JI: Self = Self::D;
+
     /// 返回简体中文的四化象文本。
     pub const fn simplified_chinese(self) -> &'static str {
         match self {
