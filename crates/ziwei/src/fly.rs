@@ -10,16 +10,19 @@ use super::{branch::Branch, palaces::Palaces, star::Star, transformation::Transf
 /// 本命宫干飞出的一条单跳边。
 ///
 /// 语义：源宫宫干使 `star` 化 `transformation`，该星落在 `target_branch`。
+///
+/// 字段私有：四元组由宫干四化表与本命星位共同决定，外部不可伪造。
+/// 只读访问见 [`Self::source_branch`] 等 getter。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ZiweiFly {
     /// 源宫支（发出飞化的本命宫）。
-    pub source_branch: Branch,
+    source_branch: Branch,
     /// 四化象（禄/权/科/忌，见 [`Transformation`]）。
-    pub transformation: Transformation,
+    transformation: Transformation,
     /// 目标宫支（被化星在本命盘上的落宫）。
-    pub target_branch: Branch,
+    target_branch: Branch,
     /// 被化星。
-    pub star: Star,
+    star: Star,
 }
 
 /// 自化标注：由边的源/目标几何派生，不入库。
@@ -34,6 +37,41 @@ pub enum SelfTransformation {
 }
 
 impl ZiweiFly {
+    /// 由引擎装配一条飞边（外部不可调用）。
+    pub(crate) const fn new(
+        source_branch: Branch,
+        transformation: Transformation,
+        target_branch: Branch,
+        star: Star,
+    ) -> Self {
+        Self {
+            source_branch,
+            transformation,
+            target_branch,
+            star,
+        }
+    }
+
+    /// 源宫支（发出飞化的本命宫）。
+    pub const fn source_branch(self) -> Branch {
+        self.source_branch
+    }
+
+    /// 四化象（禄/权/科/忌）。
+    pub const fn transformation(self) -> Transformation {
+        self.transformation
+    }
+
+    /// 目标宫支（被化星在本命盘上的落宫）。
+    pub const fn target_branch(self) -> Branch {
+        self.target_branch
+    }
+
+    /// 被化星。
+    pub const fn star(self) -> Star {
+        self.star
+    }
+
     /// 由源支与目标支派生自化标注。
     ///
     /// 判定顺序：先本宫（出），再对宫（入），否则无自化。
@@ -61,24 +99,14 @@ pub(crate) fn build_palace_flies(
     palaces: &Palaces,
     star_branches: &[Branch; 18],
 ) -> [ZiweiFly; 48] {
-    let mut edges = [ZiweiFly {
-        source_branch: Branch::Zi,
-        transformation: Transformation::A,
-        target_branch: Branch::Zi,
-        star: Star::ZiWei,
-    }; 48];
+    let mut edges = [ZiweiFly::new(Branch::Zi, Transformation::A, Branch::Zi, Star::ZiWei); 48];
     let mut i = 0;
     for branch_index in 0..12u8 {
         let source = Branch::from_index(branch_index);
-        let stem = palaces.get(source).stem;
+        let stem = palaces.get(source).stem();
         for transformation in Transformation::ALL {
             let star = stem.transformation_star(transformation);
-            edges[i] = ZiweiFly {
-                source_branch: source,
-                transformation,
-                target_branch: star_branches[star.index()],
-                star,
-            };
+            edges[i] = ZiweiFly::new(source, transformation, star_branches[star.index()], star);
             i += 1;
         }
     }

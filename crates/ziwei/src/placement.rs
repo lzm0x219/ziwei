@@ -89,20 +89,12 @@ pub(crate) fn bureau_from_ming_stems(ming: Branch, palace_stems: &[Stem; 12]) ->
 /// Wave2b：宫职逆布 + 填干，得到十二宫（局在外部用 [`bureau_from_ming_stems`]）。
 pub(crate) fn assemble_palaces(ming_shen: MingShen, palace_stems: &[Stem; 12]) -> Palaces {
     let ming_branch = ming_shen.ming;
-    let mut raw = [Palace {
-        role: PalaceRole::Ming,
-        branch: Branch::Zi,
-        stem: Stem::Jia,
-    }; 12];
+    let mut raw = [Palace::new(PalaceRole::Ming, Branch::Zi, Stem::Jia); 12];
 
     for role in PalaceRole::ALL {
         let branch_index = twelve_index(ming_branch.index() as i32 - role.index() as i32) as usize;
         let branch = Branch::from_index(branch_index as u8);
-        raw[branch_index] = Palace {
-            role,
-            branch,
-            stem: palace_stems[branch_index],
-        };
+        raw[branch_index] = Palace::new(role, branch, palace_stems[branch_index]);
     }
 
     Palaces::from_filled(raw)

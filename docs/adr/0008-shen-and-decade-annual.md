@@ -12,13 +12,12 @@ shen_branch() -> Branch
 ## 大限序列
 
 ```text
-DecadeStep {
-  step: DecadeIndex,     // 0 = 第一限；合法范围 0..=11
-  ming_branch: Branch,   // 大限命所在支
-  age_start: u8,         // 虚岁起 = 局数 + 10*step
-  age_end: u8,           // age_start + 9
-  stem: Stem,            // 该支本命宫干
-}
+// DecadeStep 字段私有；只读 getter（ADR-0010）
+step.step()           // DecadeIndex；0 = 第一限
+step.ming_branch()    // 大限命所在支
+step.age_start()      // 虚岁起 = 局数 + 10*step
+step.age_end()        // age_start + 9
+step.stem()           // 该支本命宫干
 
 decade_steps() -> [DecadeStep; 12]  // 或等价序列
 decade_step_for_age(virtual_age: u8) -> Option<DecadeIndex>
@@ -32,7 +31,8 @@ decade_step_for_age(virtual_age: u8) -> Option<DecadeIndex>
 用户选中某步大限时，必须能列出该限覆盖的**十个流年**（按需生成，不强制预存进 `Ziwei`）：
 
 ```text
-years_in_decade(index: DecadeIndex) -> Result<[(lunar_year, virtual_age); 10], DecadeYearsError>
+years_in_decade(index: DecadeIndex) -> Result<[DecadeYear; 10], DecadeYearsError>
+// DecadeYear：lunar_year() / virtual_age()；字段私有（ADR-0010）
 // virtual_age 从 age_start 到 age_end
 // lunar_year = birth_lunar_year + virtual_age - 1
 // BirthYearUnavailable：命盘来自 from_input，没有真实出生年

@@ -116,7 +116,7 @@ impl Ziwei {
 
     /// 身宫叠在本命哪一宫职上。
     pub fn shen_natal_role(&self) -> PalaceRole {
-        self.palace_at(self.shen_branch).role
+        self.palace_at(self.shen_branch).role()
     }
 
     /// 命宫五行局。
@@ -187,8 +187,8 @@ impl Ziwei {
     pub fn decade_step_for_age(&self, virtual_age: u8) -> Option<DecadeIndex> {
         self.decade_steps
             .iter()
-            .find(|step| (step.age_start..=step.age_end).contains(&virtual_age))
-            .map(|step| step.step)
+            .find(|step| (step.age_start()..=step.age_end()).contains(&virtual_age))
+            .map(|step| step.step())
     }
 
     /// 某步大限覆盖的十个流年。
@@ -205,19 +205,16 @@ impl Ziwei {
             .birth_year
             .ok_or(DecadeYearsError::BirthYearUnavailable)?;
         let step = self.decade_step(index);
-        let mut years = [DecadeYear {
-            lunar_year: 0,
-            virtual_age: 0,
-        }; 10];
+        let mut years = [DecadeYear::new(0, 0); 10];
         for i in 0..10u8 {
-            let virtual_age = step.age_start + i;
+            let virtual_age = step.age_start() + i;
             let year_offset = i32::from(virtual_age) - 1;
-            years[i as usize] = DecadeYear {
-                lunar_year: birth_year
+            years[i as usize] = DecadeYear::new(
+                birth_year
                     .checked_add(year_offset)
                     .ok_or(DecadeYearsError::LunarYearOutOfRange)?,
                 virtual_age,
-            };
+            );
         }
         Ok(years)
     }
@@ -238,7 +235,7 @@ impl Ziwei {
         match view {
             ZiweiView::Natal => None,
             ZiweiView::Decade(index) => {
-                Some(self.stem_transformations(self.decade_step(index).stem))
+                Some(self.stem_transformations(self.decade_step(index).stem()))
             }
             ZiweiView::Annual { year } => Some(self.stem_transformations(stem_from_year(year))),
         }
@@ -268,7 +265,7 @@ impl Ziwei {
     fn view_ming_branch(&self, view: ZiweiView) -> Branch {
         match view {
             ZiweiView::Natal => self.ming_branch,
-            ZiweiView::Decade(index) => self.decade_step(index).ming_branch,
+            ZiweiView::Decade(index) => self.decade_step(index).ming_branch(),
             ZiweiView::Annual { year } => branch_from_year(year),
         }
     }
@@ -301,7 +298,10 @@ mod tests {
             Branch::Zi
         );
         assert_eq!(chart.shen_branch(), Branch::Shen);
-        assert_eq!(chart.shen_natal_role(), chart.palace_at(Branch::Shen).role);
+        assert_eq!(
+            chart.shen_natal_role(),
+            chart.palace_at(Branch::Shen).role()
+        );
     }
 
     #[test]
@@ -312,7 +312,7 @@ mod tests {
 
         for role in PalaceRole::ALL {
             let branch = chart.branch_of_role(role, ZiweiView::Natal);
-            assert_eq!(chart.palace_at(branch).role, role);
+            assert_eq!(chart.palace_at(branch).role(), role);
             assert_eq!(
                 branch.index(),
                 twelve_index(ming.index() as i32 - role.index() as i32) as usize
@@ -342,7 +342,7 @@ mod tests {
                 ZiweiInput::try_new(Gender::Yang, year_stem, branch, 0, 1, 0).unwrap(),
             );
             assert_eq!(
-                chart.palace_at(Branch::Yin).stem,
+                chart.palace_at(Branch::Yin).stem(),
                 yin_stem,
                 "year_stem={year_stem:?}"
             );
@@ -401,7 +401,7 @@ mod tests {
         let ming = chart.palace_for_role(PalaceRole::Ming, ZiweiView::Natal);
         assert_eq!(
             chart.bureau(),
-            FiveElementBureau::from_ming_palace(ming.stem, ming.branch)
+            FiveElementBureau::from_ming_palace(ming.stem(), ming.branch())
         );
     }
 
@@ -546,29 +546,29 @@ mod tests {
         for branch in (0..12u8).map(Branch::from_index) {
             let chunk = chart.flies_from_branch(branch);
             assert_eq!(chunk.len(), 4);
-            assert!(chunk.iter().all(|f| f.source_branch == branch));
-            assert_eq!(chunk.map(|f| f.transformation), Transformation::ALL);
+            assert!(chunk.iter().all(|f| f.source_branch() == branch));
+            assert_eq!(chunk.map(|f| f.transformation()), Transformation::ALL);
             // 被化星落宫与盘面一致
             for fly in chunk {
-                assert_eq!(fly.target_branch, chart.branch_of_star(fly.star));
+                assert_eq!(fly.target_branch(), chart.branch_of_star(fly.star()));
             }
         }
     }
 
     /// `forward == true` 时第二限 = 命支 +1，否则 −1。
     fn assert_decade_direction(chart: &Ziwei, forward: bool) {
-        let ming = chart.decade_steps()[0].ming_branch;
-        let step1 = chart.decade_steps()[1].ming_branch;
+        let ming = chart.decade_steps()[0].ming_branch();
+        let step1 = chart.decade_steps()[1].ming_branch();
         let expected = Branch::from_index(twelve_index(
             ming.index() as i32 + if forward { 1 } else { -1 },
         ));
         assert_eq!(step1, expected, "decade direction mismatch");
         let n = chart.bureau().number();
-        assert_eq!(chart.decade_steps()[0].age_start, n);
-        assert_eq!(chart.decade_steps()[0].age_end, n + 9);
+        assert_eq!(chart.decade_steps()[0].age_start(), n);
+        assert_eq!(chart.decade_steps()[0].age_end(), n + 9);
         // 大限干 = 该支本命宫干
         for step in chart.decade_steps() {
-            assert_eq!(step.stem, chart.palace_at(step.ming_branch).stem);
+            assert_eq!(step.stem(), chart.palace_at(step.ming_branch()).stem());
         }
     }
 
@@ -579,7 +579,7 @@ mod tests {
         assert_eq!(year.len(), 4);
         assert_eq!(laiyin, chart.birth_stem().laiyin_branch());
         for xf in year {
-            assert_eq!(xf.branch, chart.branch_of_star(xf.star));
+            assert_eq!(xf.branch(), chart.branch_of_star(xf.star()));
         }
 
         let decade_view = ZiweiView::Decade(DecadeIndex::FIRST);
@@ -651,12 +651,15 @@ mod tests {
         let chart = Ziwei::from_birth(sample_birth_march_chen());
         assert_eq!(chart.laiyin_branch(), Stem::Jia.laiyin_branch());
         let year_hua = chart.year_transformations();
-        assert_eq!(year_hua[0].transformation, Transformation::LU);
+        assert_eq!(year_hua[0].transformation(), Transformation::LU);
         assert_eq!(
-            year_hua[0].star,
+            year_hua[0].star(),
             Stem::Jia.transformation_star(Transformation::A)
         );
-        assert_eq!(year_hua[0].branch, chart.branch_of_star(year_hua[0].star));
+        assert_eq!(
+            year_hua[0].branch(),
+            chart.branch_of_star(year_hua[0].star())
+        );
         assert_eq!(
             chart.stem_transformations(Stem::Jia),
             chart.year_transformations()
@@ -671,19 +674,19 @@ mod tests {
         let reverse = Ziwei::from_birth(reverse_birth);
 
         let ming = Branch::Zi;
-        assert_eq!(forward.decade_steps()[0].ming_branch, ming);
+        assert_eq!(forward.decade_steps()[0].ming_branch(), ming);
         assert_eq!(
-            forward.decade_steps()[1].ming_branch,
+            forward.decade_steps()[1].ming_branch(),
             Branch::from_index(twelve_index(ming.index() as i32 + 1))
         );
         assert_eq!(
-            reverse.decade_steps()[1].ming_branch,
+            reverse.decade_steps()[1].ming_branch(),
             Branch::from_index(twelve_index(ming.index() as i32 - 1))
         );
 
         let n = forward.bureau().number();
-        assert_eq!(forward.decade_steps()[0].age_start, n);
-        assert_eq!(forward.decade_steps()[0].age_end, n + 9);
+        assert_eq!(forward.decade_steps()[0].age_start(), n);
+        assert_eq!(forward.decade_steps()[0].age_end(), n + 9);
     }
 
     #[test]
@@ -694,13 +697,13 @@ mod tests {
             .years_in_decade(DecadeIndex::FIRST)
             .expect("第一限年份未溢出");
         assert_eq!(years.len(), 10);
-        assert_eq!(years[0].virtual_age, step0.age_start);
+        assert_eq!(years[0].virtual_age(), step0.age_start());
         assert_eq!(
-            years[0].lunar_year,
-            chart.birth_year().expect("from_birth 保留真实年") + i32::from(step0.age_start) - 1
+            years[0].lunar_year(),
+            chart.birth_year().expect("from_birth 保留真实年") + i32::from(step0.age_start()) - 1
         );
         assert_eq!(
-            chart.decade_step_for_age(step0.age_start),
+            chart.decade_step_for_age(step0.age_start()),
             Some(DecadeIndex::FIRST)
         );
     }
@@ -729,7 +732,7 @@ mod tests {
     fn decade_view_relabels_roles_without_changing_natal_palace_role() {
         let chart = Ziwei::from_birth(sample_birth_march_chen());
         let natal_ming_branch = chart.branch_of_role(PalaceRole::Ming, ZiweiView::Natal);
-        let step1_ming = chart.decade_steps()[1].ming_branch;
+        let step1_ming = chart.decade_steps()[1].ming_branch();
         assert_ne!(natal_ming_branch, step1_ming);
 
         assert_eq!(
@@ -737,7 +740,7 @@ mod tests {
             step1_ming
         );
         let palace = chart.palace_at(natal_ming_branch);
-        assert_eq!(palace.role, PalaceRole::Ming);
+        assert_eq!(palace.role(), PalaceRole::Ming);
     }
 
     #[test]
@@ -788,8 +791,8 @@ mod tests {
         for branch_index in 0..12usize {
             let branch = Branch::from_index(branch_index as u8);
             let chunk = chart.flies_from_branch(branch);
-            assert!(chunk.iter().all(|f| f.source_branch == branch));
-            assert_eq!(chunk.map(|f| f.transformation), Transformation::ALL);
+            assert!(chunk.iter().all(|f| f.source_branch() == branch));
+            assert_eq!(chunk.map(|f| f.transformation()), Transformation::ALL);
         }
 
         let _ = flies
@@ -852,8 +855,8 @@ mod tests {
         let step0 = chart.decade_steps()[0];
         let years = chart.years_in_decade(DecadeIndex::FIRST).unwrap();
         assert_eq!(
-            years[0].lunar_year,
-            birth.year() + i32::from(step0.age_start) - 1
+            years[0].lunar_year(),
+            birth.year() + i32::from(step0.age_start()) - 1
         );
     }
 
@@ -928,9 +931,9 @@ mod tests {
                 let branch = Branch::from_index(b);
                 let a = chart.flies_from_branch(branch);
                 let c = base.flies_from_branch(branch);
-                assert_eq!(a.map(|f| f.source_branch), c.map(|f| f.source_branch));
-                assert_eq!(a.map(|f| f.transformation), c.map(|f| f.transformation));
-                assert_eq!(a.map(|f| f.star), c.map(|f| f.star));
+                assert_eq!(a.map(|f| f.source_branch()), c.map(|f| f.source_branch()));
+                assert_eq!(a.map(|f| f.transformation()), c.map(|f| f.transformation()));
+                assert_eq!(a.map(|f| f.star()), c.map(|f| f.star()));
             }
             // 至少某一天紫微相对初一会变化（否则日参与公式失效）
             if day == 15 {
@@ -966,7 +969,7 @@ mod tests {
         // 十二职逆布、飞边、大限起运
         for role in PalaceRole::ALL {
             let b = chart.branch_of_role(role, ZiweiView::Natal);
-            assert_eq!(chart.palace_at(b).role, role);
+            assert_eq!(chart.palace_at(b).role(), role);
         }
         assert_flies_layout(&chart);
         assert_decade_direction(&chart, true);

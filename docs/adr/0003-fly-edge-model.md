@@ -7,7 +7,8 @@
 ## 接口草图
 
 ```text
-ZiweiFly { source_branch, transformation, target_branch, star }
+// ZiweiFly 字段私有；只读 getter（ADR-0010）
+fly.source_branch() / transformation() / target_branch() / star()
 // Out | In | None 由几何派生，不入库
 
 palace_flies() -> &[ZiweiFly; 48]              // 全量，只来自本命宫干

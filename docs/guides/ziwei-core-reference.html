@@ -569,7 +569,7 @@ match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
       <table>
         <thead><tr><th>API</th><th>说明</th></tr></thead>
         <tbody>
-          <tr><td class="sig">palace_at(Branch) → &amp;Palace</td><td>本命宫（role/branch/stem）</td></tr>
+          <tr><td class="sig">palace_at(Branch) → &amp;Palace</td><td>本命宫；role()/branch()/stem() 只读</td></tr>
           <tr><td class="sig">shen_branch() → Branch</td><td>身宫叠支</td></tr>
           <tr><td class="sig">shen_natal_role() → PalaceRole</td><td>身落在本命何职</td></tr>
           <tr><td class="sig">bureau() → FiveElementBureau</td><td>命宫五行局</td></tr>
@@ -617,15 +617,15 @@ match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
           <tr><td><code class="inline">ZiweiInput</code></td><td><code class="inline">{ gender, birth_stem, birth_branch, month, day, hour }</code>；仅 try_new</td></tr>
           <tr><td><code class="inline">Gender</code></td><td>Yin / Yang</td></tr>
           <tr><td><code class="inline">Branch</code> / <code class="inline">Stem</code></td><td>地支、天干；index 子=0 / 甲=0</td></tr>
-          <tr><td><code class="inline">Palace</code> / <code class="inline">PalaceRole</code></td><td>宫对象与十二职；PalaceRole::ALL</td></tr>
-          <tr><td><code class="inline">Star</code> / <code class="inline">StarLabel</code></td><td>十八主星与标签；Star::ALL</td></tr>
+          <tr><td><code class="inline">Palace</code> / <code class="inline">PalaceRole</code></td><td>宫对象（字段私有，role/branch/stem getter）与十二职；PalaceRole::ALL</td></tr>
+          <tr><td><code class="inline">Star</code> / <code class="inline">StarLabel</code></td><td>十八主星与标签；Star::ALL（标签保持公开字段）</td></tr>
           <tr><td><code class="inline">Transformation</code></td><td>A–D 与别名 LU/QUAN/KE/JI；ALL</td></tr>
           <tr><td><code class="inline">FiveElementBureau</code></td><td>水二…火六；number()</td></tr>
           <tr><td><code class="inline">ZiweiView</code></td><td>Natal | Decade(index) | Annual{year}</td></tr>
           <tr><td><code class="inline">DecadeIndex</code></td><td>经 try_new 校验的 0..=11 大限序号</td></tr>
-          <tr><td><code class="inline">DecadeStep</code> / <code class="inline">DecadeYear</code></td><td>大限步、限内流年</td></tr>
-          <tr><td><code class="inline">LayerTransformation</code></td><td>四化+星+落宫</td></tr>
-          <tr><td><code class="inline">ZiweiFly</code> / <code class="inline">SelfTransformation</code></td><td>飞边与自化</td></tr>
+          <tr><td><code class="inline">DecadeStep</code> / <code class="inline">DecadeYear</code></td><td>大限步、限内流年；字段私有，只读 getter</td></tr>
+          <tr><td><code class="inline">LayerTransformation</code></td><td>四化+星+落宫；字段私有</td></tr>
+          <tr><td><code class="inline">ZiweiFly</code> / <code class="inline">SelfTransformation</code></td><td>飞边（字段私有）与自化派生</td></tr>
           <tr><td><code class="inline">ZiweiInputError</code></td><td>月/日/时/干支对错误</td></tr>
           <tr><td><code class="inline">DecadeYearsError</code></td><td>真实出生年缺失或绝对流年溢出</td></tr>
         </tbody>

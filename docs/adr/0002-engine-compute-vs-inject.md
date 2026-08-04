@@ -4,6 +4,8 @@
 
 校验边界：`ZiweiBirth::try_new` / `ZiweiInput::try_new` 返回 `Result`；`from_birth(ZiweiBirth) -> Ziwei` 与 `from_input(ZiweiInput) -> Ziwei` 只接受已校验类型，不再套假错误通道。真实出生年能力见 ADR-0009。
 
+结果侧同样不可伪造：`Palace`、`ZiweiFly`、`DecadeStep`、`LayerTransformation`、`DecadeYear` 字段私有、仅引擎装配（ADR-0010）。
+
 ## Boundary table
 
 | 量                       | `from_birth`    | `from_input`                | 规则                                   |

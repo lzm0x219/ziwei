@@ -88,31 +88,103 @@ pub enum ZiweiView {
 ///
 /// 起运虚岁 = 五行局数；每限 10 年 `[age_start, age_end]`（含端点）。
 /// 大限干 = 大限命支上的**本命**宫干（不重布宫干）。
+///
+/// 字段私有：`age_end = age_start + 9`、干与命支本命宫干一致，由引擎保证。
+/// 只读访问见 [`Self::step`] 等 getter。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DecadeStep {
     /// 步序，0 = 第一限。
-    pub step: DecadeIndex,
+    step: DecadeIndex,
     /// 大限命所在支。
-    pub ming_branch: Branch,
+    ming_branch: Branch,
     /// 虚岁起（含）；第一限等于局数。
-    pub age_start: u8,
-    /// 虚岁止（含）；等于 `age_start + 9`。
-    pub age_end: u8,
+    age_start: u8,
     /// 该支本命宫干（大限干，供层四化）。
-    pub stem: Stem,
+    stem: Stem,
+}
+
+impl DecadeStep {
+    /// 由引擎装配一步大限（外部不可调用）。
+    pub(crate) const fn new(
+        step: DecadeIndex,
+        ming_branch: Branch,
+        age_start: u8,
+        stem: Stem,
+    ) -> Self {
+        Self {
+            step,
+            ming_branch,
+            age_start,
+            stem,
+        }
+    }
+
+    /// 步序，0 = 第一限。
+    pub const fn step(self) -> DecadeIndex {
+        self.step
+    }
+
+    /// 大限命所在支。
+    pub const fn ming_branch(self) -> Branch {
+        self.ming_branch
+    }
+
+    /// 虚岁起（含）；第一限等于局数。
+    pub const fn age_start(self) -> u8 {
+        self.age_start
+    }
+
+    /// 虚岁止（含）；等于 `age_start + 9`。
+    pub const fn age_end(self) -> u8 {
+        self.age_start.saturating_add(9)
+    }
+
+    /// 该支本命宫干（大限干，供层四化）。
+    pub const fn stem(self) -> Stem {
+        self.stem
+    }
 }
 
 /// 一层四化结果：四化象、被化星、落宫支。
 ///
 /// 用于生年四化、大限/流年 overlay，以及任意干的 [`crate::Ziwei::stem_transformations`]。
+///
+/// 字段私有：星与落宫由干×四化表及本命星位决定，外部不可伪造。
+/// 只读访问见 [`Self::transformation`] / [`Self::star`] / [`Self::branch`]。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LayerTransformation {
     /// 四化象。
-    pub transformation: Transformation,
+    transformation: Transformation,
     /// 被化星。
-    pub star: Star,
+    star: Star,
     /// 该星在本命盘上的落宫支。
-    pub branch: Branch,
+    branch: Branch,
+}
+
+impl LayerTransformation {
+    /// 由引擎装配一层四化项（外部不可调用）。
+    pub(crate) const fn new(transformation: Transformation, star: Star, branch: Branch) -> Self {
+        Self {
+            transformation,
+            star,
+            branch,
+        }
+    }
+
+    /// 四化象。
+    pub const fn transformation(self) -> Transformation {
+        self.transformation
+    }
+
+    /// 被化星。
+    pub const fn star(self) -> Star {
+        self.star
+    }
+
+    /// 该星在本命盘上的落宫支。
+    pub const fn branch(self) -> Branch {
+        self.branch
+    }
 }
 
 /// 单干层四化：四象 → 星 → 本命落宫。
@@ -122,23 +194,42 @@ pub(crate) fn stem_layer_transformations(
 ) -> [LayerTransformation; 4] {
     Transformation::ALL.map(|transformation| {
         let star = stem.transformation_star(transformation);
-        LayerTransformation {
-            transformation,
-            star,
-            branch: star_branches[star.index()],
-        }
+        LayerTransformation::new(transformation, star, star_branches[star.index()])
     })
 }
 
 /// 大限一步内的一个流年项。
 ///
 /// `lunar_year = birth_lunar_year + virtual_age - 1`（ADR-0008）。
+///
+/// 字段私有：绝对流年与虚岁由真实出生年与大限起运岁共同决定，外部不可伪造。
+/// 只读访问见 [`Self::lunar_year`] / [`Self::virtual_age`]。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DecadeYear {
     /// 农历年序号。
-    pub lunar_year: i32,
+    lunar_year: i32,
     /// 虚岁（由调用方理解；core 不收公历 Date）。
-    pub virtual_age: u8,
+    virtual_age: u8,
+}
+
+impl DecadeYear {
+    /// 由引擎装配限内流年项（外部不可调用）。
+    pub(crate) const fn new(lunar_year: i32, virtual_age: u8) -> Self {
+        Self {
+            lunar_year,
+            virtual_age,
+        }
+    }
+
+    /// 农历年序号。
+    pub const fn lunar_year(self) -> i32 {
+        self.lunar_year
+    }
+
+    /// 虚岁（由调用方理解；core 不收公历 Date）。
+    pub const fn virtual_age(self) -> u8 {
+        self.virtual_age
+    }
 }
 
 /// 生成某步大限的绝对农历年份时可能发生的错误。

@@ -29,4 +29,39 @@ mod tests {
             Err(DecadeYearsError::BirthYearUnavailable)
         );
     }
+
+    #[test]
+    fn reexports_result_type_read_getters() {
+        let birth = ZiweiBirth::try_new(Gender::Yang, 1984, 2, 1, 4).expect("绑定层样例合法");
+        let chart = Ziwei::from_birth(birth);
+
+        let palace = chart.palace_at(Branch::Zi);
+        let _ = (palace.role(), palace.branch(), palace.stem());
+
+        let fly = chart.flies_from_branch(Branch::Zi)[0];
+        let _ = (
+            fly.source_branch(),
+            fly.transformation(),
+            fly.target_branch(),
+            fly.star(),
+            fly.self_transformation(),
+        );
+
+        let step = chart.decade_step(DecadeIndex::FIRST);
+        let _ = (
+            step.step(),
+            step.ming_branch(),
+            step.age_start(),
+            step.age_end(),
+            step.stem(),
+        );
+
+        let xf = chart.year_transformations()[0];
+        let _ = (xf.transformation(), xf.star(), xf.branch());
+
+        let year = chart
+            .years_in_decade(DecadeIndex::FIRST)
+            .expect("from_birth 具备真实年")[0];
+        let _ = (year.lunar_year(), year.virtual_age());
+    }
 }
