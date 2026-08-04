@@ -2,6 +2,12 @@
 //!
 //! 安宫安星见 [`crate::placement`]，大限见 [`crate::decade`]，飞边见 [`crate::fly`]。
 //!
+//! # 双入口
+//!
+//! - **[`Ziwei::from_input`]**：排盘实现主体（原始量 → 命盘）。
+//! - **[`Ziwei::from_birth`]**：年序号 → 年干支后组 [`ZiweiInput`]，再委托实现；
+//!   并保留真实农历年供 `years_in_decade` 等时间线 API。
+//!
 //! # 查询原则（ADR-0004）
 //!
 //! 本命盘固定；[`ZiweiView`] 只改宫职贴标与层四化 overlay。
@@ -13,7 +19,7 @@ use super::{
     fly::{ZiweiFly, build_palace_flies},
     input::{
         Gender, ZiweiBirth, ZiweiInput, ZiweiInputError, branch_from_year, representative_year,
-        stem_from_year, validate_month_day_hour,
+        stem_from_year,
     },
     palace::{Palace, PalaceRole},
     palaces::Palaces,
@@ -37,7 +43,7 @@ pub struct Ziwei {
     shen_branch: Branch,
     /// 命宫五行局。
     bureau: FiveElementBureau,
-    /// 农历出生年序号；`from_input` 时为甲子代表年。
+    /// 农历年序号：`from_birth` 为真实年；纯 `from_input` 为甲子代表年。
     birth_year: i32,
     /// 生年天干。
     birth_stem: Stem,
@@ -93,51 +99,48 @@ impl<'a> ZiweiHandle<'a> {
 }
 
 impl Ziwei {
-    /// 从农历出生资料构造命盘（权威全管道）。
+    /// 从农历出生资料构造命盘（权威入口：年序号 → 年柱，再走 [`Self::from_input`] 实现）。
+    ///
+    /// 时间线 API（如 [`Self::years_in_decade`]）使用真实的 `birth.year`，
+    /// 不会落入纯 `from_input` 的六十甲子代表年。
     ///
     /// # Errors
     ///
-    /// 月/日/时超出范围时返回错误。
+    /// 月/日/时越界时返回错误（经 [`ZiweiInput::try_new`]）；年柱由公式推出，恒为合法六十甲子。
     pub fn from_birth(birth: ZiweiBirth) -> Result<Self, ZiweiInputError> {
-        validate_month_day_hour(birth.month, birth.day, birth.hour)?;
-        Ok(Self::build(
+        let input = ZiweiInput::try_new(
             birth.gender,
             stem_from_year(birth.year),
+            branch_from_year(birth.year),
             birth.month,
             birth.day,
             birth.hour,
-            birth.year,
-        ))
+        )?;
+        Ok(Self::from_validated_input(input, birth.year))
     }
 
-    /// 从原始量捷径构造命盘（年柱由调用方给出）。
+    /// 从原始量构造命盘（**排盘实现主体**）。
     ///
-    /// `birth_year` 取与年柱同甲子的代表年（甲子 = 4），仅用于 `years_in_decade` 等绝对年序号；
-    /// 宫盘/星曜/大限支与 `from_birth` 在相同性别与月日时下一致。
+    /// 年柱已由调用方给出；安宫、安星、飞边、大限均在此路径计算。
+    /// 盘内 `birth_year` 取与年柱同甲子的代表年（甲子 = 4），仅服务绝对年序号类 API。
     ///
     /// # Errors
     ///
-    /// 月/日/时非法，或年干支不成六十甲子时返回错误。
+    /// `ZiweiInput` 已由 [`ZiweiInput::try_new`] 校验，此函数当前总是 `Ok`；
+    /// 保留 `Result` 以便与 `from_birth` 对称及日后扩展。
     pub fn from_input(input: ZiweiInput) -> Result<Self, ZiweiInputError> {
-        Ok(Self::build(
-            input.gender(),
-            input.birth_stem(),
-            input.month(),
-            input.day(),
-            input.hour(),
-            representative_year(input.birth_stem(), input.birth_branch()),
-        ))
+        let year = representative_year(input.birth_stem(), input.birth_branch());
+        Ok(Self::from_validated_input(input, year))
     }
 
-    /// 双入口共享的排盘编排（输入已合法）。
-    fn build(
-        gender: Gender,
-        birth_stem: Stem,
-        month: u8,
-        day: u8,
-        hour: u8,
-        birth_year: i32,
-    ) -> Self {
+    /// 已校验原始量 + 用于时间线的农历年序号 → 命盘（双入口最终实现）。
+    fn from_validated_input(input: ZiweiInput, birth_year: i32) -> Self {
+        let gender = input.gender();
+        let birth_stem = input.birth_stem();
+        let month = input.month();
+        let day = input.day();
+        let hour = input.hour();
+
         let layout = layout_natal_palaces(birth_stem, month, hour);
         let star_branches = place_eighteen_stars(month, hour, day, layout.bureau.number());
         let flies = build_palace_flies(&layout.palaces, &star_branches);
@@ -188,7 +191,7 @@ impl Ziwei {
         self.birth_stem
     }
 
-    /// 农历出生年序号（`from_input` 为与年柱同甲子的代表年，见 [`Self::from_input`]）。
+    /// 农历年序号：`from_birth` 为真实年；纯 `from_input` 为甲子代表年。
     pub const fn birth_year(self) -> i32 {
         self.birth_year
     }
@@ -737,6 +740,9 @@ mod tests {
         assert_eq!(from_birth.decade_steps(), from_input.decade_steps());
         assert_eq!(from_birth.palace_flies(), from_input.palace_flies());
 
+        // from_birth 保留真实年；纯 from_input 用代表年 — 虚岁序列仍一致
+        assert_eq!(from_birth.birth_year(), birth.year);
+        assert_ne!(from_birth.birth_year(), from_input.birth_year());
         let ages_birth: Vec<_> = from_birth
             .years_in_decade(0)
             .unwrap()
@@ -750,6 +756,19 @@ mod tests {
             .map(|y| y.virtual_age)
             .collect();
         assert_eq!(ages_birth, ages_input);
+    }
+
+    /// from_birth 经 ZiweiInput 委托实现，且 years_in_decade 用真实年号。
+    #[test]
+    fn from_birth_keeps_historical_years_in_decade() {
+        let birth = sample_birth_march_chen();
+        let chart = Ziwei::from_birth(birth).unwrap();
+        let step0 = chart.decade_steps()[0];
+        let years = chart.years_in_decade(0).unwrap();
+        assert_eq!(
+            years[0].lunar_year,
+            birth.year + i32::from(step0.age_start) - 1
+        );
     }
 
     #[test]
