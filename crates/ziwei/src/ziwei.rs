@@ -17,8 +17,7 @@ use super::{
     five_element_bureau::FiveElementBureau,
     fly::ZiweiFly,
     input::{
-        Gender, ZiweiBirth, ZiweiInput, ZiweiInputError, branch_from_year, representative_year,
-        stem_from_year,
+        Gender, ZiweiBirth, ZiweiInput, branch_from_year, representative_year, stem_from_year,
     },
     palace::{Palace, PalaceRole},
     palaces::Palaces,
@@ -60,22 +59,14 @@ pub struct Ziwei {
 impl Ziwei {
     /// 从农历出生资料构造命盘（权威入口：年序号 → 年柱，再走 [`Self::from_input`] 实现）。
     ///
-    /// 时间线 API（如 [`Self::years_in_decade`]）使用真实的 `birth.year`，
+    /// 时间线 API（如 [`Self::years_in_decade`]）使用真实的 `birth.year()`，
     /// 不会落入纯 `from_input` 的六十甲子代表年。
     ///
-    /// # Errors
-    ///
-    /// 月/日/时越界时返回错误（经 [`ZiweiInput::try_new`]）；年柱由公式推出，恒为合法六十甲子。
-    pub fn from_birth(birth: ZiweiBirth) -> Result<Self, ZiweiInputError> {
-        let input = ZiweiInput::try_new(
-            birth.gender,
-            stem_from_year(birth.year),
-            branch_from_year(birth.year),
-            birth.month,
-            birth.day,
-            birth.hour,
-        )?;
-        Ok(Self::from_validated_input(input, birth.year))
+    /// 入参已由 [`ZiweiBirth::try_new`] 保证合法，故不返回 [`Result`]。
+    pub fn from_birth(birth: ZiweiBirth) -> Self {
+        let year = birth.year();
+        let input = ZiweiInput::from_birth(birth);
+        Self::from_validated_input(input, year)
     }
 
     /// 从已校验的原始量构造命盘（**排盘实现主体**）。
@@ -84,7 +75,6 @@ impl Ziwei {
     /// 盘内 `birth_year` 取与年柱同甲子的代表年（甲子 = 4），仅服务绝对年序号类 API。
     ///
     /// 入参须经 [`ZiweiInput::try_new`]；类型已保证合法，故不返回 [`Result`]。
-    /// 需要校验失败路径时用 [`Self::from_birth`] 或先 `try_new`。
     pub fn from_input(input: ZiweiInput) -> Self {
         let year = representative_year(input.birth_stem(), input.birth_branch());
         Self::from_validated_input(input, year)
@@ -287,7 +277,7 @@ mod tests {
 
     #[test]
     fn from_birth_places_ming_and_shen_for_march_chen_hour() {
-        let chart = Ziwei::from_birth(sample_birth_march_chen()).expect("应构造成功");
+        let chart = Ziwei::from_birth(sample_birth_march_chen());
 
         assert_eq!(
             chart.branch_of_role(PalaceRole::Ming, ZiweiView::Natal),
@@ -299,7 +289,7 @@ mod tests {
 
     #[test]
     fn twelve_palaces_unique_and_roles_reverse_from_ming() {
-        let chart = Ziwei::from_birth(sample_birth_march_chen()).unwrap();
+        let chart = Ziwei::from_birth(sample_birth_march_chen());
         let ming = chart
             .branch_of_role(PalaceRole::Ming, ZiweiView::Natal)
             .unwrap();
@@ -346,7 +336,7 @@ mod tests {
 
     #[test]
     fn major_star_offsets_from_ziwei_and_tianfu() {
-        let chart = Ziwei::from_birth(sample_birth_march_chen()).unwrap();
+        let chart = Ziwei::from_birth(sample_birth_march_chen());
         let z = branch_index_to_yin0(chart.branch_of_star(Star::ZiWei).index() as u8);
         let t = branch_index_to_yin0(chart.branch_of_star(Star::TianFu).index() as u8);
         assert_eq!(
@@ -377,7 +367,7 @@ mod tests {
 
     #[test]
     fn eighteen_stars_each_appear_once() {
-        let chart = Ziwei::from_birth(sample_birth_march_chen()).unwrap();
+        let chart = Ziwei::from_birth(sample_birth_march_chen());
         let mut counts = [0u8; 12];
         for star in Star::ALL {
             counts[chart.branch_of_star(star).index()] += 1;
@@ -392,7 +382,7 @@ mod tests {
 
     #[test]
     fn bureau_matches_ming_palace_table() {
-        let chart = Ziwei::from_birth(sample_birth_march_chen()).unwrap();
+        let chart = Ziwei::from_birth(sample_birth_march_chen());
         let ming = chart
             .palace_for_role(PalaceRole::Ming, ZiweiView::Natal)
             .unwrap();
@@ -400,30 +390,6 @@ mod tests {
             chart.bureau(),
             FiveElementBureau::from_ming_palace(ming.stem, ming.branch)
         );
-    }
-
-    #[test]
-    fn rejects_invalid_birth_ranges() {
-        assert!(matches!(
-            Ziwei::from_birth(ZiweiBirth {
-                gender: Gender::Yang,
-                year: 2000,
-                month: 12,
-                day: 1,
-                hour: 0,
-            }),
-            Err(ZiweiInputError::MonthOutOfRange { value: 12 })
-        ));
-        assert!(matches!(
-            Ziwei::from_birth(ZiweiBirth {
-                gender: Gender::Yang,
-                year: 2000,
-                month: 0,
-                day: 0,
-                hour: 0,
-            }),
-            Err(ZiweiInputError::DayOutOfRange { value: 0 })
-        ));
     }
 
     /// 福山堂等口诀源锁定的安命/局/紫微黄金（扩展：身、辅佐、飞边、大限、层四化）。
@@ -620,7 +586,7 @@ mod tests {
 
     #[test]
     fn tianfu_mirrors_ziwei_about_yin_shen() {
-        let chart = Ziwei::from_birth(sample_birth_march_chen()).unwrap();
+        let chart = Ziwei::from_birth(sample_birth_march_chen());
         let z = branch_index_to_yin0(chart.branch_of_star(Star::ZiWei).index() as u8);
         let t = branch_index_to_yin0(chart.branch_of_star(Star::TianFu).index() as u8);
         assert_eq!(t, twelve_index(-(i32::from(z))));
@@ -669,7 +635,7 @@ mod tests {
 
     #[test]
     fn laiyin_and_year_transformations_fixed() {
-        let chart = Ziwei::from_birth(sample_birth_march_chen()).unwrap();
+        let chart = Ziwei::from_birth(sample_birth_march_chen());
         assert_eq!(chart.laiyin_branch(), Stem::Jia.laiyin_branch());
         let year_hua = chart.year_transformations();
         assert_eq!(year_hua[0].transformation, Transformation::LU);
@@ -686,22 +652,10 @@ mod tests {
 
     #[test]
     fn decade_direction_jia_yang_forward_jia_yin_reverse() {
-        let forward = Ziwei::from_birth(ZiweiBirth {
-            gender: Gender::Yang,
-            year: 1984,
-            month: 2,
-            day: 1,
-            hour: 4,
-        })
-        .unwrap();
-        let reverse = Ziwei::from_birth(ZiweiBirth {
-            gender: Gender::Yin,
-            year: 1984,
-            month: 2,
-            day: 1,
-            hour: 4,
-        })
-        .unwrap();
+        let forward_birth = ZiweiBirth::try_new(Gender::Yang, 1984, 2, 1, 4).expect("顺行样例合法");
+        let reverse_birth = ZiweiBirth::try_new(Gender::Yin, 1984, 2, 1, 4).expect("逆行样例合法");
+        let forward = Ziwei::from_birth(forward_birth);
+        let reverse = Ziwei::from_birth(reverse_birth);
 
         let ming = Branch::Zi;
         assert_eq!(forward.decade_steps()[0].ming_branch, ming);
@@ -721,7 +675,7 @@ mod tests {
 
     #[test]
     fn years_in_decade_and_age_lookup() {
-        let chart = Ziwei::from_birth(sample_birth_march_chen()).unwrap();
+        let chart = Ziwei::from_birth(sample_birth_march_chen());
         let step0 = chart.decade_steps()[0];
         let years = chart.years_in_decade(0).expect("step 0 合法");
         assert_eq!(years.len(), 10);
@@ -737,29 +691,23 @@ mod tests {
     #[test]
     fn from_birth_accepts_extreme_i32_years() {
         for year in [i32::MIN, i32::MAX] {
-            let chart = Ziwei::from_birth(ZiweiBirth {
-                year,
-                ..sample_birth_march_chen()
-            })
-            .expect("极值农历年序号也应能构盘");
+            let birth = ZiweiBirth::try_new(Gender::Yang, year, 2, 1, 4).expect("极值年样例合法");
+            let chart = Ziwei::from_birth(birth);
             assert_eq!(chart.birth_year(), year);
         }
     }
 
     #[test]
     fn years_in_decade_returns_none_when_lunar_year_overflows() {
-        let chart = Ziwei::from_birth(ZiweiBirth {
-            year: i32::MAX,
-            ..sample_birth_march_chen()
-        })
-        .expect("极大农历年序号应能构盘");
+        let birth = ZiweiBirth::try_new(Gender::Yang, i32::MAX, 2, 1, 4).expect("极大年样例合法");
+        let chart = Ziwei::from_birth(birth);
 
         assert!(chart.years_in_decade(0).is_none());
     }
 
     #[test]
     fn decade_view_relabels_roles_without_changing_natal_palace_role() {
-        let chart = Ziwei::from_birth(sample_birth_march_chen()).unwrap();
+        let chart = Ziwei::from_birth(sample_birth_march_chen());
         let natal_ming_branch = chart
             .branch_of_role(PalaceRole::Ming, ZiweiView::Natal)
             .unwrap();
@@ -781,7 +729,7 @@ mod tests {
 
     #[test]
     fn annual_view_ming_is_taisui() {
-        let chart = Ziwei::from_birth(sample_birth_march_chen()).unwrap();
+        let chart = Ziwei::from_birth(sample_birth_march_chen());
         let year: i32 = 1990;
         let expected = branch_from_year(year);
         assert_eq!(
@@ -792,7 +740,7 @@ mod tests {
 
     #[test]
     fn overlay_empty_on_natal_and_stable_year_hua() {
-        let chart = Ziwei::from_birth(sample_birth_march_chen()).unwrap();
+        let chart = Ziwei::from_birth(sample_birth_march_chen());
         let year_hua = chart.year_transformations();
         assert!(chart.overlay_transformations(ZiweiView::Natal).is_none());
         let decade_overlay = chart
@@ -814,7 +762,7 @@ mod tests {
 
     #[test]
     fn flies_bounded_and_view_indexed() {
-        let chart = Ziwei::from_birth(sample_birth_march_chen()).unwrap();
+        let chart = Ziwei::from_birth(sample_birth_march_chen());
         let flies = chart.palace_flies();
         assert_eq!(flies.len(), 48);
 
@@ -855,17 +803,17 @@ mod tests {
     #[test]
     fn dual_entry_parity_for_same_person() {
         let birth = sample_birth_march_chen();
-        let from_birth = Ziwei::from_birth(birth).unwrap();
-        let stem = stem_from_year(birth.year);
-        let branch = branch_from_year(birth.year);
+        let from_birth = Ziwei::from_birth(birth);
+        let stem = stem_from_year(birth.year());
+        let branch = branch_from_year(birth.year());
         let from_input = Ziwei::from_input(
             ZiweiInput::try_new(
-                birth.gender,
+                birth.gender(),
                 stem,
                 branch,
-                birth.month,
-                birth.day,
-                birth.hour,
+                birth.month(),
+                birth.day(),
+                birth.hour(),
             )
             .unwrap(),
         );
@@ -888,7 +836,7 @@ mod tests {
         assert_eq!(from_birth.palace_flies(), from_input.palace_flies());
 
         // from_birth 保留真实年；纯 from_input 用代表年 — 虚岁序列仍一致
-        assert_eq!(from_birth.birth_year(), birth.year);
+        assert_eq!(from_birth.birth_year(), birth.year());
         assert_ne!(from_birth.birth_year(), from_input.birth_year());
         let ages_birth: Vec<_> = from_birth
             .years_in_decade(0)
@@ -909,12 +857,12 @@ mod tests {
     #[test]
     fn from_birth_keeps_historical_years_in_decade() {
         let birth = sample_birth_march_chen();
-        let chart = Ziwei::from_birth(birth).unwrap();
+        let chart = Ziwei::from_birth(birth);
         let step0 = chart.decade_steps()[0];
         let years = chart.years_in_decade(0).unwrap();
         assert_eq!(
             years[0].lunar_year,
-            birth.year + i32::from(step0.age_start) - 1
+            birth.year() + i32::from(step0.age_start) - 1
         );
     }
 
@@ -1012,7 +960,7 @@ mod tests {
     /// 经典三月辰时（大纪元/口诀系）：命子身申 + 甲子年干来因戌。
     #[test]
     fn classic_march_chen_hour_full_chart_invariants() {
-        let chart = Ziwei::from_birth(sample_birth_march_chen()).unwrap();
+        let chart = Ziwei::from_birth(sample_birth_march_chen());
         assert_eq!(
             chart.branch_of_role(PalaceRole::Ming, ZiweiView::Natal),
             Some(Branch::Zi)
@@ -1044,7 +992,7 @@ mod tests {
     #[test]
     fn birth_try_new_feeds_from_birth() {
         let birth = ZiweiBirth::try_new(Gender::Yin, 1990, 5, 15, 8).unwrap();
-        let chart = Ziwei::from_birth(birth).unwrap();
+        let chart = Ziwei::from_birth(birth);
         assert_eq!(chart.gender(), Gender::Yin);
         assert_eq!(chart.birth_year(), 1990);
         assert_eq!(chart.birth_stem(), stem_from_year(1990));

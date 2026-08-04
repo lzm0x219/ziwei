@@ -30,20 +30,19 @@ impl Gender {
 ///
 /// 月以正月为 0，时辰以子时为 0，日以初一为 1；历法换算与闰月/晚子时由调用方消解。
 ///
-/// 字段保持公开便于字面量与绑定层映射；**优先**用 [`Self::try_new`] 在边界完成校验。
-/// [`crate::Ziwei::from_birth`] 仍会再次校验月/日/时（字面量直构非法值时失败）。
+/// 字段私有，只能经 [`Self::try_new`] 构造；构造成功后月/日/时始终合法。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ZiweiBirth {
     /// 命主的性别。
-    pub gender: Gender,
+    gender: Gender,
     /// 农历年序号；年干支由 `(year - 4).rem_euclid(10|12)` 推导。
-    pub year: i32,
+    year: i32,
     /// 农历月，`0..=11`，正月 = 0。
-    pub month: u8,
+    month: u8,
     /// 农历日，`1..=30`，初一 = 1（用于定紫微）。
-    pub day: u8,
+    day: u8,
     /// 时辰，`0..=11`，子时 = 0。
-    pub hour: u8,
+    hour: u8,
 }
 
 impl ZiweiBirth {
@@ -70,6 +69,31 @@ impl ZiweiBirth {
             hour,
         })
     }
+
+    /// 命主性别。
+    pub const fn gender(self) -> Gender {
+        self.gender
+    }
+
+    /// 农历年序号。
+    pub const fn year(self) -> i32 {
+        self.year
+    }
+
+    /// 农历月（正月 = 0）。
+    pub const fn month(self) -> u8 {
+        self.month
+    }
+
+    /// 农历日（初一 = 1）。
+    pub const fn day(self) -> u8 {
+        self.day
+    }
+
+    /// 时辰（子时 = 0）。
+    pub const fn hour(self) -> u8 {
+        self.hour
+    }
 }
 
 /// `from_input` 的原始量捷径：性别、年干支、月/日/时。
@@ -93,6 +117,18 @@ pub struct ZiweiInput {
 }
 
 impl ZiweiInput {
+    /// 将已校验的出生资料转换为排盘输入。
+    pub(crate) const fn from_birth(birth: ZiweiBirth) -> Self {
+        Self {
+            gender: birth.gender(),
+            birth_stem: stem_from_year(birth.year()),
+            birth_branch: branch_from_year(birth.year()),
+            month: birth.month(),
+            day: birth.day(),
+            hour: birth.hour(),
+        }
+    }
+
     /// 创建已验证的原始量输入。
     ///
     /// `month` 以正月为 0，`hour` 以子时为 0，`day` 以初一为 1。
@@ -276,11 +312,11 @@ mod tests {
     fn ziwei_birth_holds_flat_lunar_fields() {
         let birth = ZiweiBirth::try_new(Gender::Yang, 2024, 0, 1, 0).expect("合法出生");
 
-        assert_eq!(birth.gender, Gender::Yang);
-        assert_eq!(birth.year, 2024);
-        assert_eq!(birth.month, 0);
-        assert_eq!(birth.day, 1);
-        assert_eq!(birth.hour, 0);
+        assert_eq!(birth.gender(), Gender::Yang);
+        assert_eq!(birth.year(), 2024);
+        assert_eq!(birth.month(), 0);
+        assert_eq!(birth.day(), 1);
+        assert_eq!(birth.hour(), 0);
     }
 
     #[test]
