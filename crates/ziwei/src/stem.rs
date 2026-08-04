@@ -34,7 +34,7 @@ const TRANSFORMAT_STARS: [[Star; 4]; 10] = [
 
 /// 十天干中的一个位置。
 ///
-/// 顺序甲…癸，与 [`Self::index`] 0..=9 一致。
+/// 顺序甲…癸，与内部下标 0..=9 一致。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Stem {
     /// 甲。
@@ -78,7 +78,7 @@ impl Stem {
         }
     }
 
-    /// 返回该天干在指定四化象下对应的星曜（查 [`TRANSFORMAT_STARS`]）。
+    /// 返回该天干在指定四化象下对应的星曜（查十干×禄权科忌四化星表）。
     pub const fn transformation_star(self, transformation: Transformation) -> Star {
         TRANSFORMAT_STARS[self.index()][transformation.index()]
     }
