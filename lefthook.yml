@@ -2,12 +2,12 @@ pre-commit:
   parallel: true
   jobs:
     - name: TypeScript format
-      run: pnpm ts:fmt {staged_files}
+      run: mise exec -- pnpm ts:fmt {staged_files}
       glob: "*.{js,ts,cjs,mjs,jsx,tsx,json,md}"
       stage_fixed: true
 
     - name: TypeScript lint
-      run: pnpm ts:lint:fix {staged_files}
+      run: mise exec -- pnpm ts:lint:fix {staged_files}
       glob: "*.{js,ts,cjs,mjs,jsx,tsx}"
       stage_fixed: true
 
