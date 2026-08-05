@@ -1,97 +1,99 @@
-# Research: 安命身十二宫 · 起寅首/宫干 · 十八主星安星
+# 安命身、十二宫与十八星安置算法研究
 
-**Ticket:** [#244](https://github.com/matharts/ziwei/issues/244)  
-**Map:** [#242](https://github.com/matharts/ziwei/issues/242)  
-**Status:** research only — no placement implementation in library  
-**Audience:** later grilling (#251) and implementation tickets
+- Issue：[#244](https://github.com/matharts/ziwei/issues/244)
+- 规划图：[#242](https://github.com/matharts/ziwei/issues/242)
+- 状态：历史研究记录，不代表当前公开 API
+- 原始用途：供 #251 领域讨论和后续实现 Issue 参考
+
+> [!NOTE]
+> 本文保留调研时的类型名、代码形态和待决问题。当前领域语言与实现边界以 [`CONTEXT.md`](../../CONTEXT.md)、[ADR-0011](../adr/0011-immutable-natal-model.md) 和 [`ziwei-model.md`](../design/ziwei-model.md) 为准。
 
 ---
 
-## 1. Scope and v1 star set
+## 1. 研究范围与首批星曜
 
-This note covers the **natal placement pipeline** up through the **default eighteen major stars** already encoded in `crates/ziwei_core/src/star.rs`:
+本文研究本命盘的安宫安星流程，范围截至当时 `crates/ziwei_core/src/star.rs` 已定义的十八颗首批星曜：
 
-| Group            | Stars (`Star` enum)                            |
-| ---------------- | ---------------------------------------------- |
-| 北斗系（紫微系） | 紫微、天机、太阳、武曲、天同、廉贞             |
+| 类别 | 星曜（当时的 `Star` 枚举） |
+| --- | --- |
+| 北斗系（紫微系） | 紫微、天机、太阳、武曲、天同、廉贞 |
 | 南斗系（天府系） | 天府、太阴、贪狼、巨门、天相、天梁、七杀、破军 |
-| 辅佐四星         | 左辅、右弼、文昌、文曲                         |
+| 辅佐四星 | 左辅、右弼、文昌、文曲 |
 
-Together these are the classical **十四正曜 + 左辅右弼文昌文曲** set used as v1 default. Course notes (`course/NOTES.md`, learning-record `0008`) confirm eighteen stars; fifteen is treated as a subset view, not a second placement mode.
+这组星曜由十四正曜和左辅、右弼、文昌、文曲组成，是 v1 的默认集合。
 
-**Out of scope here:** 禄存/羊陀、魁钺、火铃、空劫、杂曜神煞全集、大限流年算法细节（map #242 already baseline-decided those separately）、批命解读。
-
----
-
-## 2. Sources
-
-### 2.1 Classical / first-party algorithm texts (preferred anchors)
-
-| Source                             | Role                                               | Notes                                                                                                                                                                                         |
-| ---------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 《紫微斗数全书》                   | Canonical print tradition for 安身命、十二宫、四化 | Course already cites [Wikisource 卷二](https://zh.wikisource.org/wiki/紫微斗數全書/卷二) for 安身命例 / 生年干四化. Treat Wikisource as a **retrievable transcript**, not a critical edition. |
-| 《紫微斗数全集》                   | Parallel classical print                           | Wikipedia documents **庚/壬四化** divergence vs 《全书》 (see §7).                                                                                                                            |
-| 《紫微斗数捷览》(明万历九年, 1581) | Earliest dated title bearing「紫微斗数」           | Historical anchor only; not used as step-by-step engine baseline.                                                                                                                             |
-| 《洞微十八星断》(道藏)             | Classical “十八星” naming clue                     | [识典古籍 entry](https://www.shidianguji.com/book/DZ1485/chapter/DZ1485_10) — does **not** automatically equal the modern 14+4 set.                                                           |
-
-### 2.2 Algorithm digests that restate classical 口诀 (reproducible steps)
-
-These are **secondary** but carry the full 起例口诀 chain used by modern manual charting; cross-checked against each other and against repo types:
-
-| Source                         | URL / location                                        | Use                                                                                                |
-| ------------------------------ | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| 福山堂 · 起例歌诀总括          | <http://www.fushantang.com/1012/1012c/j3084.html>     | Complete 安命身 / 定寅首 / 起紫微 / 安紫微诸星 / 安天府诸星 / 辅弼昌曲 口诀 + worked 紫微 examples |
-| 维基百科 · 紫微斗数 · 推算方法 | <https://zh.wikipedia.org/zh-hans/紫微斗数>           | Ordered pipeline summary; 定紫微 algebraic sketch; 主星/辅星 spacing                               |
-| 大纪元 · 排盘方法别            | <https://www.epochtimes.com/gb/9/6/22/n2565978.htm>   | Step list + 三月辰时命宫 worked example; table-driven 紫微 lookup presentation                     |
-| 南中堂等口诀页                 | e.g. <https://www.ncc.com.tw/fate/paleo/gv/gv_15.htm> | Same 口诀 family as 福山堂 (cross-check wording)                                                   |
-
-### 2.3 Repo-local fragments already encoding parts of the rules
-
-| Artifact                                     | What it already freezes                                               |
-| -------------------------------------------- | --------------------------------------------------------------------- |
-| `Star` in `crates/ziwei_core/src/star.rs`         | v1 eighteen-star catalog                                              |
-| `PalaceRole` in `crates/ziwei_core/src/palace.rs` | 十二宫职 order & labels（交友 = 仆役别名）                            |
-| `Palace` (`role()` / `branch()` / `stem()`)  | 宫职 + 宫支 + 宫干只读结果                                            |
-| `ZiweiInput` in `crates/ziwei_core/src/input.rs`  | Preprocessed path: gender, 年干支, 月位, 时位, **命宫位**, **紫微位** |
-| `FiveElementBureau::from_ming_palace`        | 命宫干支 → 五行局（纳音局数表）                                       |
-| `Stem::transformation_star`                  | 生年干四化表（与 §7 冲突注记对照）                                    |
-| `position::twelve_index`                     | ring fold 0..=11                                                      |
-| Course `RESOURCES.md` / lessons 0008–0011    | 全书卷二 / 十八星 / dual input paths                                  |
+本文不研究禄存/羊陀、魁钺、火铃、空劫、完整杂曜神煞、大限流年算法细节（规划图 #242 已另行确定基线）和批命解读。
 
 ---
 
-## 3. Coordinate conventions (critical for code)
+## 2. 资料来源
 
-Different zero points already coexist in the crate. Placement rules must not mix them silently.
+### 2.1 典籍与一手算法文本
 
-| Quantity                           | Classical origin | Repo encoding     | Zero point           |
-| ---------------------------------- | ---------------- | ----------------- | -------------------- |
-| 宫支 `Branch`                      | 十二地支         | `Branch::index()` | **子 = 0** … 亥 = 11 |
-| `ZiweiInput::birth_month_position` | 农历生月         | `u8` 0..=11       | **正月 = 0**         |
-| `ZiweiInput::birth_hour_position`  | 生时             | `u8` 0..=11       | **子时 = 0**         |
-| `ZiweiInput::ming_palace_position` | 命宫地支         | `u8` 0..=11       | **寅 = 0**           |
-| `ZiweiInput::ziwei_star_position`  | 紫微落宫         | `u8` 0..=11       | **寅 = 0**           |
+| 资料 | 用途 | 说明 |
+| --- | --- | --- |
+| 《紫微斗数全书》 | 安身命、十二宫和四化的典籍依据 | [维基文库卷二](https://zh.wikisource.org/wiki/紫微斗數全書/卷二)收录安身命例和生年干四化，便于检索，但不是校勘本。 |
+| 《紫微斗数全集》 | 与《全书》平行的典籍 | 维基百科记录了它与《全书》在庚、壬四化上的差异，见 §7。 |
+| 《紫微斗数捷览》（明万历九年，1581） | 最早出现“紫微斗数”书名的有明确年代资料 | 只作历史定位，不作为逐步算法基线。 |
+| 《洞微十八星断》（道藏） | 古籍“十八星”的名称线索 | [识典古籍条目](https://www.shidianguji.com/book/DZ1485/chapter/DZ1485_10)中的“十八星”不能直接等同于现代的十四正曜加四颗辅佐星。 |
 
-**Placement arithmetic in this note** uses **寅 = 0** ring indices unless stated otherwise:
+### 2.2 收录完整口诀的算法资料
+
+以下资料属于二手来源，但收录了现代手工排盘所用的完整起例口诀。本文将它们彼此对照，也与仓库中的类型定义核对：
+
+| 资料 | 地址 | 用途 |
+| --- | --- | --- |
+| 福山堂《起例歌诀总括》 | <http://www.fushantang.com/1012/1012c/j3084.html> | 收录安命身、定寅首、起紫微、安紫微诸星、安天府诸星和辅弼昌曲的完整口诀，并给出紫微算例。 |
+| 维基百科“紫微斗数·推算方法” | <https://zh.wikipedia.org/zh-hans/紫微斗数> | 提供排盘步骤摘要、定紫微代数草图和主星/辅星间隔。 |
+| 大纪元“排盘方法别” | <https://www.epochtimes.com/gb/9/6/22/n2565978.htm> | 提供步骤列表、三月辰时命宫算例和定紫微查表法。 |
+| 南中堂等口诀页 | 例如 <https://www.ncc.com.tw/fate/paleo/gv/gv_15.htm> | 与福山堂属于同一口诀体系，用于交叉核对文字。 |
+
+### 2.3 仓库中已有的规则片段
+
+| 仓库对象 | 当时已经固定的内容 |
+| --- | --- |
+| `crates/ziwei_core/src/star.rs` 中的 `Star` | v1 十八颗星目录 |
+| `crates/ziwei_core/src/palace.rs` 中的 `PalaceRole` | 十二宫职顺序与标签，其中交友是仆役的别名 |
+| `Palace` 的 `role()` / `branch()` / `stem()` | 宫职、宫支和宫干只读结果 |
+| `crates/ziwei_core/src/input.rs` 中的 `ZiweiInput` | 预处理路径中的性别、年干支、月位、时位、命宫位置和紫微位置 |
+| `FiveElementBureau::from_ming_palace` | 命宫干支 → 五行局（纳音局数表） |
+| `Stem::transformation_star` | 生年干四化表，用于对照 §7 的冲突注记 |
+| `position::twelve_index` | 将下标折叠到 `0..=11` |
+
+---
+
+## 3. 坐标约定
+
+当时的 crate 同时使用多种零点。实现安置规则时必须明确转换，不能直接混用。
+
+| 量 | 典籍起点 | 仓库编码 | 零点 |
+| --- | --- | --- | --- |
+| 宫支 `Branch` | 十二地支 | `Branch::index()` | 子 = 0 … 亥 = 11 |
+| `ZiweiInput::birth_month_position` | 农历生月 | `u8` 0..=11 | 正月 = 0 |
+| `ZiweiInput::birth_hour_position` | 生时 | `u8` 0..=11 | 子时 = 0 |
+| `ZiweiInput::ming_palace_position` | 命宫地支 | `u8` 0..=11 | 寅 = 0 |
+| `ZiweiInput::ziwei_star_position` | 紫微落宫 | `u8` 0..=11 | 寅 = 0 |
+
+除非另有说明，本文的安置运算都使用“寅 = 0”的环形下标：
 
 ```
 0寅 1卯 2辰 3巳 4午 5未 6申 7酉 8戌 9亥 10子 11丑
 ```
 
-Conversion:
+换算公式：
 
 ```text
 branch_index_zi0   = (yin0_index + 2) mod 12   // 寅=0 → 子=0 系
 yin0_index         = (branch_index_zi0 + 10) mod 12
 ```
 
-`twelve_index` already implements Euclidean fold into 0..=11 for signed offsets.
+`twelve_index` 已经通过欧几里得取模将有符号偏移折叠到 `0..=11`。
 
 ---
 
-## 4. Step-by-step algorithm
+## 4. 算法步骤
 
-Pipeline order (classical manuals and Wikipedia agree on this sequencing):
+典籍资料与维基百科给出的顺序一致：
 
 1. 安命宫、身宫
 2. 定十二宫职
@@ -102,23 +104,23 @@ Pipeline order (classical manuals and Wikipedia agree on this sequencing):
 7. 安紫微系五星 + 天府系七星
 8. 安左辅、右弼、文昌、文曲
 
-Gender is **not** required for any of steps 1–8 (it is required later for 大限顺逆, already baselined on map #242).
+步骤 1–8 都不需要性别。性别只在后续计算大限顺逆时使用，规划图 #242 已确定该规则。
 
-### Step A — 安命宫、身宫
+### 步骤 A：安命宫、身宫
 
-**口诀（福山堂等同文）:**
+口诀（福山堂等资料同文）：
 
 > 寅起正月，顺数至生月，逆数生时为命宫。  
 > 寅起正月，顺数至生月，顺数生时为身宫。
 
-**Procedure:**
+计算过程：
 
-1. 固定地支盘；**从寅宫起正月**，顺行（寅→卯→…）数至农历生月，得「月宫」\(M\)。
-2. **命宫:** 从 \(M\) 起子时，**逆行**数至生时，落宫为命宫 \(Ming\)。
-3. **身宫:** 从 \(M\) 起子时，**顺行**数至生时，落宫为身宫 \(Shen\)。
-4. 身宫不是第十三宫职；它 **叠落** 在十二宫之一的地支上（可能与命宫同宫：子/午/卯/酉等特定月时组合）。
+1. 固定地支盘，从寅宫起正月，顺行（寅→卯→……）数至农历生月，得到“月宫”\(M\)。
+2. 计算命宫：从 \(M\) 起子时，逆行数至生时，落宫为命宫 \(Ming\)。
+3. 计算身宫：从 \(M\) 起子时，顺行数至生时，落宫为身宫 \(Shen\)。
+4. 身宫不是第十三宫职，而是叠落在十二宫之一的地支上；在特定月时组合中，它可能与命宫同宫，如子、午、卯、酉。
 
-**Ring formula（寅=0，月位 \(m\)、时位 \(h\) 同 `ZiweiInput`）:**
+环形公式（寅 = 0，月位 \(m\)、时位 \(h\) 与 `ZiweiInput` 相同）：
 
 \[
 \begin{aligned}
@@ -128,33 +130,33 @@ Shen &= (M + h) \bmod 12
 \end{aligned}
 \]
 
-**Worked example（大纪元）:** 三月辰时
+算例（大纪元）：三月辰时
 
 - \(m=2\) → \(M=\) 辰；\(h=\) 辰时 \(=4\)
 - 命: \((2-4)\bmod 12 = 10\) → **子** ✓
 - 身: \((2+4)\bmod 12 = 6\) → **申**
 
-### Step B — 定十二宫职
+### 步骤 B：定十二宫职
 
-**口诀:** 由命宫 **逆数** 兄弟、夫妻、子女、财帛、疾厄、迁移、奴仆/交友、事业/官禄、田宅、福德、父母。
+口诀：由命宫逆数兄弟、夫妻、子女、财帛、疾厄、迁移、奴仆/交友、事业/官禄、田宅、福德、父母。
 
-Repo `PalaceRole` order (from 命起):
+仓库中 `PalaceRole` 从命宫开始的顺序为：
 
 `Ming → XiongDi → FuQi → ZiNv → CaiBo → JiE → QianYi → JiaoYou → GuanLu → TianZhai → FuDe → FuMu`
 
-**Procedure:** 命宫坐某地支后，沿 **地支逆序**（子→亥→戌→…，即 `Branch::index` 递减）依次安十二宫职。
+命宫落到某一地支后，沿地支逆序（子→亥→戌→…，即 `Branch::index` 递减）依次安十二宫职。
 
-**Ring:** if 命宫的 `Branch::index` is \(b\)，role index \(r \in 0..11\)（0=命）落在:
+环形公式：若命宫的 `Branch::index` 为 \(b\)，宫职下标 \(r \in 0..11\)（0 = 命）落在：
 
 \[
 \text{branch\_index}(r) = (b - r) \bmod 12
 \]
 
-Naming alias: classical 奴仆/仆役 = repo `JiaoYou`（交友）; 官禄 aka 事业。
+名称对应：典籍中的奴仆/仆役对应仓库的 `JiaoYou`（交友），官禄也称事业。
 
-### Step C — 起寅首 / 安十二宫干
+### 步骤 C：起寅首、安十二宫干
 
-**口诀（五虎遁月诀 = 定寅首）:**
+口诀（五虎遁月诀，即定寅首）：
 
 > 甲己之年丙作首，乙庚之岁戊为头，  
 > 丙辛之年寻庚起，丁壬壬寅顺水流，  
@@ -168,15 +170,15 @@ Naming alias: classical 奴仆/仆役 = repo `JiaoYou`（交友）; 官禄 aka �
 | 丁、壬 | 壬       |
 | 戊、癸 | 甲       |
 
-**Procedure:** 定寅宫天干后，**顺布** 其余十一宫干（寅丙则卯丁、辰戊…；至丑止）。每宫的 `(stem, branch)` 即该宫干支。
+确定寅宫天干后，顺布其余十一宫干（寅丙则卯丁、辰戊……至丑止）。每宫的 `(stem, branch)` 就是该宫干支。
 
-Wikipedia alternate wording「年干数×2+1 为寅宫干」与五虎遁 **结果一致**（在甲=1…癸=10 编号下）。
+维基百科另用“年干数 × 2 + 1 为寅宫干”表述；在甲 = 1 到癸 = 10 的编号下，结果与五虎遁一致。
 
-**Repo:** `Palace::stem()` is exactly this 宫干; it is the base for later 自化（map #242）and for 命宫五行局.
+仓库中的 `Palace::stem()` 表示这一宫干，也是后续计算自化（规划图 #242）和命宫五行局的基础。
 
-### Step D — 定命宫五行局
+### 步骤 D：定命宫五行局
 
-**Rule:** 以 **命宫干支** 查 **纳音五行**，映射局数:
+规则：以命宫干支查纳音五行，再映射为局数：
 
 | 纳音五行 | 局     |
 | -------- | ------ |
@@ -186,25 +188,25 @@ Wikipedia alternate wording「年干数×2+1 为寅宫干」与五虎遁 **结�
 | 土       | 土五局 |
 | 火       | 火六局 |
 
-**Repo already implements** the standard 干支组表: `FiveElementBureau::from_ming_palace(stem, branch)` with tests locking the 5×6 group matrix (甲乙×子丑=金四, 甲乙×寅卯=水二, …). This matches 福山堂「以命宫天干地支而定」叙述。
+仓库当时已经通过 `FiveElementBureau::from_ming_palace(stem, branch)` 实现标准干支组表，并用测试固定 5 × 6 分组矩阵（甲乙 × 子丑 = 金四，甲乙 × 寅卯 = 水二，……）。这与福山堂“以命宫天干地支而定”的叙述一致。
 
-局数 \(n \in \{2,3,4,5,6\}\) is input to 定紫微 and (per map #242) 大限起运虚岁.
+局数 \(n \in \{2,3,4,5,6\}\) 用于定紫微，也用于计算规划图 #242 中的大限起运虚岁。
 
-### Step E — 定紫微
+### 步骤 E：定紫微
 
-Requires: 农历 **出生日数** \(d\)（初一=1 …）与局数 \(n\)。
+所需输入：农历出生日数 \(d\)（初一 = 1，依此类推）与局数 \(n\)。
 
-#### E.1 Recommended computational form（口诀「局数除日数」族）
+#### E.1 推荐算法（“局数除日数”口诀）
 
-福山堂口诀与例题可整理为（与下表查法等价）:
+福山堂的口诀与例题可以整理为以下步骤，结果与查表法一致：
 
 1. 令 \(q = \lceil d / n \rceil\)，\(e = q\cdot n - d\)（补足整除所需之「差」；若 \(d\) 整除 \(n\) 则 \(e=0\)，\(q = d/n\)）。
-2. 以 **寅为第 1 步** 起算，先走到步数 \(q\) 的宫位（「商数宫前走 / 整除起虎口」）。
+2. 以寅为第 1 步起算，先走到步数 \(q\) 的宫位（“商数宫前走 / 整除起虎口”）。
 3. 若 \(e = 0\)：紫微即落该宫。
-4. 若 \(e\) 为 **奇数**：从该宫 **逆行** \(e\) 宫。
-5. 若 \(e\) 为 **偶数**：从该宫 **顺行** \(e\) 宫。
+4. 若 \(e\) 为奇数，从该宫逆行 \(e\) 宫。
+5. 若 \(e\) 为偶数，从该宫顺行 \(e\) 宫。
 
-**Worked examples（福山堂）:**
+算例（福山堂）：
 
 | 日  | 局   | \(q,e\)           | 落宫                     |
 | --- | ---- | ----------------- | ------------------------ |
@@ -212,38 +214,48 @@ Requires: 农历 **出生日数** \(d\)（初一=1 …）与局数 \(n\)。
 | 13  | 火六 | \(q=3,e=5\)（奇） | 寅进 3=辰，逆 5 → **亥** |
 | 6   | 土五 | \(q=2,e=4\)（偶） | 寅进 2=卯，顺 4 → **未** |
 
-**寅=0 index**（步数按「寅为 1」计）:
+寅 = 0 的下标公式（步数按“寅为 1”计）：
 
 \[
 \text{ziwei\_yin0} = \bigl((q - 1) + s\cdot e\bigr) \bmod 12,\quad
 s = \begin{cases}0 & e=0\\ -1 & e\text{ odd}\\ +1 & e\text{ even}\end{cases}
 \]
 
-#### E.2 Table form
+#### E.2 查表法
 
-大纪元等教材用「局 × 日 → 地支」查表，结果应与 E.1 一致。实现时优先 **公式 + 黄金测例**，表可作为 property test 的期望生成器。
+大纪元等教材通过“局 × 日 → 地支”查表，结果应与 E.1 一致。实现时优先使用公式和黄金测例，表可作为性质测试的期望值来源。
 
-#### E.3 Wikipedia algebraic sketch
+#### E.3 维基百科的代数草图
 
-Wikipedia 给出另一套「倍数 / 差数 / 奇退偶进」叙述与公式草稿。**措辞比口诀例题更容易误读**（商、倍、差的边界）。以福山堂三例为验收金标，Wiki 公式仅作交叉参考，冲突时以口诀例题为准。
+维基百科给出另一套“倍数 / 差数 / 奇退偶进”叙述与公式草稿，其中商、倍、差的边界容易误读。本文以福山堂的三个例题作为验收基准，维基百科公式只作交叉参考；出现冲突时，以口诀例题为准。
 
-### Step F — 定天府（由紫微）
+### 步骤 F：由紫微定天府
 
-**口诀（福山堂）:**
+口诀（福山堂）：
 
 > 天府南斗令，常对紫微宫，  
 > 丑卯相更迭，未酉互为根。  
 > 往来午与戌，蹀躞子和辰，  
 > 巳亥交驰骋，同位在寅申。
 
-**Equivalent geometry:** 紫微与天府关于 **寅–申轴** 镜像：
+几何关系：紫微与天府关于寅–申轴镜像：
 
-| 紫微    | 天府    |
-| ------- | ------- |
-| 寅 / 申 | 同宫    |
-| 丑 ↔ 卯 | 子 ↔ 辰 | 亥 ↔ 巳 | 戌 ↔ 午 | 酉 ↔ 未 |
+| 紫微 | 天府 |
+| --- | --- |
+| 寅 | 寅 |
+| 申 | 申 |
+| 丑 | 卯 |
+| 卯 | 丑 |
+| 子 | 辰 |
+| 辰 | 子 |
+| 亥 | 巳 |
+| 巳 | 亥 |
+| 戌 | 午 |
+| 午 | 戌 |
+| 酉 | 未 |
+| 未 | 酉 |
 
-**Ring（寅=0）:**
+环形公式（寅 = 0）：
 
 \[
 \text{tianfu\_yin0} = (-\text{ziwei\_yin0}) \bmod 12
@@ -251,11 +263,11 @@ Wikipedia 给出另一套「倍数 / 差数 / 奇退偶进」叙述与公式草�
 
 （与「从寅逆数与紫微顺数相同步数」等价。）
 
-### Step G — 安其余十二正曜
+### 步骤 G：安其余十二正曜
 
-#### G.1 紫微系（从紫微 **逆行**）
+#### G.1 紫微系（从紫微逆行）
 
-**口诀:**
+口诀：
 
 > 紫微逆去天机星，隔一太阳武曲辰，  
 > 连接天同空二宫，廉贞居处方是真。
@@ -271,9 +283,9 @@ Wikipedia 给出另一套「倍数 / 差数 / 奇退偶进」叙述与公式草�
 | 6–7                           | （空） |
 | 8                             | 廉贞   |
 
-#### G.2 天府系（从天府 **顺行**）
+#### G.2 天府系（从天府顺行）
 
-**口诀:**
+口诀：
 
 > 天府顺行有太阴，贪狼而后巨门临，  
 > 随来天相天梁继，七杀空三是破军。
@@ -290,11 +302,11 @@ Wikipedia 给出另一套「倍数 / 差数 / 奇退偶进」叙述与公式草�
 | 7–9                           | （空） |
 | 10                            | 破军   |
 
-**Determinism:** 给定紫微位，十四正曜 **全部** 固定；无需月日时再参与（月日时已用于命宫/局/紫微）。
+给定紫微位置后，十四正曜的位置全部确定，不再需要月、日、时参与；这些输入已经用于计算命宫、五行局和紫微位置。
 
-### Step H — 安辅佐四星（完成十八星）
+### 步骤 H：安辅佐四星
 
-**口诀:**
+口诀：
 
 > 辰上顺正寻左辅，戌上逆正右弼当，  
 > 辰上顺时文曲位，戌上逆时觅文昌。
@@ -310,7 +322,7 @@ Wikipedia 给出另一套「倍数 / 差数 / 奇退偶进」叙述与公式草�
 
 ---
 
-## 5. End-to-end dependency graph
+## 5. 完整依赖关系
 
 ```text
 农历年干支 ──► 寅首/十二宫干 ──► (命宫干支) ──► 五行局 n
@@ -323,119 +335,119 @@ Wikipedia 给出另一套「倍数 / 差数 / 奇退偶进」叙述与公式草�
 
 ---
 
-## 6. Alignment with existing types and dual entry points
+## 6. 与当时类型和双入口的对应关系
 
-### 6.1 What `ZiweiInput` already carries
+本节记录 #244 调研时的代码状态，不描述当前 `ZiweiInput`。当前输入契约见 [ADR-0001](../adr/0001-lunar-birth-input-contract.md) 和 [ADR-0002](../adr/0002-engine-compute-vs-inject.md)。
 
-From `input.rs` (all positions validated 0..=11):
+### 6.1 当时的 `ZiweiInput` 字段
 
-| Field                         | Meaning    | Zero     |
-| ----------------------------- | ---------- | -------- |
-| `gender`                      | 命主性别   | —        |
-| `birth_stem` / `birth_branch` | 出生年干支 | enums    |
-| `birth_month_position`        | 生月       | 正月=0   |
-| `birth_hour_position`         | 生时       | 子=0     |
-| `ming_palace_position`        | 命宫       | **寅=0** |
-| `ziwei_star_position`         | 紫微       | **寅=0** |
+以下字段来自当时的 `input.rs`，所有位置值都校验为 `0..=11`：
 
-**Not carried:** 农历日数、身宫位、十二宫干、五行局、其余十七星、四化结果。
+| 字段 | 含义 | 零点 |
+| --- | --- | --- |
+| `gender` | 命主性别 | — |
+| `birth_stem` / `birth_branch` | 出生年干支 | 枚举值 |
+| `birth_month_position` | 生月 | 正月 = 0 |
+| `birth_hour_position` | 生时 | 子时 = 0 |
+| `ming_palace_position` | 命宫 | 寅 = 0 |
+| `ziwei_star_position` | 紫微 | 寅 = 0 |
 
-Course history: user defined precomputed path as「命盘各宫位置、紫微星位置、性别、出生天干、出生地支、出生月份位置、出生时辰位置」—— current struct stores **命宫单点** rather than full twelve-role map; twelve roles are always recoverable from 命宫 alone (Step B).
+当时未携带的字段包括农历日数、身宫位置、十二宫干、五行局、其余十七颗星和四化结果。
 
-### 6.2 Draft boundary: engine-must-compute vs injectable
+### 6.2 引擎计算与外部注入边界草案
 
-> **Non-binding draft for grilling #251.** Do not treat as ADR.
+> [!CAUTION]
+> 这是供 #251 讨论的非约束性草案，不是 ADR。
 
-| Quantity                | `from_birth` (planned)                  | `from_input` (current shape) | Draft recommendation                                                                                                                                       |
-| ----------------------- | --------------------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 历法→农历 YMDH / 年干支 | **Outside engine** (map #242)           | N/A                          | Calendar stays external                                                                                                                                    |
-| 月位 \(m\)、时位 \(h\)  | Derive from normalized lunar date       | **Inject**                   | Inject OK; pure calendar labels                                                                                                                            |
-| 年干支                  | From lunar year                         | **Inject**                   | Inject OK                                                                                                                                                  |
-| **命宫**                | **Must compute** (Step A)               | Currently **inject**         | Prefer always compute when \(m,h\) present; if inject, **validate** equals \((m-h)\bmod 12\)                                                               |
-| **身宫**                | **Must compute**                        | Missing                      | Always compute; do not inject                                                                                                                              |
-| **十二宫职**            | **Must compute** from 命                | Always derive                | Always compute; never inject full role map as source of truth                                                                                              |
-| **十二宫干**            | **Must compute** (五虎遁)               | Derive from `birth_stem`     | Always compute; `Palace::stem()` is output                                                                                                                 |
-| **五行局**              | **Must compute**                        | Derive via existing API      | Always compute; optional inject only if cross-checked                                                                                                      |
-| **农历日 \(d\)**        | Required for 紫微                       | **Missing today**            | `from_birth` must supply day; consider adding to input path if verification desired                                                                        |
-| **紫微**                | **Must compute** (needs \(d,n\))        | Currently **inject**         | `from_birth`: always compute. `from_input`: inject allowed for fixtures, but **prefer recompute** when day is available; otherwise document trust boundary |
-| **天府 + 其余 12 正曜** | **Must compute** from 紫微              | Always derive                | Always compute once 紫微 known — never inject star-by-star for 14 主星                                                                                     |
-| **左辅右弼文昌文曲**    | **Must compute** from \(m,h\)           | Always derive                | Always compute                                                                                                                                             |
-| **生年四化**            | Compute via `Stem::transformation_star` | Same                         | Always compute from year stem                                                                                                                              |
-| **大限序列**            | Compute (map rules)                     | Not in input                 | Always compute; do not inject decade sequence as natal fact                                                                                                |
+| 量 | 规划中的 `from_birth` | 当时的 `from_input` | 草案建议 |
+| --- | --- | --- | --- |
+| 历法→农历 YMDH / 年干支 | 引擎外处理（规划图 #242） | 不适用 | 历法能力留在引擎外 |
+| 月位 \(m\)、时位 \(h\) | 从归一化农历日期取得 | 注入 | 可以注入，它们是历法原始量 |
+| 年干支 | 从农历年推导 | 注入 | 可以注入 |
+| 命宫 | 必算（步骤 A） | 当时注入 | 有 \(m,h\) 时优先计算；若保留注入值，须校验它等于 \((m-h)\bmod 12\) |
+| 身宫 | 必算 | 缺失 | 始终计算，不注入 |
+| 十二宫职 | 从命宫计算 | 始终推导 | 始终计算，不把完整宫职映射作为输入真相 |
+| 十二宫干 | 按五虎遁计算 | 从 `birth_stem` 推导 | 始终计算；`Palace::stem()` 是输出 |
+| 五行局 | 必算 | 通过已有 API 推导 | 始终计算；若允许注入，必须交叉校验 |
+| 农历日 \(d\) | 定紫微所需 | 当时缺失 | `from_birth` 必须提供日数；若输入路径需要校验，也要增加该字段 |
+| 紫微 | 由 \(d,n\) 计算 | 当时注入 | `from_birth` 始终计算；`from_input` 可为夹具注入，但有日数时应重新计算，否则须写明信任边界 |
+| 天府及其余十二正曜 | 从紫微计算 | 始终推导 | 紫微位置确定后始终计算，不逐星注入十四正曜 |
+| 左辅、右弼、文昌、文曲 | 从 \(m,h\) 计算 | 始终推导 | 始终计算 |
+| 生年四化 | 通过 `Stem::transformation_star` 计算 | 相同 | 始终从年干计算 |
+| 大限序列 | 按规划图规则计算 | 不在输入中 | 始终计算，不把大限序列作为本命盘输入 |
 
-### 6.3 Risks if injection is unconstrained
+### 6.3 不受约束的注入风险
 
-1. **Hollow golden tests:** injecting both 命宫 and 紫微 without recomputation lets fixtures hard-code “answers” that never exercise Steps A/E.
-2. **Internal inconsistency:** injected 命宫 may disagree with \(m,h\); injected 紫微 may disagree with \(d\)+局.
-3. **Missing day:** current `ZiweiInput` **cannot** recompute or verify 紫微; it can only fan out Steps F–H from the injected 紫微 + \(m,h\).
+1. 如果命宫和紫微位置都直接注入，黄金测例可以预填结果，无法覆盖步骤 A 和 E 的计算。
+2. 注入的命宫可能与 \(m,h\) 不一致，注入的紫微位置也可能与 \(d\) 和局数不一致。
+3. 当时的 `ZiweiInput` 没有日数，无法重新计算或验证紫微位置，只能从注入的紫微位置和 \(m,h\) 继续执行步骤 F–H。
 
-### 6.4 Practical split proposal (for #251)
+### 6.4 供 #251 讨论的入口划分
 
-| Path                | Trust model                                                                                                                                                                                                            |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Ziwei::from_birth` | Engine-authoritative full pipeline A–H (+ later 大限/流年).                                                                                                                                                            |
-| `Ziwei::from_input` | **Dev/test accelerator**: may accept 命/紫微 as hints, but v1 production semantics should either (1) recompute everything possible from \(m,h,\) year stem, day, or (2) mark injected fields as `TrustedFixture` only. |
+| 入口 | 信任模型 |
+| --- | --- |
+| `Ziwei::from_birth` | 由引擎完整执行步骤 A–H，后续再接大限/流年。 |
+| `Ziwei::from_input` | 作为开发和测试的快捷入口，可以把命宫和紫微位置作为提示；生产语义应尽可能根据 \(m,h\)、年干和日数重新计算，或把注入字段明确限制为 `TrustedFixture`。 |
 
-Minimal additive field if verification is required on input path: **`birth_day: u8` (1..=30-ish)** so Step E can recompute 紫微.
-
----
-
-## 7. Explicit conflicts and open questions
-
-| Topic                              | Conflict                                                 | Impact on v1                                                                                                                                                                                    |
-| ---------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **庚干四化**                       | 《全集》阳武**阴同** vs 《全书》阳武**同阴**（科忌对调） | Code `TRANSFORM_STARS` for `Geng` is 阳武阴同（全集/南派口诀族）。Course text often cites《全书》卷二 — **label mismatch**. Fix at ADR time: either retarget citations to 全集/南派表，或改表。 |
-| **壬干四化**                       | 《全集》梁紫**左**武 vs 《全书》梁紫**府**武             | Code uses **左辅** (`ZuoFu`) = 全集系。Same citation issue.                                                                                                                                     |
-| **定紫微叙述**                     | Wiki 代数草稿 vs 福山堂口诀例题                          | Implement/test against 口诀三例 + exhaustive \(d,n\) table; do not code Wiki prose literally without tests.                                                                                     |
-| **身宫是否入 `Palace` 模型**       | 身宫叠支 vs 十二宫职                                     | Need domain decision: `Ziwei` 是否暴露 `shen_branch` / 查询「身宫落何职」.                                                                                                                      |
-| **晚子时 / 日界**                  | 当日 vs 隔日                                             | Affects \(d\) and possibly 时支；map puts calendar outside engine — caller must resolve before `from_birth`.                                                                                    |
-| **「命盘各宫位置」字面**           | 课程曾写「各宫位置」复数                                 | 实现上只需命宫一位即可恢复十二职；不必在 `ZiweiInput` 存 12 个 role。                                                                                                                           |
-| **十八星 vs 道藏《洞微十八星断》** | 同名不同集                                               | v1 绑定 `Star` enum，不宣称道藏同构。                                                                                                                                                           |
+若输入路径需要校验紫微位置，至少要增加 `birth_day: u8`（约束为 `1..=30`），才能执行步骤 E。
 
 ---
 
-## 8. Suggested verification vectors (for later test tickets)
+## 7. 已知冲突与待决问题
 
-Do **not** implement here; use as future property/fixture checklist:
-
-1. **命身:** 三月辰时 → 命子、身申（大纪元）.
-2. **紫微三例:** 27/木三→戌；13/火六→亥；6/土五→未（福山堂）.
-3. **紫微–天府镜像:** \(\forall p,\; t=(-p)\bmod 12\)；寅申同宫.
-4. **十四正曜间隔:** fix one 紫微，assert relative offsets in §4 G.
-5. **辅佐:** 正月 → 左辅辰、右弼戌；子时 → 文曲辰、文昌戌.
-6. **五虎遁:** 甲年寅丙、乙年寅戊、… 与 `birth_stem` 全表.
-7. **五行局:** reuse existing `FiveElementBureau` unit table; plus 命宫甲子→金四 等纳音抽检.
-8. **注入一致性:** 若同时给 \(m,h\) 与 `ming_palace_position`，assert equality（#251 若采纳校验）.
-9. **自建验收样例**（规则冻结后）: end-to-end golden fixtures，不绑定商业排盘 App。
+| 主题 | 冲突 | 对 v1 的影响 |
+| --- | --- | --- |
+| 庚干四化 | 《全集》阳武阴同，《全书》阳武同阴，科忌对调 | 当时 `Geng` 的 `TRANSFORM_STARS` 使用阳武阴同，属于《全集》/南派口诀体系。引用《全书》卷二时会出现标签不一致，ADR 需要统一引用与实现。 |
+| 壬干四化 | 《全集》梁紫左武，《全书》梁紫府武 | 当时代码使用左辅（`ZuoFu`），属于《全集》体系，存在同样的引用问题。 |
+| 定紫微叙述 | 维基百科代数草图与福山堂口诀例题 | 应使用三个口诀例题和完整 \(d,n\) 表测试，不能未经测试直接照搬维基百科文字。 |
+| 身宫是否进入 `Palace` 模型 | 身宫叠支与十二宫职是不同概念 | 需要决定 `Ziwei` 是否暴露 `shen_branch`，以及是否支持查询“身宫落何职”。 |
+| 晚子时 / 日界 | 当日与隔日规则不同 | 影响 \(d\)，也可能影响时支；规划图把历法放在引擎外，调用方须在调用 `from_birth` 前处理。 |
+| 十八星与道藏《洞微十八星断》 | 名称相同，星曜集合不同 | v1 绑定当时的 `Star` 枚举，不宣称与道藏内容同构。 |
 
 ---
 
-## 9. Mapping steps → future code modules (non-implementing sketch)
+## 8. 后续测试可用的验证向量
 
-| Step       | Likely home (per course architecture notes) | Existing hooks                           |
-| ---------- | ------------------------------------------- | ---------------------------------------- |
-| A 命身     | `rules` natal palace                        | `ZiweiInput` month/hour; `twelve_index`  |
-| B 十二职   | `rules` → fill `Palace::role()`             | `PalaceRole`                             |
-| C 宫干     | `rules` 五虎遁                              | `Stem`, `Palace::stem()`                 |
-| D 局       | already pure fn                             | `FiveElementBureau`                      |
-| E 紫微     | `rules`                                     | inject field today; need day for compute |
-| F–G 十四曜 | `rules` star placement                      | `Star`                                   |
-| H 辅佐     | `rules`                                     | month/hour positions                     |
-| 四化       | already pure fn                             | `Stem::transformation_star`              |
+本文只记录检查项，不在此实现：
 
----
-
-## 10. Summary for ticket close-out
-
-- **一手/可复现基线:** 安命身、寅首、紫微/天府系、辅弼昌曲 — 以传统 **起例口诀**（福山堂等与《全书》安身命传统一致的南派/三合排盘链）+ 口诀工作例为准；《全书》维基文库作原文入口；道藏「十八星」仅作名称史线索。
-- **逐步算法:** §4 Steps A–H，含寅=0 环形公式，与 `ZiweiInput` 零点对齐。
-- **已在仓库落地的碎片:** 十八星枚举、宫职、宫干字段、五行局表、四化表、预处理输入中的命宫/紫微位。
-- **引擎 vs 注入草案:** 命职/宫干/局/十四正曜+辅佐应由引擎从 \(m,h,d,\) 年干与命宫关系算出；当前 `from_input` 注入命宫+紫微适合夹具，但缺日数且存在「预填答案」风险 — 交给 **#251** 拍板。
-- **冲突已记录:** 庚/壬四化 全集 vs 全书；定紫微 Wiki 公式 vs 口诀例题；身宫模型与晚子日界。
+1. 命身：三月辰时 → 命子、身申（大纪元）。
+2. 紫微三例：27/木三 → 戌；13/火六 → 亥；6/土五 → 未（福山堂）。
+3. 紫微–天府镜像：\(\forall p,\; t=(-p)\bmod 12\)；寅申同宫。
+4. 十四正曜间隔：固定一个紫微位置，断言 §4 G 中的相对偏移。
+5. 辅佐：正月 → 左辅辰、右弼戌；子时 → 文曲辰、文昌戌。
+6. 五虎遁：核对甲年寅丙、乙年寅戊……与 `birth_stem` 全表。
+7. 五行局：复用已有 `FiveElementBureau` 单元测试表，并抽检命宫甲子 → 金四等纳音组合。
+8. 注入一致性：若同时提供 \(m,h\) 与 `ming_palace_position`，断言两者一致（#251 若采纳校验）。
+9. 规则冻结后建立端到端黄金样例，不绑定商业排盘 App。
 
 ---
 
-## 11. References (clickable)
+## 9. 步骤与候选代码模块
+
+| 步骤 | 候选模块（按当时的架构草案） | 已有接口 |
+| --- | --- | --- |
+| A 命身 | `rules` 中的本命宫规则 | `ZiweiInput` 的月/时、`twelve_index` |
+| B 十二职 | `rules`，填充 `Palace::role()` | `PalaceRole` |
+| C 宫干 | `rules` 中的五虎遁规则 | `Stem`、`Palace::stem()` |
+| D 局 | 已有纯函数 | `FiveElementBureau` |
+| E 紫微 | `rules` | 当时使用注入字段；重新计算需要日数 |
+| F–G 十四曜 | `rules` 中的安星规则 | `Star` |
+| H 辅佐 | `rules` | 月位和时位 |
+| 四化 | 已有纯函数 | `Stem::transformation_star` |
+
+---
+
+## 10. Issue 收尾摘要
+
+- 一手和可复现基线：安命身、寅首、紫微/天府系、辅弼昌曲以传统起例口诀和算例为准；《全书》维基文库用作原文入口；道藏“十八星”只作为名称史线索。
+- 算法步骤：§4 的步骤 A–H 包含寅 = 0 环形公式，并与当时的 `ZiweiInput` 零点对齐。
+- 当时已在仓库落地的部分：十八星枚举、宫职、宫干字段、五行局表、四化表，以及预处理输入中的命宫和紫微位置。
+- 引擎与注入草案：命职、宫干、局、十四正曜和辅佐星应由引擎从 \(m,h,d\)、年干与命宫关系计算。当时的 `from_input` 适合向夹具注入命宫和紫微位置，但缺少日数，也有预填结果的风险；该问题留给 #251 决定。
+- 已记录的冲突：庚/壬四化的《全集》与《全书》差异，定紫微的维基百科公式与口诀例题差异，以及身宫模型和晚子日界问题。
+
+---
+
+## 11. 参考资料
 
 1. 《紫微斗数全书》维基文库总目: <https://zh.wikisource.org/wiki/紫微斗數全書>
 2. 《紫微斗数全书·卷二》: <https://zh.wikisource.org/wiki/紫微斗數全書/卷二>
@@ -443,5 +455,4 @@ Do **not** implement here; use as future property/fixture checklist:
 4. 福山堂起例歌诀总括: <http://www.fushantang.com/1012/1012c/j3084.html>
 5. 大纪元排盘步骤: <https://www.epochtimes.com/gb/9/6/22/n2565978.htm>
 6. 《洞微十八星断》识典: <https://www.shidianguji.com/book/DZ1485/chapter/DZ1485_10>
-7. Repo: `crates/ziwei_core/src/{star,input,palace,five_element_bureau,stem,position}.rs`
-8. Course: `course/RESOURCES.md`, `course/NOTES.md`, learning-records `0007`–`0009`
+7. 仓库代码：`crates/ziwei_core/src/{star,input,palace,five_element_bureau,stem,position}.rs`
