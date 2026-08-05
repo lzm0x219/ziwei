@@ -1,74 +1,138 @@
-# Ziwei 应保存哪些领域数据
+# `Natal` 领域模型
 
-> 状态：已确认（2026-08-05）
->
-> 目标：只确定 `Ziwei` 的数据范围，不设计具体 Rust 类型或序列化格式。
+本文定义 `ziwei_core` 重写后的权威结果结构。它描述已确认的存储事实，不把查询便利方法或未来能力混入内核。
 
-## 判断原则
+## 根结构
 
-`Ziwei` 保存满足以下条件的事实：
+```rust
+pub struct Natal {
+    context: NatalContext,
+    zodiac: Zodiac,
+    palaces: [Palace; 12],
 
-- 由 `ziwei_core` 的排盘规则生成；
-- 生成后不随查询和时间视图改变；
-- 若不保存，重新获得该事实需要再次执行领域规则。
+    ming_palace: PalaceName,
+    ming_palace_branch: Branch,
+    body_palace: PalaceName,
+    body_palace_branch: Branch,
+    origin_palace: PalaceName,
+    origin_palace_branch: Branch,
 
-`ziwei_query` 负责从这些事实推导关系，不修改 `Ziwei`。
-
-## 建议的数据分组
-
-### 计算上下文
-
-记录 `ziwei_core` 实际使用的完整标准化出生事实，包括性别、生年干支与标准化月日时。
-
-- 真实农历出生年已知时保存，未知时明确缺失；
-- 保存生成命盘时使用的核心排盘规则集标识；
-- 不保存 `ziwei_calendar` 转换前的公历时间、时区、经纬度或转换过程；
-- 不保存计算能力或能力标志，可用查询由事实是否完整推导。
-
-### 本命事实
-
-- 十二宫及其本命宫职、地支和宫干；
-- 身宫叠落地支；
-- 五行局；
-- 星曜落宫；
-- 来因宫叠落地支；
-- 生年四化；
-- 宫干飞化集合及其自化标注。
-
-### 固定时间结构
-
-- 十二步大限；
-- 每步大限的命宫叠落地支和虚岁范围。
-
-这些数据由出生事实确定，不因调用者切换视图而改变。
-
-## 不进入 Ziwei
-
-- 当前选中的本命、大限或流年视图；
-- 对宫、三方四正等关系查询结果；
-- 按虚岁定位出的“当前大限”；
-- 某个流年的宫职叠落映射；
-- 显示标签、国际化文本和 UI 布局；
-- 格局、分析结论和解读文本；
-- SDK 或 FFI 专用 DTO。
-
-## 与当前实现的关系
-
-现有 `Ziwei` 已保存大部分建议数据，重写时保留这些固定事实：
-
-- 宫位、身宫、五行局、星位、来因宫、生年四化、宫干飞化和大限继续作为 core 数据，视为固定排盘事实；
-- `ming_branch` 等内部缓存可以保留，但不成为跨语言领域契约；
-- 时间视图与关系方法从 `Ziwei` 移到 `ziwei_query`。
-
-## 已确认
-
-确认 `Ziwei` 采用以下顶层结构：
-
-```text
-Ziwei
-├── 计算上下文
-├── 本命事实
-└── 固定时间结构
+    bureau: FiveElementBureau,
+    decade_direction: DecadeDirection,
+    decades: [Decade; 12],
+}
 ```
 
-[领域语义收口](domain-semantics-convergence.md)与 [`ziwei_core` 首批迁移](ziwei-core-first-batch.md)已经完成。下一步执行 [#280](https://github.com/matharts/ziwei/issues/280)，围绕不可变 `Ziwei` 重写 core；`ziwei_query` 的 interface 继续延后。
+所有字段私有。`Natal::from_birth(ZiweiBirth)` 与 `Natal::from_input(ZiweiInput)` 是两条公开、无失败的构造入口；两者必须进入同一条归一化计算流水线。
+
+```rust
+pub struct NatalContext {
+    gender: Gender,
+    year: Option<i32>,
+    birth_stem: Stem,
+    birth_branch: Branch,
+    month: u8,
+    day: u8,
+    hour: u8,
+}
+```
+
+`NatalContext` 只由已验证输入生成，不公开构造，也不成为第三种输入。`ZiweiBirth` 的年份必须保证十二个大限中的全部年份都能以 `i32` 表示；`ZiweiInput` 的 `year` 固定为 `None`。
+
+## 宫位与星曜
+
+```rust
+pub struct Palace {
+    name: PalaceName,
+    branch: Branch,
+    stem: Stem,
+    stars: Vec<Star>,
+    transformations: [PalaceTransformation; 4],
+}
+
+pub struct Star {
+    key: StarKey,
+    origin_transformation: Option<Transformation>,
+    self_transformations: StarSelfTransformations,
+}
+
+pub struct StarSelfTransformations {
+    inward: Option<Transformation>,
+    outward: Option<Transformation>,
+}
+```
+
+`PalaceName` 只改原 `PalaceRole` 的类型名，十二个枚举成员及次序保持不变：
+
+```text
+Ming, XiongDi, FuQi, ZiNv, CaiBo, JiE,
+QianYi, JiaoYou, GuanLu, TianZhai, FuDe, FuMu
+```
+
+`palaces` 的数组坐标不是 `Branch` 的内部序号，而是固定以寅为零：
+
+```text
+0 Yin, 1 Mao, 2 Chen, 3 Si, 4 Wu, 5 Wei,
+6 Shen, 7 You, 8 Xu, 9 Hai, 10 Zi, 11 Chou
+```
+
+每宫的 `stars` 只存落在该宫的星曜，并按 `StarKey::ALL` 的相对次序稳定排列。全盘十八个 `StarKey` 各出现一次。
+
+`StarKey` 只承载稳定身份及领域分类：
+
+- `StarType`: `Major / Minor / Auxiliary`；十四主星为 `Major`，左辅、右弼、文昌、文曲为 `Minor`，首批没有 `Auxiliary` 成员。
+- `StarGalaxy`: `S / N / C`，分别表示南斗、北斗、中斗；没有斗系的星返回 `None`。
+- `as_str()` 返回稳定 snake_case key，不提供简繁体显示文案。
+
+`StarKey::ALL` 沿用当前十八星算法顺序，不参与决定安星先后；安星结果由计算规则决定，数组只提供稳定遍历顺序。
+
+## 四化关系
+
+```rust
+pub enum Transformation { A, B, C, D }
+
+pub struct PalaceTransformation {
+    source_name: PalaceName,
+    source_branch: Branch,
+    transformation: Transformation,
+    target_name: PalaceName,
+    target_branch: Branch,
+    star_key: StarKey,
+}
+```
+
+`A / B / C / D` 是领域稳定代码，展示层可映射为禄、权、科、忌。每个 `Palace` 保存以自身为源宫的四条关系，顺序为 `A / B / C / D`。每条关系的目标宫必须包含且只包含对应 `star_key`。
+
+生年四化直接存于目标 `Star.origin_transformation`。全盘恰有四个 `Some`，并且 `A / B / C / D` 各一次，不再另存顶层数组。
+
+自化也存于目标星曜：
+
+- 源宫地支等于目标宫地支时，`outward = Some(transformation)`；
+- 源宫与目标宫相对时，`inward = Some(transformation)`；
+- 两者可同时存在，各自至多一个；
+- 它们必须能从 `PalaceTransformation` 唯一复算。
+
+## 生肖与大限
+
+`Zodiac` 由出生地支计算并存入 `Natal`：子鼠、丑牛、寅虎、卯兔、辰龙、巳蛇、午马、未羊、申猴、酉鸡、戌狗、亥猪。
+
+```rust
+pub enum DecadeDirection { Forward, Reverse }
+
+pub struct Decade {
+    index: DecadeIndex,
+    ming_palace_branch: Branch,
+    years: [DecadeYear; 10],
+}
+
+pub struct DecadeYear {
+    year: Option<i32>,
+    age: u8,
+}
+```
+
+`DecadeDirection::Forward` 当且仅当出生年干阴阳与性别阴阳相同。第零大限命宫地支等于本命命宫地支，后续按方向逐宫移动。
+
+十二个大限按 `DecadeIndex(0..=11)` 排列。每个大限存十个连续虚岁；`age_start()` 和 `age_end()` 分别读取首尾条目，不重复存储。`from_birth` 的年份为 `birth_year + age - 1`，`from_input` 的年份全部为 `None`。
+
+这里只保存“年份 + 虚岁”的最小流年事实。流年宫位、星曜、四化和按年份/年龄选择大限属于 `ziwei_query` 或后续独立计算，不进入本切片。

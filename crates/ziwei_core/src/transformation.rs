@@ -1,58 +1,25 @@
-//! 四化象的身份与显示文本。
-//!
-//! 引擎内部与表下标使用 `A/B/C/D` 对应禄/权/科/忌；显示名由
-//! [`Transformation::simplified_chinese`] / [`Transformation::traditional_chinese`] 提供。
-//! 具体「某干化哪颗星」见 [`crate::Stem::transformation_star`]。
+//! 四化的稳定领域身份。
 
-/// 紫微斗数中的一种四化象。
+/// 紫微斗数四化中的一个稳定代码。
 ///
-/// 变体字母与历史表下标对齐：`A=禄(0)、B=权(1)、C=科(2)、D=忌(3)`。
+/// `A / B / C / D` 分别由外层文案映射为禄、权、科、忌；core 不保存显示语言。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Transformation {
-    /// A，显示为禄／祿。
+    /// 第一化。
     A,
-    /// B，显示为权／權。
+    /// 第二化。
     B,
-    /// C，显示为科。
+    /// 第三化。
     C,
-    /// D，显示为忌。
+    /// 第四化。
     D,
 }
 
 impl Transformation {
-    /// 禄、权、科、忌（与表下标 0..=3 一致），便于 `map` 遍历四化。
+    /// 四化全集，顺序固定为 `A / B / C / D`。
     pub const ALL: [Self; 4] = [Self::A, Self::B, Self::C, Self::D];
 
-    /// 禄（同 [`Self::A`]）。
-    pub const LU: Self = Self::A;
-    /// 权（同 [`Self::B`]）。
-    pub const QUAN: Self = Self::B;
-    /// 科（同 [`Self::C`]）。
-    pub const KE: Self = Self::C;
-    /// 忌（同 [`Self::D`]）。
-    pub const JI: Self = Self::D;
-
-    /// 返回简体中文的四化象文本。
-    pub const fn simplified_chinese(self) -> &'static str {
-        match self {
-            Self::A => "禄",
-            Self::B => "权",
-            Self::C => "科",
-            Self::D => "忌",
-        }
-    }
-
-    /// 返回繁体中文的四化象文本。
-    pub const fn traditional_chinese(self) -> &'static str {
-        match self {
-            Self::A => "祿",
-            Self::B => "權",
-            Self::C => "科",
-            Self::D => "忌",
-        }
-    }
-
-    /// 表下标：禄=0 … 忌=3。
+    /// 四化表下标，与 [`Self::ALL`] 对齐。
     pub(crate) const fn index(self) -> usize {
         match self {
             Self::A => 0,
@@ -67,19 +34,9 @@ impl Transformation {
 mod tests {
     use super::*;
 
-    /// 锁定四化中英文标签与下标，防止显示与表映射错位。
     #[test]
-    fn labels_match_the_confirmed_four_transformations() {
-        let expected = [
-            (Transformation::A, "禄", "祿", 0),
-            (Transformation::B, "权", "權", 1),
-            (Transformation::C, "科", "科", 2),
-            (Transformation::D, "忌", "忌", 3),
-        ];
-
-        for (transformation, hans, hant, index) in expected {
-            assert_eq!(transformation.simplified_chinese(), hans);
-            assert_eq!(transformation.traditional_chinese(), hant);
+    fn transformation_order_matches_table_indices() {
+        for (index, transformation) in Transformation::ALL.into_iter().enumerate() {
             assert_eq!(transformation.index(), index);
         }
     }

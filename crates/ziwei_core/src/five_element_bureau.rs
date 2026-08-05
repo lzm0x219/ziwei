@@ -24,7 +24,7 @@ impl FiveElementBureau {
     /// 根据命宫的天干和地支计算五行局数。
     ///
     /// 天干按甲乙/丙丁/戊己/庚辛/壬癸五组，地支按子丑/寅卯/…六组，查 5×6 纳音局表。
-    pub const fn from_ming_palace(stem: Stem, branch: Branch) -> Self {
+    pub(crate) const fn from_ming_palace(stem: Stem, branch: Branch) -> Self {
         BUREAUS[stem_group_index(stem)][branch_group_index(branch)]
     }
 
@@ -36,17 +36,6 @@ impl FiveElementBureau {
             Self::MetalFour => 4,
             Self::EarthFive => 5,
             Self::FireSix => 6,
-        }
-    }
-
-    /// 返回简体中文的五行局名称。
-    pub const fn simplified_chinese(self) -> &'static str {
-        match self {
-            Self::WaterTwo => "水二局",
-            Self::WoodThree => "木三局",
-            Self::MetalFour => "金四局",
-            Self::EarthFive => "土五局",
-            Self::FireSix => "火六局",
         }
     }
 }
@@ -199,18 +188,17 @@ mod tests {
     }
 
     #[test]
-    fn labels_and_numbers_match_the_confirmed_bureaus() {
+    fn numbers_match_the_confirmed_bureaus() {
         let expected = [
-            (FiveElementBureau::WaterTwo, 2, "水二局"),
-            (FiveElementBureau::WoodThree, 3, "木三局"),
-            (FiveElementBureau::MetalFour, 4, "金四局"),
-            (FiveElementBureau::EarthFive, 5, "土五局"),
-            (FiveElementBureau::FireSix, 6, "火六局"),
+            (FiveElementBureau::WaterTwo, 2),
+            (FiveElementBureau::WoodThree, 3),
+            (FiveElementBureau::MetalFour, 4),
+            (FiveElementBureau::EarthFive, 5),
+            (FiveElementBureau::FireSix, 6),
         ];
 
-        for (bureau, number, name) in expected {
+        for (bureau, number) in expected {
             assert_eq!(bureau.number(), number);
-            assert_eq!(bureau.simplified_chinese(), name);
         }
     }
 }

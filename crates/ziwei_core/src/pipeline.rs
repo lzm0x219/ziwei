@@ -1,117 +1,145 @@
-//! 命盘构造编排：按依赖波次顺序求值并拼装。
-//!
-//! # 依赖图
-//!
-//! ```text
-//! Wave1    命身(m,h)  ·  十二宫干(年干)  ·  辅佐(m,h)
-//!            │                │
-//!            └──────┬─────────┘
-//!                   ▼
-//! Wave2a     命宫局  ←  仅需命支 + 该支宫干（不必先布满十二职）
-//!            │
-//!     ┌──────┴──────┐
-//!     ▼             ▼
-//! Wave2b/3   拼装十二宫职    十四正曜(day,局)
-//!     │             │
-//!     └──────┬──────┘
-//!            ▼
-//! Wave3b     合并辅佐 → 十八星
-//!            │
-//!     ┌──────┴──────┐
-//!     ▼             ▼
-//! Wave4      宫干飞边      大限序列
-//!     └──────┬──────┘
-//!            ▼
-//!         ChartParts → Ziwei
-//! ```
-//!
-//! 单盘计算量极小，一律顺序求值。批量排盘请在**盘级**并行（对多个
-//! `from_birth` / `from_input` 调用做并行），勿在盘内微并行。
+//! 从归一化出生上下文装配不可变 `Natal`。
 
 use super::{
     branch::Branch,
-    decade::build_decade_steps,
-    fly::{ZiweiFly, build_palace_flies},
-    input::{Gender, ZiweiInput},
+    decade::build_decades,
+    natal::{Natal, NatalContext},
+    palace::{Palace, PalaceName, PalaceTransformation},
     placement::{
-        NatalLayout, assemble_palaces, bureau_from_ming_stems, compute_ming_shen,
+        PalaceSeed, build_palace_seeds, bureau_from_ming_stems, compute_ming_body,
         compute_palace_stems, merge_assistants, place_assistants, place_major_stars,
     },
+    position::branch_from_yin0,
+    star::{Star, StarKey, StarSelfTransformations},
     stem::Stem,
-    view::DecadeStep,
-    year_transformation::{YearTransformation, build_year_transformations},
+    transformation::Transformation,
+    zodiac::Zodiac,
 };
 
-/// 构造完成、尚未装入 [`crate::Ziwei`] 公开字段前的零件。
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct ChartParts {
-    /// 十二宫 + 命身 + 局。
-    pub layout: NatalLayout,
-    /// 十八星落宫。
-    pub star_branches: [Branch; 18],
-    /// 来因宫叠落地支。
-    pub laiyin_branch: Branch,
-    /// 固定生年四化。
-    pub year_transformations: [YearTransformation; 4],
-    /// 飞边。
-    pub flies: [ZiweiFly; 48],
-    /// 大限。
-    pub decade_steps: [DecadeStep; 12],
-    /// 生年干（回填盘对象）。
-    pub birth_stem: Stem,
-    /// 生年支（回填盘对象）。
-    pub birth_branch: Branch,
-    /// 性别。
-    pub gender: Gender,
+/// 由归一化上下文计算完整本命盘。
+pub(crate) fn build_natal(context: NatalContext) -> Natal {
+    let ming_body = compute_ming_body(context.month(), context.hour());
+    let palace_stems = compute_palace_stems(context.birth_stem());
+    let bureau = bureau_from_ming_stems(ming_body.ming, &palace_stems);
+    let palace_seeds = build_palace_seeds(ming_body.ming, &palace_stems);
+    let star_branches = merge_assistants(
+        place_major_stars(context.day(), bureau.number()),
+        place_assistants(context.month(), context.hour()),
+    );
+
+    let mut stars_by_branch: [Vec<Star>; 12] = std::array::from_fn(|_| Vec::new());
+    for key in StarKey::ALL {
+        let branch = star_branches[key.index()];
+        let origin_transformation = origin_transformation(context.birth_stem(), key);
+        let self_transformations = self_transformations(key, branch, &palace_seeds);
+        stars_by_branch[branch.index()].push(Star::new(
+            key,
+            origin_transformation,
+            self_transformations,
+        ));
+    }
+
+    let palaces = std::array::from_fn(|yin0| {
+        let yin0 = u8::try_from(yin0).expect("twelve palaces fit in u8");
+        let branch = branch_from_yin0(yin0);
+        let seed = palace_seeds[branch.index()];
+        let transformations = build_palace_transformations(seed, &palace_seeds, &star_branches);
+        Palace::new(
+            seed.name,
+            seed.branch,
+            seed.stem,
+            std::mem::take(&mut stars_by_branch[branch.index()]),
+            transformations,
+        )
+    });
+
+    let origin_palace_branch = context.birth_stem().origin_palace_branch();
+    let ming_palace = palace_name_at(ming_body.ming, &palace_seeds);
+    let body_palace = palace_name_at(ming_body.body, &palace_seeds);
+    let origin_palace = palace_name_at(origin_palace_branch, &palace_seeds);
+    let (decade_direction, decades) = build_decades(
+        context.gender(),
+        context.birth_stem(),
+        context.year(),
+        ming_body.ming,
+        bureau.number(),
+    );
+
+    Natal::new(
+        context,
+        Zodiac::from_branch(context.birth_branch()),
+        palaces,
+        ming_palace,
+        ming_body.ming,
+        body_palace,
+        ming_body.body,
+        origin_palace,
+        origin_palace_branch,
+        bureau,
+        decade_direction,
+        decades,
+    )
 }
 
-/// 已校验输入 → 全盘零件（双入口最终实现体）。
-pub(crate) fn build_chart_parts(input: ZiweiInput) -> ChartParts {
-    let gender = input.gender();
-    let birth_stem = input.birth_stem();
-    let birth_branch = input.birth_branch();
-    let month = input.month();
-    let day = input.day();
-    let hour = input.hour();
+fn palace_name_at(branch: Branch, palace_seeds: &[PalaceSeed; 12]) -> PalaceName {
+    palace_seeds[branch.index()].name
+}
 
-    // —— Wave 1：三路独立（顺序求值）——
-    let ming_shen = compute_ming_shen(month, hour);
-    let palace_stems = compute_palace_stems(birth_stem);
-    let assistants = place_assistants(month, hour);
+fn origin_transformation(birth_stem: Stem, key: StarKey) -> Option<Transformation> {
+    Transformation::ALL
+        .into_iter()
+        .find(|transformation| birth_stem.transformation_star(*transformation) == key)
+}
 
-    // —— Wave 2a：局只依赖命支 + 命宫干 ——
-    let bureau = bureau_from_ming_stems(ming_shen.ming, &palace_stems);
-    let bureau_n = bureau.number();
+fn self_transformations(
+    key: StarKey,
+    target_branch: Branch,
+    palace_seeds: &[PalaceSeed; 12],
+) -> StarSelfTransformations {
+    let mut inward = None;
+    let mut outward = None;
 
-    // —— Wave 2b / 3a：拼宫与正曜 ——
-    let palaces = assemble_palaces(ming_shen, &palace_stems);
-    let majors = place_major_stars(day, bureau_n);
-
-    let layout = NatalLayout {
-        palaces,
-        ming_branch: ming_shen.ming,
-        shen_branch: ming_shen.shen,
-        bureau,
-    };
-
-    // —— Wave 3b：合并辅佐 ——
-    let star_branches = merge_assistants(majors, assistants);
-    let laiyin_branch = birth_stem.laiyin_branch();
-    let year_transformations = build_year_transformations(birth_stem, &star_branches);
-
-    // —— Wave 4：飞边与大限 ——
-    let flies = build_palace_flies(&layout.palaces, &star_branches);
-    let decade_steps = build_decade_steps(gender, birth_stem, layout.ming_branch, bureau_n);
-
-    ChartParts {
-        layout,
-        star_branches,
-        laiyin_branch,
-        year_transformations,
-        flies,
-        decade_steps,
-        birth_stem,
-        birth_branch,
-        gender,
+    for source in palace_seeds {
+        for transformation in Transformation::ALL {
+            if source.stem.transformation_star(transformation) != key {
+                continue;
+            }
+            if source.branch == target_branch {
+                debug_assert!(
+                    outward.is_none(),
+                    "a star has at most one outward self-transformation"
+                );
+                outward = Some(transformation);
+            }
+            if source.branch.opposite() == target_branch {
+                debug_assert!(
+                    inward.is_none(),
+                    "a star has at most one inward self-transformation"
+                );
+                inward = Some(transformation);
+            }
+        }
     }
+
+    StarSelfTransformations::new(inward, outward)
+}
+
+fn build_palace_transformations(
+    source: PalaceSeed,
+    palace_seeds: &[PalaceSeed; 12],
+    star_branches: &[Branch; 18],
+) -> [PalaceTransformation; 4] {
+    std::array::from_fn(|index| {
+        let transformation = Transformation::ALL[index];
+        let star_key = source.stem.transformation_star(transformation);
+        let target_branch = star_branches[star_key.index()];
+        PalaceTransformation::new(
+            source.name,
+            source.branch,
+            transformation,
+            palace_name_at(target_branch, palace_seeds),
+            target_branch,
+            star_key,
+        )
+    })
 }

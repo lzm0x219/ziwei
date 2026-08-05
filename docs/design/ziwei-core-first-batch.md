@@ -1,32 +1,49 @@
-# `ziwei_core` 首批迁移
+# `ziwei_core` 首批重写
 
-> 状态：已执行（2026-08-05）
->
-> 目标：把现有 Rust 实现完整迁入 `ziwei_core`，作为后续重写的可编译基线。
+## 状态
 
-## 决定
+此前的机械拆分已经完成：workspace、`ziwei_core`、`ziwei` 门面及空的后续 crate 边界均已建立。当前工作是 #280 跟踪的首个真正领域重写切片。
 
-本次只做机械迁移，不在移动过程中重新划分类型、排盘和查询 interface：
+## 本切片目标
 
-- 原 `crates/ziwei/src` 的实现与测试整体迁入 `crates/ziwei_core/src`；
-- crate 内私有构造器、内部坐标和模块关系保持不变；
-- `ziwei` 收敛为 SDK facade，显式导出 `ziwei_core` 的当前公开类型；
-- calendar、query、analysis 和 bindings 不增加实现。
+在不保留旧 `Ziwei` 结果模型的前提下，以一个可工作的端到端切片建立不可变 `Natal`：
 
-因此，现有视图和查询代码也暂时随实现进入 `ziwei_core`。这是重写前的代码基线，不代表最终 crate 边界。
+1. 两种已验证输入进入同一条归一化流水线；
+2. 生成十二宫、十八星、生年四化、宫位四化关系与星曜自化；
+3. 生成生肖、五行局、大限方向、十二大限及每限十个年份/虚岁；
+4. 通过 `ziwei` 门面选择性重导出稳定领域类型；
+5. 删除旧结果类型、查询选择器和兼容路径。
 
-## 迁移结果
+之所以作为一个切片完成，是因为宫位、星曜、四化边与自化共同构成一个所有权图。保留新旧双模型会制造重复事实和临时转换层，不符合 Extreme Simplicity。
 
-```text
-ziwei
-  └── facade / 统一公开入口
-        ↓
-ziwei_core
-  └── 当前全部 Rust 领域实现与测试
-```
+## 精确范围
 
-实现只在 `ziwei_core` 保留一份，`ziwei` 不复制任何紫微规则，也不保留旧实现模块。
+包含：
 
-## 后续
+- `Ziwei` 重命名为 `Natal`，无别名；
+- `PalaceRole` 重命名为 `PalaceName`，成员顺序不变；
+- 原星曜身份枚举重命名为 `StarKey`，新增盘内 `Star`；
+- 四化统一为 `Transformation::A/B/C/D`；
+- `PalaceTransformation` 下沉到源 `Palace`，生年四化与自化下沉到目标 `Star`；
+- `DecadeStep` 重命名为 `Decade`，每限保存十个 `DecadeYear`；
+- 出生年份增加覆盖十二大限的可表示性校验；
+- 结果字段私有、只读，由 crate 内统一装配。
 
-下一步执行 [#280](https://github.com/matharts/ziwei/issues/280)，围绕不可变 `Ziwei` 重写 `ziwei_core`。等 `Ziwei` 数据模型稳定后，再设计 `ziwei_query` 的 interface，并将关系查询从 core 移出。
+不包含：
+
+- `ziwei_query` 的查询实现；
+- 流年盘、流年宫位、流年星曜或流年四化；
+- 历法、bindings、analysis、插件机制；
+- 简繁体或其他 i18n 实现；
+- 规则集标识或扩展框架。
+
+## 验收标准
+
+- `from_birth` 与 `from_input` 共享计算路径，前者年份全部为 `Some`，后者全部为 `None`。
+- 十二宫按寅为零排列，宫名与地支各自唯一。
+- 十八个 `StarKey` 全盘各一次，宫内顺序遵循 `StarKey::ALL`。
+- 生年 `A/B/C/D` 各一次；每宫四条关系均能解析到唯一目标星曜。
+- 星曜自化与宫位四化关系可相互校验。
+- 生肖映射、大限方向、十二乘十大限条目及年份/虚岁公式有测试覆盖。
+- 旧查询接口不再从 `ziwei_core` 或 `ziwei` 导出。
+- `cargo test --workspace`、`cargo fmt --all -- --check`、`cargo clippy --workspace --all-targets -- -D warnings`、`cargo doc --workspace --no-deps` 全部通过。
