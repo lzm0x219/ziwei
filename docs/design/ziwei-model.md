@@ -81,7 +81,7 @@ QianYi, JiaoYou, GuanLu, TianZhai, FuDe, FuMu
 `StarKey` 只承载稳定身份及领域分类：
 
 - `StarType`: `Major / Minor / Auxiliary`；十四主星为 `Major`，左辅、右弼、文昌、文曲为 `Minor`，首批没有 `Auxiliary` 成员。
-- `StarGalaxy`: `S / N / C`，分别表示南斗、北斗、中斗；没有斗系的星返回 `None`。
+- `StarGalaxy`: `South / North / Central`，分别表示南斗、北斗、中斗；没有斗系的星返回 `None`。
 - `as_str()` 返回稳定 snake_case key，不提供简繁体显示文案。
 
 `StarKey::ALL` 沿用当前十八星算法顺序，不参与决定安星先后；安星结果由计算规则决定，数组只提供稳定遍历顺序。

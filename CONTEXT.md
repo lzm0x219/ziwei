@@ -13,6 +13,7 @@
 | `PalaceName` | 十二宫名；枚举成员沿用原十二宫职顺序 |
 | `Palace` | 一个宫位的宫名、地支、天干、星曜与四条宫位四化关系 |
 | `StarKey` | 十八颗首批星曜的稳定身份 |
+| `StarGalaxy` | 星曜所属斗系；`South`、`North`、`Central` 分别表示南斗、北斗、中斗 |
 | `Star` | 星曜在本命盘中的落位事实，包含生年四化与自化 |
 | `Transformation` | 四化稳定代码 `A / B / C / D`；展示层可映射为禄、权、科、忌 |
 | `PalaceTransformation` | 一条从源宫到目标星曜所在宫的四化关系 |
