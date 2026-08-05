@@ -112,12 +112,12 @@ pub enum Stem {
 impl Stem {
     /// 返回由该生年天干确定的来因地支（固定表，ADR-0005）。
     ///
-    /// 甲戌、乙酉、丙辰、丁未、戊午、己巳、庚辰、辛卯、壬寅、癸亥。
+    /// 甲戌、乙酉、丙申、丁未、戊午、己巳、庚辰、辛卯、壬寅、癸亥。
     pub(crate) const fn origin_palace_branch(self) -> Branch {
         match self {
             Self::Jia => Branch::Xu,
             Self::Yi => Branch::You,
-            Self::Bing => Branch::Chen,
+            Self::Bing => Branch::Shen,
             Self::Ding => Branch::Wei,
             Self::Wu => Branch::Wu,
             Self::Ji => Branch::Si,
@@ -197,7 +197,7 @@ mod tests {
         let expected = [
             (Stem::Jia, Branch::Xu),
             (Stem::Yi, Branch::You),
-            (Stem::Bing, Branch::Chen),
+            (Stem::Bing, Branch::Shen),
             (Stem::Ding, Branch::Wei),
             (Stem::Wu, Branch::Wu),
             (Stem::Ji, Branch::Si),

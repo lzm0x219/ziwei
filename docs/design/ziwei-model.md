@@ -103,7 +103,7 @@ pub struct PalaceTransformation {
 
 `A / B / C / D` 是领域稳定代码，展示层可映射为禄、权、科、忌。每个 `Palace` 保存以自身为源宫的四条关系，顺序为 `A / B / C / D`。每条关系的目标宫必须包含且只包含对应 `star_key`。
 
-生年四化直接存于目标 `Star.origin_transformation`。全盘恰有四个 `Some`，并且 `A / B / C / D` 各一次，不再另存顶层数组。
+由生年天干所飞化的生年四化直接存于目标 `Star.origin_transformation`。来因宫与五虎遁宫干各自独立计算，但来因宫宫干必须与生年天干一致，因此同一组四化也存在于 `origin_palace` 那一宫的 `PalaceTransformation` 中，两者按目标 `star_key` 与 `transformation` 一一对应。全盘恰有四个 `Some`，并且 `A / B / C / D` 各一次，不再另存顶层数组。
 
 自化也存于目标星曜：
 

@@ -538,11 +538,39 @@ mod tests {
                 4,
                 "stem={stem:?}"
             );
+            for transformation in Transformation::ALL {
+                let key = stem.transformation_star(transformation);
+                let (_, star) = find_star(&natal, key);
+                assert_eq!(
+                    star.origin_transformation(),
+                    Some(transformation),
+                    "stem={stem:?}, star={key:?}"
+                );
+            }
             assert_eq!(all_transformations(&natal).count(), 48);
             for edge in all_transformations(&natal) {
                 let (target_palace, _) = find_star(&natal, edge.star_key());
                 assert_eq!(edge.target_name(), target_palace.name());
                 assert_eq!(edge.target_branch(), target_palace.branch());
+            }
+
+            let origin_palace = natal
+                .palaces()
+                .iter()
+                .find(|palace| {
+                    palace.name() == natal.origin_palace()
+                        && palace.branch() == natal.origin_palace_branch()
+                })
+                .expect("origin palace is present");
+            assert_eq!(origin_palace.stem(), stem, "stem={stem:?}");
+            for edge in origin_palace.transformations() {
+                let (_, star) = find_star(&natal, edge.star_key());
+                assert_eq!(
+                    star.origin_transformation(),
+                    Some(edge.transformation()),
+                    "stem={stem:?}, star={:?}",
+                    edge.star_key()
+                );
             }
         }
     }
