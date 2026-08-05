@@ -1,11 +1,16 @@
 //! 十二宫名、宫位及宫位四化关系。
 
+use arrayvec::ArrayVec;
+
 use super::{
     branch::Branch,
     star::{Star, StarKey},
     stem::Stem,
     transformation::Transformation,
 };
+
+pub(crate) const MAX_STARS_PER_PALACE: usize = 6;
+pub(crate) type PalaceStars = ArrayVec<Star, MAX_STARS_PER_PALACE>;
 
 /// 十二宫名，自命宫起按经典逆布次序排列。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -142,7 +147,7 @@ pub struct Palace {
     name: PalaceName,
     branch: Branch,
     stem: Stem,
-    stars: Vec<Star>,
+    stars: PalaceStars,
     transformations: [PalaceTransformation; 4],
 }
 
@@ -152,7 +157,7 @@ impl Palace {
         name: PalaceName,
         branch: Branch,
         stem: Stem,
-        stars: Vec<Star>,
+        stars: PalaceStars,
         transformations: [PalaceTransformation; 4],
     ) -> Self {
         Self {
@@ -181,7 +186,7 @@ impl Palace {
 
     /// 落在本宫的星曜，顺序遵循 [`StarKey::ALL`]。
     pub fn stars(&self) -> &[Star] {
-        &self.stars
+        self.stars.as_slice()
     }
 
     /// 以本宫为源宫的四条关系，顺序固定为 `A / B / C / D`。
@@ -210,11 +215,13 @@ mod tests {
             Branch::Zi,
             StarKey::ZiWei,
         );
+        let mut stars = PalaceStars::new();
+        stars.push(star);
         let palace = Palace::new(
             PalaceName::Ming,
             Branch::Zi,
             Stem::Jia,
-            vec![star],
+            stars,
             [relation; 4],
         );
 

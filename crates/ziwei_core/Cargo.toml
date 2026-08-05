@@ -10,6 +10,19 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+arrayvec.workspace = true
+
+[dev-dependencies]
+allocation-counter.workspace = true
+criterion.workspace = true
+
+[[bench]]
+name = "natal"
+harness = false
+
+[[bench]]
+name = "natal_allocations"
+harness = false
 
 [lints]
 workspace = true
