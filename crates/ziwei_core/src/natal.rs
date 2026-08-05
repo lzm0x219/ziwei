@@ -354,12 +354,12 @@ mod tests {
             ),
         ];
 
-        for (input, ming, shen, bureau, ziwei) in cases {
+        for (input, ming, shen, bureau, zi_wei_branch) in cases {
             let natal = Natal::from_input(input);
             assert_eq!(natal.ming_palace_branch(), ming);
             assert_eq!(natal.shen_palace_branch(), shen);
             assert_eq!(natal.bureau(), bureau);
-            assert_eq!(find_star(&natal, StarKey::ZiWei).0.branch(), ziwei);
+            assert_eq!(find_star(&natal, StarKey::ZiWei).0.branch(), zi_wei_branch);
         }
 
         let first = Natal::from_input(cases[0].0);

@@ -54,7 +54,7 @@ pub(crate) fn compute_palace_stems(birth_stem: Stem) -> [Stem; 12] {
 }
 
 /// 命宫干支确定五行局。
-pub(crate) fn bureau_from_ming_stems(
+pub(crate) fn bureau_from_ming_palace(
     ming_palace_branch: Branch,
     palace_stems: &[Stem; 12],
 ) -> FiveElementBureau {
@@ -113,8 +113,8 @@ pub(crate) fn place_major_stars(day: u8, bureau_number: u8) -> [Branch; 18] {
         value if value % 2 == 1 => -value,
         value => value,
     };
-    let ziwei_yin0 = twelve_index((quotient - 1) + correction);
-    let tianfu_yin0 = twelve_index(-i32::from(ziwei_yin0));
+    let zi_wei_yin0 = twelve_index((quotient - 1) + correction);
+    let tian_fu_yin0 = twelve_index(-i32::from(zi_wei_yin0));
 
     let mut branches = [Branch::Zi; 18];
     for (key, offset) in [
@@ -128,7 +128,7 @@ pub(crate) fn place_major_stars(day: u8, bureau_number: u8) -> [Branch; 18] {
         set_star_at_yin0(
             &mut branches,
             key,
-            twelve_index(i32::from(ziwei_yin0) - offset),
+            twelve_index(i32::from(zi_wei_yin0) - offset),
         );
     }
     for (key, offset) in [
@@ -144,7 +144,7 @@ pub(crate) fn place_major_stars(day: u8, bureau_number: u8) -> [Branch; 18] {
         set_star_at_yin0(
             &mut branches,
             key,
-            twelve_index(i32::from(tianfu_yin0) + offset),
+            twelve_index(i32::from(tian_fu_yin0) + offset),
         );
     }
 
@@ -294,21 +294,21 @@ mod tests {
     }
 
     #[test]
-    fn tianfu_mirrors_ziwei_for_every_supported_day_and_bureau() {
+    fn tian_fu_mirrors_zi_wei_for_every_supported_day_and_bureau() {
         for day in 1..=30u8 {
             for bureau_number in [2u8, 3, 4, 5, 6] {
                 let stars = place_major_stars(day, bureau_number);
-                let ziwei = branch_index_to_yin0(
+                let zi_wei_yin0 = branch_index_to_yin0(
                     u8::try_from(stars[StarKey::ZiWei.index()].index())
                         .expect("branch index fits in u8"),
                 );
-                let tianfu = branch_index_to_yin0(
+                let tian_fu_yin0 = branch_index_to_yin0(
                     u8::try_from(stars[StarKey::TianFu.index()].index())
                         .expect("branch index fits in u8"),
                 );
                 assert_eq!(
-                    tianfu,
-                    twelve_index(-i32::from(ziwei)),
+                    tian_fu_yin0,
+                    twelve_index(-i32::from(zi_wei_yin0)),
                     "day={day} bureau={bureau_number}"
                 );
             }

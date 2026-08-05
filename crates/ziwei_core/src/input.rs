@@ -265,13 +265,13 @@ const fn validate_birth_year(year: i32) -> Result<(), ZiweiInputError> {
 
 /// 校验月 ∈ 0..=11、日 ∈ 1..=30、时 ∈ 0..=11。
 pub(crate) fn validate_month_day_hour(month: u8, day: u8, hour: u8) -> Result<(), ZiweiInputError> {
-    if !ring_position_is_valid(month) {
+    if !is_valid_ring_position(month) {
         return Err(ZiweiInputError::MonthOutOfRange { value: month });
     }
     if !(1..=30).contains(&day) {
         return Err(ZiweiInputError::DayOutOfRange { value: day });
     }
-    if !ring_position_is_valid(hour) {
+    if !is_valid_ring_position(hour) {
         return Err(ZiweiInputError::HourOutOfRange { value: hour });
     }
     Ok(())
@@ -287,7 +287,7 @@ pub(crate) fn validate_year_pillar(stem: Stem, branch: Branch) -> Result<(), Ziw
 }
 
 /// `position` 已是规范的 0..=11 环下标时为真（与 `twelve_index` 往返一致）。
-const fn ring_position_is_valid(position: u8) -> bool {
+const fn is_valid_ring_position(position: u8) -> bool {
     twelve_index(position as i32) == position
 }
 

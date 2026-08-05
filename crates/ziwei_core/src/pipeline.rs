@@ -6,7 +6,7 @@ use super::{
     natal::{Natal, NatalContext},
     palace::{Palace, PalaceName, PalaceTransformation},
     placement::{
-        PalaceSeed, build_palace_seeds, bureau_from_ming_stems, compute_ming_shen_branches,
+        PalaceSeed, build_palace_seeds, bureau_from_ming_palace, compute_ming_shen_branches,
         compute_palace_stems, merge_assistants, place_assistants, place_major_stars,
     },
     position::branch_from_yin0,
@@ -20,7 +20,7 @@ use super::{
 pub(crate) fn build_natal(context: NatalContext) -> Natal {
     let ming_shen_branches = compute_ming_shen_branches(context.month(), context.hour());
     let palace_stems = compute_palace_stems(context.birth_stem());
-    let bureau = bureau_from_ming_stems(ming_shen_branches.ming, &palace_stems);
+    let bureau = bureau_from_ming_palace(ming_shen_branches.ming, &palace_stems);
     let palace_seeds = build_palace_seeds(ming_shen_branches.ming, &palace_stems);
     let star_branches = merge_assistants(
         place_major_stars(context.day(), bureau.number()),
@@ -30,8 +30,8 @@ pub(crate) fn build_natal(context: NatalContext) -> Natal {
     let mut stars_by_branch: [Vec<Star>; 12] = std::array::from_fn(|_| Vec::new());
     for key in StarKey::ALL {
         let branch = star_branches[key.index()];
-        let origin_transformation = origin_transformation(context.birth_stem(), key);
-        let self_transformations = self_transformations(key, branch, &palace_seeds);
+        let origin_transformation = find_origin_transformation(context.birth_stem(), key);
+        let self_transformations = compute_self_transformations(key, branch, &palace_seeds);
         stars_by_branch[branch.index()].push(Star::new(
             key,
             origin_transformation,
@@ -85,13 +85,13 @@ fn palace_name_at(branch: Branch, palace_seeds: &[PalaceSeed; 12]) -> PalaceName
     palace_seeds[branch.index()].name
 }
 
-fn origin_transformation(birth_stem: Stem, key: StarKey) -> Option<Transformation> {
+fn find_origin_transformation(birth_stem: Stem, key: StarKey) -> Option<Transformation> {
     Transformation::ALL
         .into_iter()
         .find(|transformation| birth_stem.transformation_star(*transformation) == key)
 }
 
-fn self_transformations(
+fn compute_self_transformations(
     key: StarKey,
     target_branch: Branch,
     palace_seeds: &[PalaceSeed; 12],
