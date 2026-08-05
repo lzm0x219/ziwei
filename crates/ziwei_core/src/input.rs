@@ -48,11 +48,11 @@ pub struct ZiweiBirth {
 impl ZiweiBirth {
     /// 创建月/日/时已校验的农历出生资料。
     ///
-    /// `year` 任意 `i32` 皆可（年干支由公式取模，无越界错误）。
+    /// `year` 必须能表示十二个大限中的全部年份；年干支仍由公式取模。
     ///
     /// # Errors
     ///
-    /// 月不在 `0..=11`、日不在 `1..=30`、时不在 `0..=11` 时返回 [`ZiweiInputError`]。
+    /// 年份无法覆盖十二个大限，或月、日、时越界时返回 [`ZiweiInputError`]。
     pub fn try_new(
         gender: Gender,
         year: i32,
@@ -61,6 +61,7 @@ impl ZiweiBirth {
         hour: u8,
     ) -> Result<Self, ZiweiInputError> {
         validate_month_day_hour(month, day, hour)?;
+        validate_birth_year(year)?;
         Ok(Self {
             gender,
             year,
@@ -190,6 +191,11 @@ impl ZiweiInput {
 /// 创建输入或排盘构造时可能发生的验证错误。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ZiweiInputError {
+    /// 出生年份无法表示十二个大限中的全部年份。
+    YearOutOfRange {
+        /// 不合法的值。
+        value: i32,
+    },
     /// 出生月份不在 0 至 11。
     MonthOutOfRange {
         /// 不合法的值。
@@ -217,6 +223,12 @@ pub enum ZiweiInputError {
 impl fmt::Display for ZiweiInputError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::YearOutOfRange { value } => {
+                write!(
+                    formatter,
+                    "year must allow all twelve decades within i32, got {value}"
+                )
+            }
             Self::MonthOutOfRange { value } => {
                 write!(formatter, "month must be within 0..=11, got {value}")
             }
@@ -239,6 +251,15 @@ impl fmt::Display for ZiweiInputError {
 }
 
 impl std::error::Error for ZiweiInputError {}
+
+/// 校验出生年份可以覆盖十二大限的最大年份偏移 `+124`。
+const fn validate_birth_year(year: i32) -> Result<(), ZiweiInputError> {
+    if year.checked_add(124).is_some() {
+        Ok(())
+    } else {
+        Err(ZiweiInputError::YearOutOfRange { value: year })
+    }
+}
 
 /// 校验月 ∈ 0..=11、日 ∈ 1..=30、时 ∈ 0..=11。
 pub(crate) fn validate_month_day_hour(month: u8, day: u8, hour: u8) -> Result<(), ZiweiInputError> {
@@ -312,8 +333,19 @@ mod tests {
             ZiweiBirth::try_new(Gender::Yang, 2000, 0, 1, 12),
             Err(ZiweiInputError::HourOutOfRange { value: 12 })
         );
-        // 年序号任意取模，不报错
         assert!(ZiweiBirth::try_new(Gender::Yin, -100, 0, 1, 0).is_ok());
+    }
+
+    #[test]
+    fn birth_try_new_requires_the_full_decade_year_range() {
+        assert!(ZiweiBirth::try_new(Gender::Yang, i32::MAX - 124, 0, 1, 0).is_ok());
+        assert_eq!(
+            ZiweiBirth::try_new(Gender::Yang, i32::MAX - 123, 0, 1, 0),
+            Err(ZiweiInputError::YearOutOfRange {
+                value: i32::MAX - 123,
+            })
+        );
+        assert!(ZiweiBirth::try_new(Gender::Yang, i32::MIN, 0, 1, 0).is_ok());
     }
 
     #[test]

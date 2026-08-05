@@ -1,11 +1,10 @@
-//! Ziwei 的 Rust SDK 聚合入口。
+//! Ziwei Rust SDK 的统一门面。
 //!
-//! 当前直接导出 [`ziwei_core`] 的领域类型与排盘能力。历法、查询和分析能力稳定后，
-//! 也由本 crate 统一组合并对外提供。
+//! 当前只选择性重导出 `ziwei_core` 已稳定的本命盘领域公开面。
 
 pub use ziwei_core::{
-    Branch, DecadeIndex, DecadeIndexError, DecadeStep, DecadeYear, DecadeYearsError,
-    FiveElementBureau, Gender, Palace, PalaceRole, PalaceRoleLabel, SelfTransformation, Star,
-    StarLabel, Stem, Transformation, YearTransformation, Ziwei, ZiweiBirth, ZiweiFly, ZiweiInput,
-    ZiweiInputError, ZiweiView,
+    Branch, Decade, DecadeDirection, DecadeIndex, DecadeIndexError, DecadeYear, FiveElementBureau,
+    Gender, Natal, NatalContext, Palace, PalaceName, PalaceTransformation, Star, StarGalaxy,
+    StarKey, StarSelfTransformations, StarType, Stem, Transformation, ZiweiBirth, ZiweiInput,
+    ZiweiInputError, Zodiac,
 };

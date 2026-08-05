@@ -1,15 +1,14 @@
-//! 默认十八主星目录与显示文本。
-//!
-//! v1 集合：十四正曜（紫微系 + 天府系）+ 左辅、右弼、文昌、文曲。
-//! 落宫由排盘管线计算；本模块只定义身份、内部下标与中文标签。
+//! 星曜稳定身份与本命盘内的星曜事实。
 
-/// 第一版星曜集合中的一颗星。
-///
-/// 枚举变体声明顺序不必与落宫数组下标相同；存放与遍历时一律以 [`Self::ALL`] 为准。
+use super::transformation::Transformation;
+
+/// 首批十八颗星曜的稳定身份。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Star {
+pub enum StarKey {
     /// 紫微。
     ZiWei,
+    /// 天机。
+    TianJi,
     /// 太阳。
     TaiYang,
     /// 武曲。
@@ -18,24 +17,22 @@ pub enum Star {
     TianTong,
     /// 廉贞。
     LianZhen,
-    /// 天机。
-    TianJi,
+    /// 天府。
+    TianFu,
     /// 太阴。
     TaiYin,
     /// 贪狼。
     TanLang,
     /// 巨门。
     JuMen,
-    /// 天梁。
-    TianLiang,
-    /// 破军。
-    PoJun,
-    /// 七杀。
-    QiSha,
     /// 天相。
     TianXiang,
-    /// 天府。
-    TianFu,
+    /// 天梁。
+    TianLiang,
+    /// 七杀。
+    QiSha,
+    /// 破军。
+    PoJun,
     /// 左辅。
     ZuoFu,
     /// 右弼。
@@ -46,19 +43,30 @@ pub enum Star {
     WenQu,
 }
 
-/// 一颗星的显示文本。
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct StarLabel {
-    /// 星曜全名。
-    pub name: &'static str,
-    /// 星曜简称。
-    pub abbreviation: &'static str,
+/// 星曜层级。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum StarType {
+    /// 十四主星。
+    Major,
+    /// 首批辅星：左辅、右弼、文昌、文曲。
+    Minor,
+    /// 其余辅助星；首批目录没有此类成员。
+    Auxiliary,
 }
 
-impl Star {
-    /// 十八星全集，顺序与内部落宫数组下标一致（紫微系→天府系→辅佐）。
-    ///
-    /// 绑定层与遍历 API 应使用本常量，勿依赖枚举变体的声明顺序。
+/// 星曜斗系。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum StarGalaxy {
+    /// 南斗。
+    S,
+    /// 北斗。
+    N,
+    /// 中斗。
+    C,
+}
+
+impl StarKey {
+    /// 首批十八星全集；顺序也是落宫数组和宫内星曜的稳定遍历顺序。
     pub const ALL: [Self; 18] = [
         Self::ZiWei,
         Self::TianJi,
@@ -80,7 +88,55 @@ impl Star {
         Self::WenQu,
     ];
 
-    /// 落宫数组下标 0..=17（与 [`Self::ALL`] 顺序一致）。
+    /// 返回稳定的 snake_case 机器 key。
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::ZiWei => "zi_wei",
+            Self::TianJi => "tian_ji",
+            Self::TaiYang => "tai_yang",
+            Self::WuQu => "wu_qu",
+            Self::TianTong => "tian_tong",
+            Self::LianZhen => "lian_zhen",
+            Self::TianFu => "tian_fu",
+            Self::TaiYin => "tai_yin",
+            Self::TanLang => "tan_lang",
+            Self::JuMen => "ju_men",
+            Self::TianXiang => "tian_xiang",
+            Self::TianLiang => "tian_liang",
+            Self::QiSha => "qi_sha",
+            Self::PoJun => "po_jun",
+            Self::ZuoFu => "zuo_fu",
+            Self::YouBi => "you_bi",
+            Self::WenChang => "wen_chang",
+            Self::WenQu => "wen_qu",
+        }
+    }
+
+    /// 返回星曜层级。
+    pub const fn star_type(self) -> StarType {
+        match self {
+            Self::ZuoFu | Self::YouBi | Self::WenChang | Self::WenQu => StarType::Minor,
+            _ => StarType::Major,
+        }
+    }
+
+    /// 返回斗系；没有斗系的星曜返回 `None`。
+    pub const fn galaxy(self) -> Option<StarGalaxy> {
+        match self {
+            Self::ZiWei | Self::ZuoFu | Self::YouBi | Self::WenChang | Self::WenQu => {
+                Some(StarGalaxy::C)
+            }
+            Self::TianJi | Self::TaiYang | Self::WuQu | Self::TianTong | Self::LianZhen => {
+                Some(StarGalaxy::N)
+            }
+            Self::TaiYin | Self::TanLang | Self::JuMen | Self::TianLiang | Self::PoJun => {
+                Some(StarGalaxy::S)
+            }
+            Self::TianFu | Self::TianXiang | Self::QiSha => None,
+        }
+    }
+
+    /// 落宫数组下标，与 [`Self::ALL`] 对齐。
     pub(crate) const fn index(self) -> usize {
         match self {
             Self::ZiWei => 0,
@@ -103,161 +159,70 @@ impl Star {
             Self::WenQu => 17,
         }
     }
+}
 
-    /// 返回简体中文的星曜显示文本。
-    pub const fn simplified_chinese(self) -> StarLabel {
-        match self {
-            Self::ZiWei => StarLabel {
-                name: "紫微",
-                abbreviation: "紫",
-            },
-            Self::TaiYang => StarLabel {
-                name: "太阳",
-                abbreviation: "阳",
-            },
-            Self::WuQu => StarLabel {
-                name: "武曲",
-                abbreviation: "武",
-            },
-            Self::TianTong => StarLabel {
-                name: "天同",
-                abbreviation: "同",
-            },
-            Self::LianZhen => StarLabel {
-                name: "廉贞",
-                abbreviation: "廉",
-            },
-            Self::TianJi => StarLabel {
-                name: "天机",
-                abbreviation: "机",
-            },
-            Self::TaiYin => StarLabel {
-                name: "太阴",
-                abbreviation: "阴",
-            },
-            Self::TanLang => StarLabel {
-                name: "贪狼",
-                abbreviation: "贪",
-            },
-            Self::JuMen => StarLabel {
-                name: "巨门",
-                abbreviation: "巨",
-            },
-            Self::TianLiang => StarLabel {
-                name: "天梁",
-                abbreviation: "梁",
-            },
-            Self::PoJun => StarLabel {
-                name: "破军",
-                abbreviation: "破",
-            },
-            Self::QiSha => StarLabel {
-                name: "七杀",
-                abbreviation: "杀",
-            },
-            Self::TianXiang => StarLabel {
-                name: "天相",
-                abbreviation: "相",
-            },
-            Self::TianFu => StarLabel {
-                name: "天府",
-                abbreviation: "府",
-            },
-            Self::ZuoFu => StarLabel {
-                name: "左辅",
-                abbreviation: "左",
-            },
-            Self::YouBi => StarLabel {
-                name: "右弼",
-                abbreviation: "右",
-            },
-            Self::WenChang => StarLabel {
-                name: "文昌",
-                abbreviation: "昌",
-            },
-            Self::WenQu => StarLabel {
-                name: "文曲",
-                abbreviation: "曲",
-            },
+/// 一颗星曜的向心与离心自化。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct StarSelfTransformations {
+    inward: Option<Transformation>,
+    outward: Option<Transformation>,
+}
+
+impl StarSelfTransformations {
+    /// 由内核装配星曜自化。
+    pub(crate) const fn new(
+        inward: Option<Transformation>,
+        outward: Option<Transformation>,
+    ) -> Self {
+        Self { inward, outward }
+    }
+
+    /// 向心自化；源宫与目标宫相对时为 `Some`。
+    pub const fn inward(self) -> Option<Transformation> {
+        self.inward
+    }
+
+    /// 离心自化；源宫与目标宫相同时为 `Some`。
+    pub const fn outward(self) -> Option<Transformation> {
+        self.outward
+    }
+}
+
+/// 一张具体本命盘内的星曜事实。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Star {
+    key: StarKey,
+    origin_transformation: Option<Transformation>,
+    self_transformations: StarSelfTransformations,
+}
+
+impl Star {
+    /// 由内核装配星曜落位事实。
+    pub(crate) const fn new(
+        key: StarKey,
+        origin_transformation: Option<Transformation>,
+        self_transformations: StarSelfTransformations,
+    ) -> Self {
+        Self {
+            key,
+            origin_transformation,
+            self_transformations,
         }
     }
 
-    /// 返回繁体中文的星曜显示文本。
-    pub const fn traditional_chinese(self) -> StarLabel {
-        match self {
-            Self::ZiWei => StarLabel {
-                name: "紫微",
-                abbreviation: "紫",
-            },
-            Self::TaiYang => StarLabel {
-                name: "太陽",
-                abbreviation: "陽",
-            },
-            Self::WuQu => StarLabel {
-                name: "武曲",
-                abbreviation: "武",
-            },
-            Self::TianTong => StarLabel {
-                name: "天同",
-                abbreviation: "同",
-            },
-            Self::LianZhen => StarLabel {
-                name: "廉貞",
-                abbreviation: "廉",
-            },
-            Self::TianJi => StarLabel {
-                name: "天機",
-                abbreviation: "機",
-            },
-            Self::TaiYin => StarLabel {
-                name: "太陰",
-                abbreviation: "陰",
-            },
-            Self::TanLang => StarLabel {
-                name: "貪狼",
-                abbreviation: "貪",
-            },
-            Self::JuMen => StarLabel {
-                name: "巨門",
-                abbreviation: "巨",
-            },
-            Self::TianLiang => StarLabel {
-                name: "天梁",
-                abbreviation: "梁",
-            },
-            Self::PoJun => StarLabel {
-                name: "破軍",
-                abbreviation: "破",
-            },
-            Self::QiSha => StarLabel {
-                name: "七殺",
-                abbreviation: "殺",
-            },
-            Self::TianXiang => StarLabel {
-                name: "天相",
-                abbreviation: "相",
-            },
-            Self::TianFu => StarLabel {
-                name: "天府",
-                abbreviation: "府",
-            },
-            Self::ZuoFu => StarLabel {
-                name: "左輔",
-                abbreviation: "左",
-            },
-            Self::YouBi => StarLabel {
-                name: "右弼",
-                abbreviation: "右",
-            },
-            Self::WenChang => StarLabel {
-                name: "文昌",
-                abbreviation: "昌",
-            },
-            Self::WenQu => StarLabel {
-                name: "文曲",
-                abbreviation: "曲",
-            },
-        }
+    /// 星曜稳定身份。
+    pub const fn key(self) -> StarKey {
+        self.key
+    }
+
+    /// 生年四化；不化时为 `None`。
+    pub const fn origin_transformation(self) -> Option<Transformation> {
+        self.origin_transformation
+    }
+
+    /// 向心与离心自化。
+    pub const fn self_transformations(self) -> StarSelfTransformations {
+        self.self_transformations
     }
 }
 
@@ -266,43 +231,29 @@ mod tests {
     use super::*;
 
     #[test]
-    fn labels_match_the_confirmed_eighteen_star_catalog() {
-        let expected = [
-            (Star::ZiWei, "紫微", "紫", "紫微", "紫"),
-            (Star::TaiYang, "太阳", "阳", "太陽", "陽"),
-            (Star::WuQu, "武曲", "武", "武曲", "武"),
-            (Star::TianTong, "天同", "同", "天同", "同"),
-            (Star::LianZhen, "廉贞", "廉", "廉貞", "廉"),
-            (Star::TianJi, "天机", "机", "天機", "機"),
-            (Star::TaiYin, "太阴", "阴", "太陰", "陰"),
-            (Star::TanLang, "贪狼", "贪", "貪狼", "貪"),
-            (Star::JuMen, "巨门", "巨", "巨門", "巨"),
-            (Star::TianLiang, "天梁", "梁", "天梁", "梁"),
-            (Star::PoJun, "破军", "破", "破軍", "破"),
-            (Star::QiSha, "七杀", "杀", "七殺", "殺"),
-            (Star::TianXiang, "天相", "相", "天相", "相"),
-            (Star::TianFu, "天府", "府", "天府", "府"),
-            (Star::ZuoFu, "左辅", "左", "左輔", "左"),
-            (Star::YouBi, "右弼", "右", "右弼", "右"),
-            (Star::WenChang, "文昌", "昌", "文昌", "昌"),
-            (Star::WenQu, "文曲", "曲", "文曲", "曲"),
-        ];
+    fn star_keys_have_stable_identity_metadata() {
+        assert_eq!(StarKey::ALL.len(), 18);
+        assert_eq!(StarKey::ZiWei.as_str(), "zi_wei");
+        assert_eq!(StarKey::PoJun.galaxy(), Some(StarGalaxy::S));
+        assert_eq!(StarKey::TianJi.galaxy(), Some(StarGalaxy::N));
+        assert_eq!(StarKey::WenQu.galaxy(), Some(StarGalaxy::C));
+        assert_eq!(StarKey::TianFu.galaxy(), None);
+        assert_eq!(StarKey::ZuoFu.star_type(), StarType::Minor);
+        assert_eq!(StarKey::QiSha.star_type(), StarType::Major);
+    }
 
-        for (star, hans_name, hans_abbreviation, hant_name, hant_abbreviation) in expected {
-            assert_eq!(
-                star.simplified_chinese(),
-                StarLabel {
-                    name: hans_name,
-                    abbreviation: hans_abbreviation,
-                }
-            );
-            assert_eq!(
-                star.traditional_chinese(),
-                StarLabel {
-                    name: hant_name,
-                    abbreviation: hant_abbreviation,
-                }
-            );
-        }
+    #[test]
+    fn placed_star_exposes_only_its_chart_facts() {
+        let self_transformations =
+            StarSelfTransformations::new(Some(Transformation::C), Some(Transformation::A));
+        let star = Star::new(
+            StarKey::ZiWei,
+            Some(Transformation::B),
+            self_transformations,
+        );
+
+        assert_eq!(star.key(), StarKey::ZiWei);
+        assert_eq!(star.origin_transformation(), Some(Transformation::B));
+        assert_eq!(star.self_transformations(), self_transformations);
     }
 }
