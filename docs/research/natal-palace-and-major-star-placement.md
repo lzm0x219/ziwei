@@ -9,7 +9,7 @@
 
 ## 1. Scope and v1 star set
 
-This note covers the **natal placement pipeline** up through the **default eighteen major stars** already encoded in `crates/ziwei/src/star.rs`:
+This note covers the **natal placement pipeline** up through the **default eighteen major stars** already encoded in `crates/ziwei_core/src/star.rs`:
 
 | Group            | Stars (`Star` enum)                            |
 | ---------------- | ---------------------------------------------- |
@@ -49,10 +49,10 @@ These are **secondary** but carry the full 起例口诀 chain used by modern man
 
 | Artifact                                     | What it already freezes                                               |
 | -------------------------------------------- | --------------------------------------------------------------------- |
-| `Star` in `crates/ziwei/src/star.rs`         | v1 eighteen-star catalog                                              |
-| `PalaceRole` in `crates/ziwei/src/palace.rs` | 十二宫职 order & labels（交友 = 仆役别名）                            |
+| `Star` in `crates/ziwei_core/src/star.rs`         | v1 eighteen-star catalog                                              |
+| `PalaceRole` in `crates/ziwei_core/src/palace.rs` | 十二宫职 order & labels（交友 = 仆役别名）                            |
 | `Palace` (`role()` / `branch()` / `stem()`)  | 宫职 + 宫支 + 宫干只读结果                                            |
-| `ZiweiInput` in `crates/ziwei/src/input.rs`  | Preprocessed path: gender, 年干支, 月位, 时位, **命宫位**, **紫微位** |
+| `ZiweiInput` in `crates/ziwei_core/src/input.rs`  | Preprocessed path: gender, 年干支, 月位, 时位, **命宫位**, **紫微位** |
 | `FiveElementBureau::from_ming_palace`        | 命宫干支 → 五行局（纳音局数表）                                       |
 | `Stem::transformation_star`                  | 生年干四化表（与 §7 冲突注记对照）                                    |
 | `position::twelve_index`                     | ring fold 0..=11                                                      |
@@ -443,5 +443,5 @@ Do **not** implement here; use as future property/fixture checklist:
 4. 福山堂起例歌诀总括: <http://www.fushantang.com/1012/1012c/j3084.html>
 5. 大纪元排盘步骤: <https://www.epochtimes.com/gb/9/6/22/n2565978.htm>
 6. 《洞微十八星断》识典: <https://www.shidianguji.com/book/DZ1485/chapter/DZ1485_10>
-7. Repo: `crates/ziwei/src/{star,input,palace,five_element_bureau,stem,position}.rs`
+7. Repo: `crates/ziwei_core/src/{star,input,palace,five_element_bureau,stem,position}.rs`
 8. Course: `course/RESOURCES.md`, `course/NOTES.md`, learning-records `0007`–`0009`

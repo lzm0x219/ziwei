@@ -276,7 +276,7 @@
       </p>
       <div class="toolbar">
         <button type="button" id="themeToggle" title="切换明暗主题">切换主题</button>
-        <a class="btn" href="../../crates/ziwei/src/lib.rs">源码 lib.rs</a>
+        <a class="btn" href="../../crates/ziwei_core/src/lib.rs">源码 lib.rs</a>
         <a class="btn" href="../../CONTEXT.md">CONTEXT.md</a>
       </div>
     </header>
@@ -572,8 +572,7 @@ match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
           <tr><td class="sig">stars_at(Branch) → impl Iterator&lt;Star&gt;</td><td>该宫十八星</td></tr>
           <tr><td class="sig">branch_of_star(Star) → Branch</td><td>星落宫</td></tr>
           <tr><td class="sig">laiyin_branch() → Branch</td><td>来因（年干表）</td></tr>
-          <tr><td class="sig">year_transformations() → [LayerTransformation; 4]</td><td>生年禄权科忌+落宫</td></tr>
-          <tr><td class="sig">stem_transformations(Stem) → [LayerTransformation; 4]</td><td>任意干层四化</td></tr>
+          <tr><td class="sig">year_transformations() → &amp;[YearTransformation; 4]</td><td>排盘时保存的生年禄权科忌与落宫</td></tr>
         </tbody>
       </table>
 
@@ -587,7 +586,6 @@ match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
           <tr><td class="sig">years_in_decade(index) → Result&lt;[DecadeYear; 10], DecadeYearsError&gt;</td><td>区分真实出生年缺失与年份溢出</td></tr>
           <tr><td class="sig">branch_of_role(role, view) → Branch</td><td>视图下宫职→支</td></tr>
           <tr><td class="sig">palace_for_role(role, view) → &amp;Palace</td><td>视图下取本命宫对象</td></tr>
-          <tr><td class="sig">overlay_transformations(view) → Option&lt;[…;4]&gt;</td><td>Natal=None；大限/流年层四化</td></tr>
         </tbody>
       </table>
       <p class="note">v1 不提供 <code class="inline">with_view</code> / <code class="inline">ZiweiHandle</code>：视图参数一律显式传入。</p>
@@ -599,7 +597,7 @@ match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
           <tr><td class="sig">palace_flies() → &amp;[ZiweiFly; 48]</td><td>全量宫干飞边（支序×四化）</td></tr>
           <tr><td class="sig">flies_from_branch(Branch) → &amp;[ZiweiFly; 4]</td><td>O(1) 切片</td></tr>
           <tr><td class="sig">flies_from_role(role, view) → &amp;[ZiweiFly; 4]</td><td>视图职→支再切片</td></tr>
-          <tr><td class="sig">ZiweiFly::self_transformation()</td><td>Out / In / None</td></tr>
+          <tr><td class="sig">ZiweiFly::self_transformation()</td><td>读取排盘时保存的 Out / In / None</td></tr>
           <tr><td class="sig">Star::ALL / PalaceRole::ALL</td><td>绑定层遍历全集</td></tr>
         </tbody>
       </table>
@@ -619,8 +617,8 @@ match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
           <tr><td><code class="inline">ZiweiView</code></td><td>Natal | Decade(index) | Annual{year}</td></tr>
           <tr><td><code class="inline">DecadeIndex</code></td><td>经 try_new 校验的 0..=11 大限序号</td></tr>
           <tr><td><code class="inline">DecadeStep</code> / <code class="inline">DecadeYear</code></td><td>大限步、限内流年；字段私有，只读 getter</td></tr>
-          <tr><td><code class="inline">LayerTransformation</code></td><td>四化+星+落宫；字段私有</td></tr>
-          <tr><td><code class="inline">ZiweiFly</code> / <code class="inline">SelfTransformation</code></td><td>飞边（字段私有）与自化派生</td></tr>
+          <tr><td><code class="inline">YearTransformation</code></td><td>生年四化+星+落宫；字段私有</td></tr>
+          <tr><td><code class="inline">ZiweiFly</code> / <code class="inline">SelfTransformation</code></td><td>飞边（字段私有）与随边保存的自化</td></tr>
           <tr><td><code class="inline">ZiweiInputError</code></td><td>月/日/时/干支对错误</td></tr>
           <tr><td><code class="inline">DecadeYearsError</code></td><td>真实出生年缺失或绝对流年溢出</td></tr>
         </tbody>
@@ -641,7 +639,7 @@ match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
     <!-- ========== 模块 ========== -->
     <section id="modules">
       <h2>5. 源码模块地图</h2>
-      <p class="sub">路径均在 <code class="inline">crates/ziwei/src/</code>。</p>
+      <p class="sub">路径均在 <code class="inline">crates/ziwei_core/src/</code>。</p>
       <table>
         <thead><tr><th>模块</th><th>职责</th><th>可见性</th></tr></thead>
         <tbody>
@@ -652,7 +650,8 @@ match ZiweiInput::try_new(gender, stem, branch, month, day, hour) {
           <tr><td><code class="inline">decade.rs</code></td><td>大限序列</td><td>crate</td></tr>
           <tr><td><code class="inline">fly.rs</code></td><td>飞边类型 + 构造</td><td>pub + crate</td></tr>
           <tr><td><code class="inline">palaces.rs</code></td><td>十二宫数组</td><td>crate</td></tr>
-          <tr><td><code class="inline">view.rs</code></td><td>View/DecadeStep/层四化类型</td><td>pub</td></tr>
+          <tr><td><code class="inline">view.rs</code></td><td>View / DecadeStep / DecadeYear</td><td>pub</td></tr>
+          <tr><td><code class="inline">year_transformation.rs</code></td><td>生年四化固定事实</td><td>pub type + crate</td></tr>
           <tr><td><code class="inline">stem / branch / star / palace / transformation / five_element_bureau / position</code></td><td>表与坐标</td><td>混合</td></tr>
         </tbody>
       </table>

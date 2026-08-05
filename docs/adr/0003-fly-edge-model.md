@@ -8,7 +8,7 @@
 
 ```text
 // ZiweiFly 字段私有；只读 getter（ADR-0010）
-fly.source_branch() / transformation() / target_branch() / star()
+fly.source_branch() / transformation() / target_branch() / star() / self_transformation()
 // Out | In | None 在排盘时判定并随边保存
 
 palace_flies() -> &[ZiweiFly; 48]              // 全量，只来自本命宫干

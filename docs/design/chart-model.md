@@ -71,4 +71,4 @@ Chart
 └── 固定时间结构
 ```
 
-下一步讨论 `ziwei_query` 的 interface。
+[领域语义收口](domain-semantics-convergence.md)与 [`ziwei_core` 首批迁移](ziwei-core-first-batch.md)已经完成。下一步重写 core，`ziwei_query` 的 interface 继续延后。

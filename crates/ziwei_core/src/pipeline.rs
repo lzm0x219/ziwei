@@ -39,6 +39,7 @@ use super::{
     },
     stem::Stem,
     view::DecadeStep,
+    year_transformation::{YearTransformation, build_year_transformations},
 };
 
 /// 构造完成、尚未装入 [`crate::Ziwei`] 公开字段前的零件。
@@ -48,6 +49,10 @@ pub(crate) struct ChartParts {
     pub layout: NatalLayout,
     /// 十八星落宫。
     pub star_branches: [Branch; 18],
+    /// 来因宫叠落地支。
+    pub laiyin_branch: Branch,
+    /// 固定生年四化。
+    pub year_transformations: [YearTransformation; 4],
     /// 飞边。
     pub flies: [ZiweiFly; 48],
     /// 大限。
@@ -91,20 +96,18 @@ pub(crate) fn build_chart_parts(input: ZiweiInput) -> ChartParts {
 
     // —— Wave 3b：合并辅佐 ——
     let star_branches = merge_assistants(majors, assistants);
+    let laiyin_branch = birth_stem.laiyin_branch();
+    let year_transformations = build_year_transformations(birth_stem, &star_branches);
 
     // —— Wave 4：飞边与大限 ——
     let flies = build_palace_flies(&layout.palaces, &star_branches);
-    let decade_steps = build_decade_steps(
-        gender,
-        birth_stem,
-        layout.ming_branch,
-        bureau_n,
-        &layout.palaces,
-    );
+    let decade_steps = build_decade_steps(gender, birth_stem, layout.ming_branch, bureau_n);
 
     ChartParts {
         layout,
         star_branches,
+        laiyin_branch,
+        year_transformations,
         flies,
         decade_steps,
         birth_stem,

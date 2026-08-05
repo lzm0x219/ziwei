@@ -1,11 +1,11 @@
 //! 本命 / 大限 / 流年查询视图及相关结果类型（ADR-0004、ADR-0008）。
 //!
-//! 视图只改变「宫职→地支」贴标与层四化 overlay，不复制整盘、不重算
-//! 星位 / 宫干 / 飞边 / 生年四化 / 来因。
+//! 视图只改变「宫职→地支」贴标，不复制整盘、不重算星位、宫干、飞边、
+//! 生年四化或来因宫。
 
 use core::fmt;
 
-use super::{branch::Branch, star::Star, stem::Stem, transformation::Transformation};
+use super::branch::Branch;
 
 /// 十二步大限的零基序号（`0..=11`）。
 ///
@@ -71,7 +71,7 @@ impl std::error::Error for DecadeIndexError {}
 /// 与固定的 [`crate::Ziwei`] 本命盘配合使用；切换视图不得重建命盘。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ZiweiView {
-    /// 本命：宫职用本命十二职，无层四化 overlay。
+    /// 本命：宫职使用本命十二职。
     Natal,
     /// 第 `index` 步大限（0 = 第一大限）。
     Decade(DecadeIndex),
@@ -87,9 +87,8 @@ pub enum ZiweiView {
 /// 大限序列中的一步。
 ///
 /// 起运虚岁 = 五行局数；每限 10 年 `[age_start, age_end]`（含端点）。
-/// 大限干 = 大限命支上的**本命**宫干（不重布宫干）。
 ///
-/// 字段私有：`age_end = age_start + 9`、干与命支本命宫干一致，由引擎保证。
+/// 字段私有：`age_end = age_start + 9`，由引擎保证。
 /// 只读访问见 [`Self::step`] 等 getter。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DecadeStep {
@@ -99,23 +98,15 @@ pub struct DecadeStep {
     ming_branch: Branch,
     /// 虚岁起（含）；第一限等于局数。
     age_start: u8,
-    /// 该支本命宫干（大限干，供层四化）。
-    stem: Stem,
 }
 
 impl DecadeStep {
     /// 由引擎装配一步大限（外部不可调用）。
-    pub(crate) const fn new(
-        step: DecadeIndex,
-        ming_branch: Branch,
-        age_start: u8,
-        stem: Stem,
-    ) -> Self {
+    pub(crate) const fn new(step: DecadeIndex, ming_branch: Branch, age_start: u8) -> Self {
         Self {
             step,
             ming_branch,
             age_start,
-            stem,
         }
     }
 
@@ -138,64 +129,6 @@ impl DecadeStep {
     pub const fn age_end(self) -> u8 {
         self.age_start.saturating_add(9)
     }
-
-    /// 该支本命宫干（大限干，供层四化）。
-    pub const fn stem(self) -> Stem {
-        self.stem
-    }
-}
-
-/// 一层四化结果：四化象、被化星、落宫支。
-///
-/// 用于生年四化、大限/流年 overlay，以及任意干的 [`crate::Ziwei::stem_transformations`]。
-///
-/// 字段私有：星与落宫由干×四化表及本命星位决定，外部不可伪造。
-/// 只读访问见 [`Self::transformation`] / [`Self::star`] / [`Self::branch`]。
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct LayerTransformation {
-    /// 四化象。
-    transformation: Transformation,
-    /// 被化星。
-    star: Star,
-    /// 该星在本命盘上的落宫支。
-    branch: Branch,
-}
-
-impl LayerTransformation {
-    /// 由引擎装配一层四化项（外部不可调用）。
-    pub(crate) const fn new(transformation: Transformation, star: Star, branch: Branch) -> Self {
-        Self {
-            transformation,
-            star,
-            branch,
-        }
-    }
-
-    /// 四化象。
-    pub const fn transformation(self) -> Transformation {
-        self.transformation
-    }
-
-    /// 被化星。
-    pub const fn star(self) -> Star {
-        self.star
-    }
-
-    /// 该星在本命盘上的落宫支。
-    pub const fn branch(self) -> Branch {
-        self.branch
-    }
-}
-
-/// 单干层四化：四象 → 星 → 本命落宫。
-pub(crate) fn stem_layer_transformations(
-    stem: Stem,
-    star_branches: &[Branch; 18],
-) -> [LayerTransformation; 4] {
-    Transformation::ALL.map(|transformation| {
-        let star = stem.transformation_star(transformation);
-        LayerTransformation::new(transformation, star, star_branches[star.index()])
-    })
 }
 
 /// 大限一步内的一个流年项。
