@@ -8,6 +8,7 @@
 | --- | --- |
 | `ZiweiBirth` | 历法层归一化后的公开农历出生资料；`year` 是农历年序号，可计算各大限的农历年份与虚岁 |
 | `ZiweiInput` | 不含绝对农历年序号的公开输入；只计算虚岁 |
+| `Gender` | 命主的阴阳性别；`Yang` 表示阳男，`Yin` 表示阴女，领域值不使用 `Male` / `Female` |
 | `NatalContext` | 两种输入归一化后的私有只读上下文，不是第三种公开输入 |
 | `Natal` | `ziwei_core` 产出的不可变本命盘 |
 | `PalaceName` | 十二宫名；枚举成员沿用原十二宫职顺序 |
@@ -18,7 +19,7 @@
 | `PalaceTransformation` | 一条从源宫到目标星曜所在宫的四化关系 |
 | `StarSelfTransformations` | 星曜的向心、离心自化结果 |
 | `Decade` | 一个十年大限，包含大限命宫地支与十个年份/虚岁条目 |
-| `DecadeYear` | 大限中的最小流年事实：可选 `year`（农历年序号）与虚岁 |
+| `DecadeYear` | 大限中的最小流年事实：可选 `year` 与 `age`；在紫微斗数语境中，`year` 专指农历年序号，`age` 专指虚岁 |
 
 ## 上下文边界
 
