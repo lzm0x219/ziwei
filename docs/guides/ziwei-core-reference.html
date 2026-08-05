@@ -1,0 +1,1431 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="ziwei_core 不可变 Natal 模型的结构、所有权、公开 API 与边界参考。"
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='16' fill='%230b2622'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='17' fill='white'%3E%E7%B4%AB%3C/text%3E%3C/svg%3E"
+    />
+    <title>Ziwei Core · Natal 参考</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --pine-950: #0b2622;
+        --pine-800: #163e37;
+        --jade-600: #2e7468;
+        --jade-300: #9bc5bc;
+        --mineral-100: #e7efec;
+        --mist-50: #f6f9f7;
+        --paper: #fbfcfa;
+        --ink: #17241f;
+        --muted: #64736d;
+        --line: #cbd8d3;
+        --cinnabar: #c95842;
+        --brass: #a8893f;
+        --code-bg: #102d28;
+        --shadow: 0 24px 60px rgba(11, 38, 34, 0.12);
+        --display: "Avenir Next Condensed", "Arial Narrow", "PingFang SC", sans-serif;
+        --body: "Avenir Next", "PingFang SC", "Noto Sans CJK SC", system-ui, sans-serif;
+        --mono: "SFMono-Regular", "Cascadia Code", "Roboto Mono", monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 24px;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 12% 8%, rgba(155, 197, 188, 0.34), transparent 32rem),
+          linear-gradient(135deg, var(--mist-50), var(--mineral-100));
+        font-family: var(--body);
+        line-height: 1.65;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      code,
+      pre {
+        font-family: var(--mono);
+      }
+
+      code:not(pre code) {
+        padding: 0.12rem 0.36rem;
+        border: 1px solid rgba(46, 116, 104, 0.2);
+        border-radius: 0.35rem;
+        color: var(--pine-800);
+        background: rgba(231, 239, 236, 0.8);
+        font-size: 0.9em;
+      }
+
+      .skip-link {
+        position: fixed;
+        z-index: 100;
+        top: 12px;
+        left: 12px;
+        padding: 0.7rem 1rem;
+        color: white;
+        background: var(--pine-950);
+        transform: translateY(-160%);
+      }
+
+      .skip-link:focus {
+        transform: translateY(0);
+      }
+
+      :focus-visible {
+        outline: 3px solid var(--cinnabar);
+        outline-offset: 3px;
+      }
+
+      .page {
+        display: grid;
+        grid-template-columns: 248px minmax(0, 1fr);
+        gap: 28px;
+        width: min(1480px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 24px 0 64px;
+      }
+
+      .rail {
+        position: sticky;
+        top: 24px;
+        align-self: start;
+        height: calc(100vh - 48px);
+        padding: 28px 22px;
+        border: 1px solid rgba(11, 38, 34, 0.14);
+        border-radius: 24px;
+        background: rgba(251, 252, 250, 0.82);
+        box-shadow: 0 16px 42px rgba(11, 38, 34, 0.07);
+        backdrop-filter: blur(18px);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 22px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 42px;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        color: white;
+        background: conic-gradient(from -15deg, var(--cinnabar) 0 30deg, var(--pine-800) 30deg 360deg);
+        font-family: var(--display);
+        font-size: 1.15rem;
+        font-weight: 700;
+      }
+
+      .brand strong {
+        display: block;
+        color: var(--pine-950);
+        font-family: var(--display);
+        font-size: 1.05rem;
+        letter-spacing: 0.04em;
+      }
+
+      .brand span {
+        display: block;
+        color: var(--muted);
+        font-size: 0.73rem;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+      }
+
+      .rail nav {
+        margin-top: 22px;
+      }
+
+      .rail nav a {
+        display: grid;
+        grid-template-columns: 24px 1fr;
+        gap: 8px;
+        align-items: baseline;
+        padding: 0.54rem 0.7rem;
+        border-radius: 10px;
+        color: var(--muted);
+        text-decoration: none;
+        transition: color 160ms ease, background 160ms ease, transform 160ms ease;
+      }
+
+      .rail nav a span {
+        color: var(--jade-600);
+        font-family: var(--mono);
+        font-size: 0.68rem;
+      }
+
+      .rail nav a:hover,
+      .rail nav a[aria-current="true"] {
+        color: var(--pine-950);
+        background: var(--mineral-100);
+        transform: translateX(3px);
+      }
+
+      .rail-note {
+        position: absolute;
+        right: 22px;
+        bottom: 24px;
+        left: 22px;
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      main {
+        min-width: 0;
+      }
+
+      .hero {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1.08fr) minmax(340px, 0.92fr);
+        min-height: 610px;
+        overflow: hidden;
+        border-radius: 30px;
+        color: white;
+        background:
+          linear-gradient(115deg, rgba(11, 38, 34, 0.98), rgba(22, 62, 55, 0.94)),
+          var(--pine-950);
+        box-shadow: var(--shadow);
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+        background-size: 38px 38px;
+        mask-image: linear-gradient(to right, black, transparent 72%);
+      }
+
+      .hero-copy {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 64px 32px 64px 64px;
+      }
+
+      .eyebrow {
+        margin: 0 0 18px;
+        color: var(--jade-300);
+        font-family: var(--mono);
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        text-wrap: balance;
+      }
+
+      h1 {
+        max-width: 760px;
+        margin: 0;
+        font-family: var(--display);
+        font-size: clamp(3rem, 6.5vw, 6.5rem);
+        font-stretch: condensed;
+        font-weight: 750;
+        line-height: 0.9;
+        letter-spacing: -0.055em;
+      }
+
+      h1 em {
+        display: block;
+        margin-top: 0.16em;
+        color: var(--jade-300);
+        font-style: normal;
+      }
+
+      .hero-lead {
+        max-width: 620px;
+        margin: 30px 0 0;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 1.08rem;
+      }
+
+      .hero-rule {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 42px;
+        padding-top: 22px;
+        border-top: 1px solid rgba(255, 255, 255, 0.18);
+      }
+
+      .hero-rule strong {
+        display: block;
+        color: white;
+        font-family: var(--display);
+        font-size: 1.7rem;
+        line-height: 1;
+      }
+
+      .hero-rule span {
+        display: block;
+        margin-top: 6px;
+        color: rgba(255, 255, 255, 0.56);
+        font-size: 0.72rem;
+      }
+
+      .orbit-wrap {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        place-items: center;
+        padding: 38px;
+      }
+
+      .orbit {
+        position: relative;
+        width: min(390px, 100%);
+        aspect-ratio: 1;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 50%;
+        background:
+          radial-gradient(circle, rgba(11, 38, 34, 0.96) 0 31%, transparent 31.5%),
+          repeating-conic-gradient(from -15deg, rgba(255, 255, 255, 0.05) 0 29deg, rgba(155, 197, 188, 0.3) 29deg 30deg);
+        box-shadow:
+          inset 0 0 0 30px rgba(255, 255, 255, 0.02),
+          0 0 90px rgba(155, 197, 188, 0.12);
+      }
+
+      .orbit::after {
+        content: "寅为 0\A counterclockwise";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        color: var(--jade-300);
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        line-height: 1.6;
+        text-align: center;
+        white-space: pre;
+        transform: translate(-50%, 36px);
+      }
+
+      .orbit-core {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: grid;
+        place-items: center;
+        width: 112px;
+        aspect-ratio: 1;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        color: white;
+        background: var(--pine-950);
+        font-family: var(--display);
+        font-size: 1.45rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        transform: translate(-50%, -50%);
+      }
+
+      .orbit-node {
+        --radius: 167px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        display: grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        margin: -23px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 50%;
+        color: white;
+        background: rgba(11, 38, 34, 0.9);
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        transform: rotate(calc(var(--i) * -30deg)) translateY(calc(var(--radius) * -1)) rotate(calc(var(--i) * 30deg));
+      }
+
+      .orbit-node:first-of-type {
+        border-color: var(--cinnabar);
+        background: var(--cinnabar);
+      }
+
+      .orbit-caption {
+        position: absolute;
+        right: 26px;
+        bottom: 20px;
+        color: rgba(255, 255, 255, 0.5);
+        font-family: var(--mono);
+        font-size: 0.64rem;
+      }
+
+      .sheet {
+        margin-top: 28px;
+        overflow: hidden;
+        border: 1px solid rgba(11, 38, 34, 0.13);
+        border-radius: 28px;
+        background: var(--paper);
+        box-shadow: 0 20px 50px rgba(11, 38, 34, 0.08);
+      }
+
+      .section {
+        display: grid;
+        grid-template-columns: 180px minmax(0, 1fr);
+        gap: 42px;
+        padding: 64px;
+        border-top: 1px solid var(--line);
+      }
+
+      .section:first-child {
+        border-top: 0;
+      }
+
+      .section-label {
+        position: sticky;
+        top: 28px;
+        align-self: start;
+      }
+
+      .section-label span {
+        display: block;
+        color: var(--cinnabar);
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+      }
+
+      .section-label h2 {
+        margin: 8px 0 0;
+        color: var(--pine-950);
+        font-family: var(--display);
+        font-size: 1.8rem;
+        line-height: 1.05;
+      }
+
+      .section-body > :first-child {
+        margin-top: 0;
+      }
+
+      .section-body > :last-child {
+        margin-bottom: 0;
+      }
+
+      .section-body h3 {
+        margin: 2.4rem 0 0.8rem;
+        color: var(--pine-800);
+        font-family: var(--display);
+        font-size: 1.35rem;
+      }
+
+      .lede {
+        max-width: 820px;
+        color: var(--pine-800);
+        font-size: 1.2rem;
+        line-height: 1.55;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        gap: 12px;
+        align-items: stretch;
+        margin: 28px 0;
+      }
+
+      .flow-node {
+        min-height: 118px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--mist-50);
+      }
+
+      .flow-node strong,
+      .flow-node code {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 700;
+      }
+
+      .flow-node small {
+        color: var(--muted);
+      }
+
+      .flow-arrow {
+        display: grid;
+        place-items: center;
+        color: var(--jade-600);
+        font-family: var(--mono);
+      }
+
+      .scope-grid,
+      .ownership-grid,
+      .fact-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        margin: 28px 0;
+      }
+
+      .scope-block,
+      .ownership-card,
+      .fact-card {
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--mist-50);
+      }
+
+      .scope-block h3,
+      .ownership-card h3,
+      .fact-card h3 {
+        margin: 0 0 12px;
+      }
+
+      .scope-block ul,
+      .ownership-card ul,
+      .fact-card ul {
+        margin: 0;
+        padding-left: 1.2rem;
+      }
+
+      .scope-block.is-out {
+        border-color: rgba(201, 88, 66, 0.35);
+        background: rgba(201, 88, 66, 0.045);
+      }
+
+      .model-tree {
+        margin: 28px 0;
+        padding: 26px;
+        border-left: 4px solid var(--jade-600);
+        border-radius: 0 16px 16px 0;
+        color: #d9ece7;
+        background: var(--code-bg);
+        font-family: var(--mono);
+        font-size: 0.88rem;
+        line-height: 1.8;
+        white-space: pre-wrap;
+      }
+
+      .model-tree .accent {
+        color: #f1ac9e;
+      }
+
+      .model-tree .type {
+        color: #9ed7ca;
+      }
+
+      .order-strip {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(44px, 1fr));
+        gap: 5px;
+        margin: 24px 0;
+      }
+
+      .order-strip div {
+        padding: 10px 5px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        text-align: center;
+        background: var(--mist-50);
+      }
+
+      .order-strip strong,
+      .order-strip span {
+        display: block;
+      }
+
+      .order-strip strong {
+        color: var(--pine-800);
+        font-family: var(--mono);
+        font-size: 0.78rem;
+      }
+
+      .order-strip span {
+        color: var(--muted);
+        font-size: 0.66rem;
+      }
+
+      .order-strip div:first-child {
+        border-color: var(--cinnabar);
+        box-shadow: inset 0 -3px var(--cinnabar);
+      }
+
+      .ownership-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .ownership-card {
+        position: relative;
+        padding-top: 50px;
+      }
+
+      .ownership-card::before {
+        content: attr(data-owner);
+        position: absolute;
+        top: 18px;
+        left: 22px;
+        color: var(--cinnabar);
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+      }
+
+      .transformation-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin: 24px 0;
+      }
+
+      .transformation-row div {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        text-align: center;
+        background: var(--mist-50);
+      }
+
+      .transformation-row strong {
+        display: block;
+        color: var(--pine-800);
+        font-family: var(--display);
+        font-size: 1.7rem;
+      }
+
+      .transformation-row span {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .galaxy-table {
+        display: grid;
+        grid-template-columns: 90px 1fr;
+        margin: 22px 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .galaxy-table > div {
+        padding: 14px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .galaxy-table > div:nth-child(odd) {
+        color: var(--jade-600);
+        font-family: var(--mono);
+        font-weight: 700;
+      }
+
+      .galaxy-table > div:nth-child(even) {
+        border-left: 1px solid var(--line);
+      }
+
+      .code-block {
+        position: relative;
+        margin: 24px 0;
+        overflow: hidden;
+        border-radius: 16px;
+        background: var(--code-bg);
+      }
+
+      .code-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.55);
+        font-family: var(--mono);
+        font-size: 0.68rem;
+      }
+
+      .copy-button {
+        padding: 0.35rem 0.65rem;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        color: rgba(255, 255, 255, 0.74);
+        background: transparent;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .copy-button:hover {
+        color: white;
+        border-color: var(--jade-300);
+      }
+
+      pre {
+        margin: 0;
+        overflow-x: auto;
+        padding: 24px;
+        color: #dcebe7;
+        font-size: 0.82rem;
+        line-height: 1.7;
+        tab-size: 4;
+      }
+
+      .kw { color: #f1ac9e; }
+      .ty { color: #9ed7ca; }
+      .fn { color: #dfc57e; }
+      .cm { color: #78958e; }
+
+      .api-table {
+        width: 100%;
+        margin: 24px 0;
+        border-collapse: collapse;
+        font-size: 0.88rem;
+      }
+
+      .api-table th,
+      .api-table td {
+        padding: 14px 12px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .api-table th {
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .api-table td:first-child {
+        width: 28%;
+        color: var(--pine-800);
+        font-family: var(--mono);
+        font-weight: 700;
+      }
+
+      .api-table td:nth-child(2) {
+        width: 44%;
+        font-family: var(--mono);
+        font-size: 0.82rem;
+      }
+
+      .callout {
+        margin: 26px 0;
+        padding: 20px 22px;
+        border-left: 4px solid var(--brass);
+        border-radius: 0 12px 12px 0;
+        background: rgba(168, 137, 63, 0.09);
+      }
+
+      .callout strong {
+        color: #70591e;
+      }
+
+      .sources {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 26px;
+      }
+
+      .sources a {
+        padding: 0.55rem 0.78rem;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--pine-800);
+        background: var(--mist-50);
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        text-decoration: none;
+      }
+
+      .sources a:hover {
+        border-color: var(--jade-600);
+      }
+
+      footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 26px 8px 0;
+        color: var(--muted);
+        font-size: 0.74rem;
+      }
+
+      @media (max-width: 1120px) {
+        .page {
+          grid-template-columns: 1fr;
+        }
+
+        .rail {
+          position: relative;
+          top: 0;
+          z-index: 10;
+          display: flex;
+          align-items: center;
+          height: auto;
+          overflow-x: auto;
+          padding: 12px 16px;
+          border-radius: 18px;
+        }
+
+        .brand {
+          min-width: max-content;
+          padding: 0 18px 0 0;
+          border-right: 1px solid var(--line);
+          border-bottom: 0;
+        }
+
+        .rail nav {
+          display: flex;
+          min-width: max-content;
+          margin: 0 0 0 12px;
+        }
+
+        .rail nav a {
+          display: inline-flex;
+          gap: 5px;
+        }
+
+        .rail-note {
+          display: none;
+        }
+      }
+
+      @media (max-width: 850px) {
+        .hero {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-copy {
+          padding: 52px 34px 20px;
+        }
+
+        .orbit-wrap {
+          min-height: 420px;
+        }
+
+        .section {
+          grid-template-columns: 1fr;
+          gap: 22px;
+          padding: 42px 32px;
+        }
+
+        .section-label {
+          position: static;
+          padding-bottom: 16px;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .flow {
+          grid-template-columns: 1fr;
+        }
+
+        .flow-arrow {
+          transform: rotate(90deg);
+        }
+
+        .ownership-grid,
+        .fact-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .order-strip {
+          grid-template-columns: repeat(6, 1fr);
+        }
+      }
+
+      @media (max-width: 560px) {
+        .page {
+          width: min(100% - 18px, 1480px);
+          padding-top: 9px;
+        }
+
+        .rail {
+          border-radius: 14px;
+        }
+
+        .brand span,
+        .rail nav a span {
+          display: none;
+        }
+
+        .hero {
+          border-radius: 20px;
+        }
+
+        .hero-copy {
+          padding: 42px 24px 12px;
+        }
+
+        h1 {
+          font-size: clamp(2.7rem, 17vw, 4.5rem);
+        }
+
+        .hero-rule {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .orbit-wrap {
+          min-height: 340px;
+          padding: 16px;
+        }
+
+        .orbit {
+          width: 290px;
+        }
+
+        .orbit-node {
+          --radius: 124px;
+          width: 40px;
+          height: 40px;
+          margin: -20px;
+          font-size: 0.62rem;
+        }
+
+        .orbit-core {
+          width: 92px;
+          font-size: 1.2rem;
+        }
+
+        .sheet {
+          border-radius: 20px;
+        }
+
+        .section {
+          padding: 34px 22px;
+        }
+
+        .scope-grid,
+        .transformation-row {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .order-strip {
+          grid-template-columns: repeat(4, 1fr);
+        }
+
+        .api-table,
+        .api-table tbody,
+        .api-table tr,
+        .api-table td {
+          display: block;
+          width: 100% !important;
+        }
+
+        .api-table thead {
+          display: none;
+        }
+
+        .api-table tr {
+          padding: 14px 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .api-table td {
+          padding: 5px 0;
+          border: 0;
+        }
+
+        footer {
+          flex-direction: column;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#content">跳到正文</a>
+    <div class="page">
+      <aside class="rail" aria-label="页面导航">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">紫</div>
+          <div>
+            <strong>Ziwei Core</strong>
+            <span>Natal reference</span>
+          </div>
+        </div>
+        <nav>
+          <a href="#overview"><span>01</span>总览</a>
+          <a href="#construction"><span>02</span>构造</a>
+          <a href="#natal"><span>03</span>Natal</a>
+          <a href="#palace"><span>04</span>宫位</a>
+          <a href="#star"><span>05</span>星曜</a>
+          <a href="#transformation"><span>06</span>四化</a>
+          <a href="#decade"><span>07</span>大限</a>
+          <a href="#api"><span>08</span>API</a>
+          <a href="#boundary"><span>09</span>边界</a>
+        </nav>
+        <p class="rail-note">基于 ADR 0011 与合并后的不可变 <code>Natal</code> 模型。</p>
+      </aside>
+
+      <main id="content">
+        <header class="hero" id="overview">
+          <div class="hero-copy">
+            <p class="eyebrow">Immutable domain graph · Rust</p>
+            <h1>一份出生事实，<em>一张 Natal。</em></h1>
+            <p class="hero-lead">
+              两种已验证输入进入同一条计算流水线。结果字段私有、结构只读；宫位拥有星曜与四化关系，星曜拥有生年四化与自化。
+            </p>
+            <div class="hero-rule" aria-label="核心结构数量">
+              <div><strong>12</strong><span>Palace · 寅为零 · 逆步</span></div>
+              <div><strong>18</strong><span>StarKey · 各一次</span></div>
+              <div><strong>4×12</strong><span>PalaceTransformation</span></div>
+              <div><strong>12×10</strong><span>DecadeYear</span></div>
+            </div>
+          </div>
+          <div class="orbit-wrap" aria-label="十二宫以寅为零，按寅、卯、辰、巳、午、未、申、酉、戌、亥、子、丑逆步排列">
+            <div class="orbit" aria-hidden="true">
+              <div class="orbit-node" style="--i: 0">Yin</div>
+              <div class="orbit-node" style="--i: 1">Mao</div>
+              <div class="orbit-node" style="--i: 2">Chen</div>
+              <div class="orbit-node" style="--i: 3">Si</div>
+              <div class="orbit-node" style="--i: 4">Wu</div>
+              <div class="orbit-node" style="--i: 5">Wei</div>
+              <div class="orbit-node" style="--i: 6">Shen</div>
+              <div class="orbit-node" style="--i: 7">You</div>
+              <div class="orbit-node" style="--i: 8">Xu</div>
+              <div class="orbit-node" style="--i: 9">Hai</div>
+              <div class="orbit-node" style="--i: 10">Zi</div>
+              <div class="orbit-node" style="--i: 11">Chou</div>
+              <div class="orbit-core">Natal</div>
+            </div>
+            <div class="orbit-caption">palaces()[0..12]</div>
+          </div>
+        </header>
+
+        <article class="sheet">
+          <section class="section" id="construction">
+            <div class="section-label"><span>02 / INPUT</span><h2>构造入口</h2></div>
+            <div class="section-body">
+              <p class="lede">
+                <code>ZiweiBirth</code> 与 <code>ZiweiInput</code> 是仅有的公开输入。它们在边界完成校验，再归一化为只读 <code>NatalContext</code>。
+              </p>
+              <div class="flow" aria-label="构造流水线">
+                <div class="flow-node">
+                  <code>ZiweiBirth</code>
+                  <small>性别、年份、月、日、时；core 从年份推导年干支。</small>
+                </div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-node">
+                  <code>NatalContext</code>
+                  <small>统一上下文；私有构造，不是第三种输入。</small>
+                </div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-node">
+                  <code>Natal</code>
+                  <small>完整、不可变、只读的本命盘事实图。</small>
+                </div>
+              </div>
+              <div class="flow" aria-label="原始量输入流水线">
+                <div class="flow-node">
+                  <code>ZiweiInput</code>
+                  <small>性别、年干支、月、日、时；年干支必须组成六十甲子。</small>
+                </div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-node">
+                  <code>NatalContext</code>
+                  <small><code>year = None</code>，但其余规则与出生年入口一致。</small>
+                </div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-node">
+                  <code>Natal</code>
+                  <small>大限仍含虚岁；所有 <code>DecadeYear.year</code> 为 <code>None</code>。</small>
+                </div>
+              </div>
+
+              <h3>输入范围</h3>
+              <div class="fact-grid">
+                <div class="fact-card">
+                  <h3>共同字段</h3>
+                  <ul>
+                    <li><code>month: 0..=11</code>，正月为 0</li>
+                    <li><code>day: 1..=30</code>，初一为 1</li>
+                    <li><code>hour: 0..=11</code>，子时为 0</li>
+                  </ul>
+                </div>
+                <div class="fact-card">
+                  <h3>年份能力</h3>
+                  <ul>
+                    <li><code>ZiweiBirth.year + 124</code> 必须可由 <code>i32</code> 表示</li>
+                    <li>历法、闰月、晚子时在 core 外消解</li>
+                    <li>验证成功后，两条 <code>Natal</code> 构造均无失败</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section" id="natal">
+            <div class="section-label"><span>03 / ROOT</span><h2>Natal 根结构</h2></div>
+            <div class="section-body">
+              <p class="lede">
+                <code>Natal</code> 只保存无需查询即可成立的固定事实。名字与地支成对保存，所有坐标都能解析到同一张盘中的唯一宫位。
+              </p>
+              <div class="model-tree"><span class="type">Natal</span>
+├─ context: <span class="type">NatalContext</span>
+├─ zodiac: <span class="type">Zodiac</span>
+├─ palaces: [<span class="type">Palace</span>; 12]
+│  ├─ stars: Vec&lt;<span class="type">Star</span>&gt;
+│  └─ transformations: [<span class="type">PalaceTransformation</span>; 4]
+├─ <span class="accent">ming_palace</span> + ming_palace_branch
+├─ <span class="accent">body_palace</span> + body_palace_branch
+├─ <span class="accent">origin_palace</span> + origin_palace_branch
+├─ bureau: <span class="type">FiveElementBureau</span>
+├─ decade_direction: <span class="type">DecadeDirection</span>
+└─ decades: [<span class="type">Decade</span>; 12]
+   └─ years: [<span class="type">DecadeYear</span>; 10]</div>
+              <div class="callout">
+                <strong>不变量由类型系统与装配管线保证。</strong>
+                外部代码不能直接构造或修改 <code>Natal</code>、<code>Palace</code>、<code>Star</code>、关系边或大限条目。
+              </div>
+            </div>
+          </section>
+
+          <section class="section" id="palace">
+            <div class="section-label"><span>04 / PALACE</span><h2>宫位坐标</h2></div>
+            <div class="section-body">
+              <p class="lede">
+                <code>PalaceName</code> 表示宫名，<code>Branch</code> 表示空间地支。<code>palaces()</code> 的数组顺序固定以寅为零，索引递增时在盘面逆步；这与 <code>Branch::index()</code> 的子为零编码不同。
+              </p>
+              <div class="order-strip" aria-label="Palace 数组顺序">
+                <div><strong>Yin</strong><span>0 · 寅</span></div>
+                <div><strong>Mao</strong><span>1 · 卯</span></div>
+                <div><strong>Chen</strong><span>2 · 辰</span></div>
+                <div><strong>Si</strong><span>3 · 巳</span></div>
+                <div><strong>Wu</strong><span>4 · 午</span></div>
+                <div><strong>Wei</strong><span>5 · 未</span></div>
+                <div><strong>Shen</strong><span>6 · 申</span></div>
+                <div><strong>You</strong><span>7 · 酉</span></div>
+                <div><strong>Xu</strong><span>8 · 戌</span></div>
+                <div><strong>Hai</strong><span>9 · 亥</span></div>
+                <div><strong>Zi</strong><span>10 · 子</span></div>
+                <div><strong>Chou</strong><span>11 · 丑</span></div>
+              </div>
+              <h3>十二宫名稳定顺序</h3>
+              <div class="code-block">
+                <div class="code-head"><span>PalaceName::ALL</span><button class="copy-button" type="button">复制</button></div>
+                <pre><code>Ming, XiongDi, FuQi, ZiNv, CaiBo, JiE,
+QianYi, JiaoYou, GuanLu, TianZhai, FuDe, FuMu</code></pre>
+              </div>
+              <p>
+                每个 <code>Palace</code> 保存 <code>name</code>、<code>branch</code>、<code>stem</code>、本宫 <code>stars</code>，以及以本宫为源宫的四条 <code>transformations</code>。
+              </p>
+            </div>
+          </section>
+
+          <section class="section" id="star">
+            <div class="section-label"><span>05 / STAR</span><h2>身份与落位</h2></div>
+            <div class="section-body">
+              <p class="lede">
+                <code>StarKey</code> 是稳定身份；<code>Star</code> 是某张盘内的落位事实。分类与斗系属于 key，生年四化与自化属于落位对象。
+              </p>
+              <div class="code-block">
+                <div class="code-head"><span>StarKey::ALL · stable order</span><button class="copy-button" type="button">复制</button></div>
+                <pre><code>ZiWei, TianJi, TaiYang, WuQu, TianTong, LianZhen,
+TianFu, TaiYin, TanLang, JuMen, TianXiang, TianLiang,
+QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
+              </div>
+              <div class="galaxy-table" aria-label="星曜斗系映射">
+                <div>C · 中斗</div><div>ZiWei, ZuoFu, YouBi, WenChang, WenQu</div>
+                <div>N · 北斗</div><div>TianJi, TaiYang, WuQu, TianTong, LianZhen</div>
+                <div>S · 南斗</div><div>TaiYin, TanLang, JuMen, TianLiang, PoJun</div>
+                <div>None</div><div>TianFu, TianXiang, QiSha</div>
+              </div>
+              <div class="scope-grid">
+                <div class="scope-block">
+                  <h3>StarType</h3>
+                  <ul>
+                    <li>十四主星：<code>Major</code></li>
+                    <li>左辅、右弼、文昌、文曲：<code>Minor</code></li>
+                    <li>首批没有 <code>Auxiliary</code> 成员</li>
+                  </ul>
+                </div>
+                <div class="scope-block">
+                  <h3>稳定 key</h3>
+                  <ul>
+                    <li><code>StarKey::as_str()</code> 返回 snake_case</li>
+                    <li>示例：<code>ZiWei → "zi_wei"</code></li>
+                    <li>简繁体显示文案不在 core</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section" id="transformation">
+            <div class="section-label"><span>06 / HUA</span><h2>四化所有权</h2></div>
+            <div class="section-body">
+              <p class="lede">
+                四化只使用稳定代码 <code>A / B / C / D</code>。同一个事实只保存一次：生年四化和自化在星曜上，宫干四化关系在源宫上。
+              </p>
+              <div class="transformation-row" aria-label="四化稳定代码">
+                <div><strong>A</strong><span>外层映射：禄</span></div>
+                <div><strong>B</strong><span>外层映射：权</span></div>
+                <div><strong>C</strong><span>外层映射：科</span></div>
+                <div><strong>D</strong><span>外层映射：忌</span></div>
+              </div>
+              <div class="ownership-grid">
+                <div class="ownership-card" data-owner="OWNER · STAR">
+                  <h3>生年四化</h3>
+                  <p><code>Star.origin_transformation</code></p>
+                  <ul>
+                    <li>全盘恰有四个 <code>Some</code></li>
+                    <li>A、B、C、D 各出现一次</li>
+                    <li>不再另存顶层数组</li>
+                  </ul>
+                </div>
+                <div class="ownership-card" data-owner="OWNER · PALACE">
+                  <h3>宫位关系</h3>
+                  <p><code>Palace.transformations</code></p>
+                  <ul>
+                    <li>每宫固定四条，顺序 A–D</li>
+                    <li>保存完整源宫与目标宫坐标</li>
+                    <li><code>star_key</code> 在目标宫唯一解析</li>
+                  </ul>
+                </div>
+                <div class="ownership-card" data-owner="OWNER · STAR">
+                  <h3>自化</h3>
+                  <p><code>Star.self_transformations</code></p>
+                  <ul>
+                    <li>源支 = 目标支：<code>outward</code></li>
+                    <li>源支与目标支相对：<code>inward</code></li>
+                    <li>两者可同时存在，各自至多一个</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="model-tree"><span class="type">PalaceTransformation</span> {
+  source_name: <span class="type">PalaceName</span>,
+  source_branch: <span class="type">Branch</span>,
+  transformation: <span class="type">Transformation</span>,
+  target_name: <span class="type">PalaceName</span>,
+  target_branch: <span class="type">Branch</span>,
+  star_key: <span class="type">StarKey</span>,
+}</div>
+            </div>
+          </section>
+
+          <section class="section" id="decade">
+            <div class="section-label"><span>07 / DECADE</span><h2>大限与年份</h2></div>
+            <div class="section-body">
+              <p class="lede">
+                十二个大限是命盘固定事实，因此保存在 core。每限只保存十个“年份 + 虚岁”条目，不提前构造完整流年盘。
+              </p>
+              <div class="model-tree"><span class="type">Decade</span> {
+  index: <span class="type">DecadeIndex</span>,               <span class="cm">// 0..=11</span>
+  ming_palace_branch: <span class="type">Branch</span>,
+  years: [<span class="type">DecadeYear</span>; 10],
+}
+
+<span class="type">DecadeYear</span> {
+  year: Option&lt;i32&gt;,
+  age: u8,                           <span class="cm">// 虚岁</span>
+}</div>
+              <div class="fact-grid">
+                <div class="fact-card">
+                  <h3>推进方向</h3>
+                  <ul>
+                    <li>年干阴阳与性别相同：<code>Forward</code></li>
+                    <li>不同：<code>Reverse</code></li>
+                    <li>第 0 限命宫支等于本命命宫支</li>
+                  </ul>
+                </div>
+                <div class="fact-card">
+                  <h3>年份能力</h3>
+                  <ul>
+                    <li><code>from_birth</code>：<code>year = birth_year + age - 1</code></li>
+                    <li><code>from_input</code>：所有 <code>year = None</code></li>
+                    <li>同一张盘不混用 <code>Some</code> 与 <code>None</code></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="section" id="api">
+            <div class="section-label"><span>08 / API</span><h2>公开读取面</h2></div>
+            <div class="section-body">
+              <p class="lede">
+                使用 <code>ziwei</code> facade 即可获得稳定公开面。小型值按值返回，聚合数组与集合按借用返回。
+              </p>
+              <div class="code-block">
+                <div class="code-head"><span>Rust · minimal usage</span><button class="copy-button" type="button">复制</button></div>
+                <pre><code><span class="kw">use</span> ziwei::{<span class="ty">Gender</span>, <span class="ty">Natal</span>, <span class="ty">ZiweiBirth</span>};
+
+<span class="kw">fn</span> <span class="fn">main</span>() -&gt; <span class="ty">Result</span>&lt;(), <span class="ty">Box</span>&lt;<span class="kw">dyn</span> std::error::Error&gt;&gt; {
+    <span class="kw">let</span> birth = <span class="ty">ZiweiBirth</span>::<span class="fn">try_new</span>(
+        <span class="ty">Gender</span>::Yang,
+        1984,
+        2,  <span class="cm">// 三月，正月 = 0</span>
+        1,  <span class="cm">// 初一</span>
+        4,  <span class="cm">// 辰时，子时 = 0</span>
+    )?;
+    <span class="kw">let</span> natal = <span class="ty">Natal</span>::<span class="fn">from_birth</span>(birth);
+
+    <span class="kw">for</span> palace <span class="kw">in</span> natal.<span class="fn">palaces</span>() {
+        println!(<span class="cm">"{:?} {:?}"</span>, palace.<span class="fn">name</span>(), palace.<span class="fn">branch</span>());
+        <span class="kw">for</span> star <span class="kw">in</span> palace.<span class="fn">stars</span>() {
+            println!(<span class="cm">"  {}"</span>, star.<span class="fn">key</span>().<span class="fn">as_str</span>());
+        }
+    }
+
+    <span class="ty">Ok</span>(())
+}</code></pre>
+              </div>
+
+              <table class="api-table">
+                <thead><tr><th>类型</th><th>公开入口 / getter</th><th>语义</th></tr></thead>
+                <tbody>
+                  <tr><td>ZiweiBirth</td><td>try_new(gender, year, month, day, hour)</td><td>含真实年份的验证输入</td></tr>
+                  <tr><td>ZiweiInput</td><td>try_new(gender, stem, branch, month, day, hour)</td><td>含年干支、不含年份的验证输入</td></tr>
+                  <tr><td>Natal</td><td>from_birth / from_input</td><td>两条无失败构造入口</td></tr>
+                  <tr><td>Natal</td><td>context / zodiac / palaces / decades</td><td>上下文与主要聚合</td></tr>
+                  <tr><td>Natal</td><td>ming_palace(_branch) / body_palace(_branch) / origin_palace(_branch)</td><td>三组宫名 + 地支坐标</td></tr>
+                  <tr><td>Natal</td><td>bureau / decade_direction</td><td>五行局与大限方向</td></tr>
+                  <tr><td>Palace</td><td>name / branch / stem / stars / transformations</td><td>完整宫位事实</td></tr>
+                  <tr><td>PalaceTransformation</td><td>source_name / source_branch / transformation / target_name / target_branch / star_key</td><td>完整四化关系边</td></tr>
+                  <tr><td>Star</td><td>key / origin_transformation / self_transformations</td><td>盘内星曜事实</td></tr>
+                  <tr><td>StarKey</td><td>ALL / as_str / star_type / galaxy</td><td>稳定身份与固有元数据</td></tr>
+                  <tr><td>StarSelfTransformations</td><td>inward / outward</td><td>向心与离心自化</td></tr>
+                  <tr><td>Decade</td><td>index / ming_palace_branch / years / age_start / age_end</td><td>一个十年大限</td></tr>
+                  <tr><td>DecadeYear</td><td>year / age</td><td>可选年份与虚岁</td></tr>
+                  <tr><td>DecadeIndex</td><td>try_new / get</td><td>验证后的 0..=11 索引</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="section" id="boundary">
+            <div class="section-label"><span>09 / SCOPE</span><h2>边界与来源</h2></div>
+            <div class="section-body">
+              <p class="lede">
+                core 的职责是构造可靠事实图，不是把所有消费方式都变成方法。查询与展示留在外层，避免反向污染存储结构。
+              </p>
+              <div class="scope-grid">
+                <div class="scope-block">
+                  <h3>ziwei_core 负责</h3>
+                  <ul>
+                    <li>输入验证与统一计算流水线</li>
+                    <li>十二宫、十八星与五行局</li>
+                    <li>生年四化、宫位关系、自化</li>
+                    <li>生肖、大限方向与最小年份/虚岁</li>
+                    <li>维护结果图不变量</li>
+                  </ul>
+                </div>
+                <div class="scope-block is-out">
+                  <h3>明确不负责</h3>
+                  <ul>
+                    <li>按宫、星、年龄或年份条件查询</li>
+                    <li>完整流年宫位、星曜与四化盘</li>
+                    <li>公农历转换、时区、真太阳时</li>
+                    <li>简繁体与其他 i18n 文案</li>
+                    <li>bindings、analysis、插件或规则集</li>
+                  </ul>
+                </div>
+              </div>
+              <h3>Workspace 方向</h3>
+              <div class="flow" aria-label="crate 依赖方向">
+                <div class="flow-node"><code>ziwei_core</code><small>计算不可变 Natal</small></div>
+                <div class="flow-arrow" aria-hidden="true">←</div>
+                <div class="flow-node"><code>ziwei</code><small>选择性重导出稳定公开面</small></div>
+                <div class="flow-arrow" aria-hidden="true">←</div>
+                <div class="flow-node"><code>consumers</code><small>未来组合 query / calendar / analysis</small></div>
+              </div>
+              <div class="sources" aria-label="权威来源">
+                <a href="../design/ziwei-model.md">ziwei-model.md</a>
+                <a href="../design/public-interface-and-domain-types.md">public-interface-and-domain-types.md</a>
+                <a href="../design/workspace-refactoring.md">workspace-refactoring.md</a>
+                <a href="../adr/0011-immutable-natal-model.md">ADR 0011</a>
+                <a href="../../crates/ziwei_core/src/lib.rs">ziwei_core/src/lib.rs</a>
+                <a href="../../crates/ziwei/src/lib.rs">ziwei facade</a>
+              </div>
+            </div>
+          </section>
+        </article>
+
+        <footer>
+          <span>Ziwei Core · Immutable Natal reference</span>
+          <span>机器身份留在 core，显示语言留在外层。</span>
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      const links = [...document.querySelectorAll(".rail nav a")];
+      const sections = links
+        .map((link) => document.querySelector(link.getAttribute("href")))
+        .filter(Boolean);
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter((entry) => entry.isIntersecting)
+            .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+          if (!visible) return;
+          links.forEach((link) => {
+            const active = link.getAttribute("href") === `#${visible.target.id}`;
+            if (active) link.setAttribute("aria-current", "true");
+            else link.removeAttribute("aria-current");
+          });
+        },
+        { rootMargin: "-15% 0px -65%", threshold: [0.05, 0.35, 0.7] },
+      );
+      sections.forEach((section) => observer.observe(section));
+
+      document.querySelectorAll(".copy-button").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const codeElement = button.closest(".code-block")?.querySelector("code");
+          if (!codeElement) return;
+          const oldLabel = button.textContent;
+          try {
+            if (navigator.clipboard) {
+              await navigator.clipboard.writeText(codeElement.innerText);
+            } else {
+              const selection = window.getSelection();
+              const range = document.createRange();
+              range.selectNodeContents(codeElement);
+              selection.removeAllRanges();
+              selection.addRange(range);
+              const copied = document.execCommand("copy");
+              selection.removeAllRanges();
+              if (!copied) throw new Error("copy command failed");
+            }
+            button.textContent = "已复制";
+          } catch {
+            button.textContent = "复制失败";
+          }
+          window.setTimeout(() => (button.textContent = oldLabel), 1200);
+        });
+      });
+    </script>
+  </body>
+</html>
