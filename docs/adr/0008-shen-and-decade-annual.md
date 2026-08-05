@@ -1,5 +1,7 @@
 # 身宫与大限/流年查询细节
 
+> 状态：**部分由 [ADR-0011](0011-immutable-natal-model.md) 取代。** 身宫、大限顺序与农历流年公式仍有效；旧 `DecadeStep`、按需 `years_in_decade` 和 `ZiweiView` 公开面已由不可变 `Natal` / `Decade` 存储模型取代。
+
 ## 身宫
 
 v1 公开身宫。身宫为叠支（落在十二支之一，非第十三宫职）：寅起正月顺月，再顺时至生时（与 research 安命身口诀一致）。引擎必算，禁止注入。
@@ -38,7 +40,7 @@ years_in_decade(index: DecadeIndex) -> Result<[DecadeYear; 10], DecadeYearsError
 // LunarYearOutOfRange：lunar_year 超出 i32
 ```
 
-绝对流年序号能力只属于 `from_birth` 路径（ADR-0009）。成功列表中的 `lunar_year` 可直接作为 `ZiweiView::Annual { year }` 参数。
+绝对流年序号能力只属于 `from_birth` 路径（ADR-0009）。成功列表中的 `lunar_year` 可直接作为历史草图中的 `ZiweiView::Annual { year }` 参数。
 
 ## 流年宫职
 

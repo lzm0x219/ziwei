@@ -37,7 +37,7 @@ pub struct NatalContext {
 }
 ```
 
-`NatalContext` 只由已验证输入生成，不公开构造，也不成为第三种输入。`ZiweiBirth` 的年份必须保证十二个大限中的全部年份都能以 `i32` 表示；`ZiweiInput` 的 `year` 固定为 `None`。
+`NatalContext` 只由已验证输入生成，不公开构造，也不成为第三种输入。`ZiweiBirth.year` 是历法层归一化后的农历年序号，必须保证十二个大限中的全部农历年份都能以 `i32` 表示；`ZiweiInput` 的 `year` 固定为 `None`。
 
 ## 宫位与星曜
 
@@ -133,6 +133,6 @@ pub struct DecadeYear {
 
 `DecadeDirection::Forward` 当且仅当出生年干阴阳与性别阴阳相同。第零大限命宫地支等于本命命宫地支，后续按方向逐宫移动。
 
-十二个大限按 `DecadeIndex(0..=11)` 排列。每个大限存十个连续虚岁；`age_start()` 和 `age_end()` 分别读取首尾条目，不重复存储。`from_birth` 的年份为 `birth_year + age - 1`，`from_input` 的年份全部为 `None`。
+十二个大限按 `DecadeIndex(0..=11)` 排列。每个大限存十个连续虚岁；`age_start()` 和 `age_end()` 分别读取首尾条目，不重复存储。`from_birth` 的 `year` 为 `birth_year + age - 1`，`from_input` 的 `year` 全部为 `None`；这里的年份均指农历年序号。
 
 这里只保存“年份 + 虚岁”的最小流年事实。流年宫位、星曜、四化和按年份/年龄选择大限属于 `ziwei_query` 或后续独立计算，不进入本切片。

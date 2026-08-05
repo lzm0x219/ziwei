@@ -36,7 +36,7 @@ origin_palace / origin_palace_branch
 
 ## 时间语义
 
-`Decade` 是命盘整体的一部分，因此保存在 `Natal`。`DecadeYear` 只保存当前确定且无需查询才能成立的两个事实：`year: Option<i32>` 和虚岁 `age: u8`。
+`Decade` 是命盘整体的一部分，因此保存在 `Natal`。`DecadeYear` 只保存当前确定且无需查询才能成立的两个事实：`year: Option<i32>`（农历年序号）和虚岁 `age: u8`。
 
 没有出生年份的输入仍可产生完整大限与虚岁，但不能伪造年份。流年盘、流年宫位和流年四化不是 `Natal` 的存储事实。
 

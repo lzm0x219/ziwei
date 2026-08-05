@@ -1,6 +1,8 @@
 # 显式表达真实出生年能力
 
-`Ziwei` 只在 `from_birth` 路径保存真实农历出生年；`from_input` 保留生年干支，但不再用六十甲子合成代表年。两条路径都可查询生年干支，只有前者的 `birth_year() -> Option<i32>` 为 `Some`；`years_in_decade(...) -> Result<_, DecadeYearsError>` 区分出生年缺失与年份溢出。这样调用方不会把推造值当成历史事实。
+> 状态：**部分由 [ADR-0011](0011-immutable-natal-model.md) 取代。** 不从生年干支伪造绝对农历年的能力边界仍有效；旧 `Ziwei` getter、按需大限查询和错误类型已由 `NatalContext` 与预存的 `DecadeYear` 取代。
+
+`Natal` 只在 `from_birth` 路径保存绝对农历出生年序号；`from_input` 保留生年干支，但不再用六十甲子合成代表年。两条路径都保存生年干支，只有前者的 `natal.context().year() -> Option<i32>` 与各 `DecadeYear::year()` 为 `Some`；这里的 `year` 均指历法层归一化后的农历年序号。这样调用方不会把推造值当成历史事实。
 
 ## Considered Options
 

@@ -1,15 +1,18 @@
 # 引擎结果类型字段不变量
 
-引擎产出的多字段结果类型不得被外部自由构造。`Palace`、`ZiweiFly`、`DecadeStep`、`DecadeYear` 的字段私有，只经 crate 内装配；对外只提供 `const` 只读 getter。与输入侧 `ZiweiBirth` / `ZiweiInput` / `DecadeIndex` 同一模式：不变量由类型系统保证，不靠调用方自觉。
+> 状态：**部分由 [ADR-0011](0011-immutable-natal-model.md) 取代。** 结果类型只能由内核装配的不变量仍有效；旧 `ZiweiFly` / `DecadeStep` 名称及存储形态以 ADR-0011 为准。
+
+引擎产出的多字段结果类型不得被外部自由构造。`Palace`、`Star`、`PalaceTransformation`、`Decade`、`DecadeYear` 的字段私有，只经 crate 内装配；对外只提供只读 getter。与输入侧 `ZiweiBirth` / `ZiweiInput` / `DecadeIndex` 同一模式：不变量由类型系统保证，不靠调用方自觉。
 
 ## 哪些类型要封
 
 | 类型 | 字段组合不变量（引擎保证） |
 | ---- | -------------------------- |
 | `Palace` | 宫职逆布 + 宫支 + 五虎遁宫干一致 |
-| `ZiweiFly` | 源支宫干 × 四化 → 星 → 本命落宫为目标支；自化标注与源支/目标支一致 |
-| `DecadeStep` | `age_end = age_start + 9`；`ming_branch` 为大限命宫叠落地支 |
-| `DecadeYear` | `lunar_year = birth_year + virtual_age - 1`（仅 `from_birth`） |
+| `PalaceTransformation` | 源宫宫干 × 四化 → 星 → 本命落宫为目标宫；源、目标坐标一致 |
+| `Star` | 星曜身份、落宫、生年四化与自化结果一致 |
+| `Decade` | `age_end = age_start + 9`；`ming_palace_branch` 为大限命宫叠落地支 |
+| `DecadeYear` | `year = birth_year + age - 1`（仅 `from_birth`；二者均为农历年序号） |
 
 ## 明确不封
 
@@ -21,9 +24,9 @@
 ```text
 // 外部：只读
 palace.role() / palace.branch() / palace.stem()
-fly.source_branch() / fly.transformation() / fly.target_branch() / fly.star()
-step.step() / step.ming_branch() / step.age_start() / step.age_end()
-year.lunar_year() / year.virtual_age()
+transformation.source_branch() / transformation.transformation() / transformation.target_branch() / transformation.star_key()
+decade.index() / decade.ming_palace_branch() / decade.age_start() / decade.age_end()
+decade_year.year() / decade_year.age()
 
 // 内部：pub(crate) new(...)，无公开构造、无兼容 struct 字面量
 ```
