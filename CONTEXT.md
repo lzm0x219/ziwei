@@ -6,8 +6,8 @@
 
 | 术语 | 含义 |
 | --- | --- |
-| `ZiweiBirth` | 历法层归一化后的公开农历出生资料；`year` 是农历年序号，可计算各大限的农历年份与虚岁 |
-| `ZiweiInput` | 不含绝对农历年序号的公开输入；只计算虚岁 |
+| `ZiweiBirth` | 紫微斗数领域中由历法层归一化后的公开农历出生资料；`year` 是农历年序号，可计算各大限的农历年份与虚岁 |
+| `ZiweiInput` | 紫微斗数领域中不含绝对农历年序号的公开输入；只计算虚岁 |
 | `Gender` | 命主的阴阳性别；`Yang` 表示阳男，`Yin` 表示阴女，领域值不使用 `Male` / `Female` |
 | `NatalContext` | 两种输入归一化后的私有只读上下文，不是第三种公开输入 |
 | `Natal` | `ziwei_core` 产出的不可变本命盘 |
@@ -50,7 +50,7 @@
 - 十二宫名各出现一次；十八个 `StarKey` 各出现一次。
 - 每宫恰有四条 `PalaceTransformation`，顺序固定为 `A / B / C / D`。
 - 全盘恰有四颗星的 `origin_transformation` 为 `Some(A/B/C/D)`，每类一次。
-- `ming_palace`、`body_palace`、`origin_palace` 的宫名与地支必须能解析到同一个 `Palace`。
+- `ming_palace`、`shen_palace`、`origin_palace` 的宫名与地支必须能解析到同一个 `Palace`。
 - `origin_palace` 所在宫位的天干必须与生年天干一致。
 - 十二个大限按 `DecadeIndex(0..=11)` 排列，每个大限恰有十个连续虚岁条目；同一张盘的 `year` 必须全部为 `Some` 或全部为 `None`。
 
