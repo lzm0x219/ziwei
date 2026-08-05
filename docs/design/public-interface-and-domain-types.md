@@ -23,11 +23,15 @@ Decade.index() / ming_palace_branch() / years() / age_start() / age_end()
 DecadeYear.year() / age()
 ```
 
+`year` 与 `age` 是公开内核中的规范领域名，分别指农历年序号与虚岁；不增加 `lunar_year` / `virtual_age` 或对应长前缀别名。
+
 公开接口不提供可构造非法结果的 `new`，也不暴露可变集合。crate 内装配使用 `pub(crate)` 构造函数。
 
 ## 身份与文案
 
-`Branch`、`Stem`、`PalaceName`、`StarKey`、`StarType`、`StarGalaxy`、`Transformation`、`Zodiac`、`DecadeDirection`、`DecadeIndex` 是稳定领域身份或值。
+`Gender`、`Branch`、`Stem`、`PalaceName`、`StarKey`、`StarType`、`StarGalaxy`、`Transformation`、`Zodiac`、`DecadeDirection`、`DecadeIndex` 是稳定领域身份或值。
+
+`Gender` 固定使用 `Yang / Yin` 表示阳男/阴女；阴阳是 core 的领域值，`Male / Female` 不属于公开内核语言。
 
 `StarKey::as_str()` 提供机器稳定 key。宫名、星名、斗系及四化的简繁体文案不属于 core，待真实消费者出现后由 `ziwei` 外层适配器或独立 i18n 模块提供。
 
