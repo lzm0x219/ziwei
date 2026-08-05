@@ -1,0 +1,258 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ziwei_core · Immutable Natal Architecture",
+    "subtitle": "Validated inputs, deterministic rule assembly, and the read-only domain graph",
+    "output": "ziwei-core-architecture.html",
+    "animation": "none",
+    "visual_preset": "blueprint",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/matharts/ziwei",
+      "revision": "56c86cbeccbae9c56d58ced6d278c88c6886fade"
+    },
+    "viewBox": [1360, 760]
+  },
+  "components": [
+    {
+      "id": "rust_consumers",
+      "type": "external",
+      "label": "Rust Consumers",
+      "sublabel": "ziwei facade / direct core",
+      "pos": [30, 333],
+      "size": [140, 72]
+    },
+    {
+      "id": "validated_inputs",
+      "type": "security",
+      "label": "Validated Inputs",
+      "sublabel": "ZiweiBirth · ZiweiInput",
+      "tag": "only public inputs",
+      "sources": [{ "path": "crates/ziwei_core/src/input.rs" }],
+      "pos": [230, 330],
+      "size": [170, 78]
+    },
+    {
+      "id": "natal_constructors",
+      "type": "backend",
+      "label": "Natal Constructors",
+      "sublabel": "from_birth · from_input",
+      "sources": [{ "path": "crates/ziwei_core/src/natal.rs" }],
+      "pos": [460, 330],
+      "size": [170, 78]
+    },
+    {
+      "id": "build_pipeline",
+      "type": "backend",
+      "label": "Build Pipeline",
+      "sublabel": "build_natal(NatalContext)",
+      "sources": [{ "path": "crates/ziwei_core/src/pipeline.rs" }],
+      "pos": [690, 330],
+      "size": [180, 78]
+    },
+    {
+      "id": "coordinate_algebra",
+      "type": "backend",
+      "label": "Coordinate Algebra",
+      "sublabel": "Branch · Stem · twelve_index",
+      "sources": [
+        { "path": "crates/ziwei_core/src/position.rs" },
+        { "path": "crates/ziwei_core/src/branch.rs" },
+        { "path": "crates/ziwei_core/src/stem.rs" }
+      ],
+      "pos": [360, 90],
+      "size": [190, 78]
+    },
+    {
+      "id": "placement_rules",
+      "type": "backend",
+      "label": "Placement Rules",
+      "sublabel": "命身 · 宫干 · 主辅星",
+      "sources": [{ "path": "crates/ziwei_core/src/placement.rs" }],
+      "pos": [690, 90],
+      "size": [180, 78]
+    },
+    {
+      "id": "stable_codes",
+      "type": "database",
+      "label": "Stable Domain Codes",
+      "sublabel": "PalaceName · StarKey · A/B/C/D",
+      "sources": [
+        { "path": "crates/ziwei_core/src/palace.rs" },
+        { "path": "crates/ziwei_core/src/star.rs" },
+        { "path": "crates/ziwei_core/src/transformation.rs" }
+      ],
+      "pos": [670, 580],
+      "size": [220, 82]
+    },
+    {
+      "id": "palace_graph",
+      "type": "database",
+      "label": "Palace Graph",
+      "sublabel": "Palace → Stars + Transformations",
+      "tag": "12 palaces · 18 stars",
+      "sources": [
+        { "path": "crates/ziwei_core/src/palace.rs" },
+        { "path": "crates/ziwei_core/src/star.rs" }
+      ],
+      "pos": [940, 120],
+      "size": [190, 82]
+    },
+    {
+      "id": "decades",
+      "type": "database",
+      "label": "Decades",
+      "sublabel": "12 × Decade · 10 × DecadeYear",
+      "sources": [{ "path": "crates/ziwei_core/src/decade.rs" }],
+      "pos": [940, 330],
+      "size": [190, 78]
+    },
+    {
+      "id": "derived_facts",
+      "type": "database",
+      "label": "Derived Facts",
+      "sublabel": "Zodiac · FiveElementBureau",
+      "sources": [
+        { "path": "crates/ziwei_core/src/zodiac.rs" },
+        { "path": "crates/ziwei_core/src/five_element_bureau.rs" }
+      ],
+      "pos": [940, 540],
+      "size": [190, 78]
+    },
+    {
+      "id": "immutable_natal",
+      "type": "backend",
+      "label": "Immutable Natal",
+      "sublabel": "private fields · read-only getters",
+      "tag": "complete fact graph",
+      "sources": [{ "path": "crates/ziwei_core/src/natal.rs" }],
+      "pos": [1160, 330],
+      "size": [150, 82]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "ziwei_core · construction and immutable natal facts",
+      "wraps": [
+        "validated_inputs",
+        "natal_constructors",
+        "build_pipeline",
+        "coordinate_algebra",
+        "placement_rules",
+        "stable_codes",
+        "palace_graph",
+        "decades",
+        "derived_facts",
+        "immutable_natal"
+      ],
+      "pad": 24
+    }
+  ],
+  "connections": [
+    {
+      "id": "consumer_input",
+      "from": "rust_consumers",
+      "to": "validated_inputs",
+      "label": "try_new",
+      "variant": "emphasis",
+      "route": "orthogonal-h"
+    },
+    {
+      "id": "input_constructor",
+      "from": "validated_inputs",
+      "to": "natal_constructors",
+      "label": "validated"
+    },
+    {
+      "id": "constructor_pipeline",
+      "from": "natal_constructors",
+      "to": "build_pipeline",
+      "variant": "emphasis"
+    },
+    {
+      "id": "coordinates_placement",
+      "from": "coordinate_algebra",
+      "to": "placement_rules"
+    },
+    {
+      "id": "placement_pipeline",
+      "from": "placement_rules",
+      "to": "build_pipeline"
+    },
+    {
+      "id": "codes_pipeline",
+      "from": "stable_codes",
+      "to": "build_pipeline"
+    },
+    {
+      "id": "pipeline_palaces",
+      "from": "build_pipeline",
+      "to": "palace_graph"
+    },
+    {
+      "id": "pipeline_decades",
+      "from": "build_pipeline",
+      "to": "decades"
+    },
+    {
+      "id": "pipeline_facts",
+      "from": "build_pipeline",
+      "to": "derived_facts"
+    },
+    {
+      "id": "palaces_natal",
+      "from": "palace_graph",
+      "to": "immutable_natal"
+    },
+    {
+      "id": "decades_natal",
+      "from": "decades",
+      "to": "immutable_natal"
+    },
+    {
+      "id": "facts_natal",
+      "from": "derived_facts",
+      "to": "immutable_natal"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Construction contract",
+      "items": [
+        "ZiweiBirth and ZiweiInput are the only public inputs",
+        "Both paths normalize to private NatalContext",
+        "Successful Natal construction is infallible"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Ownership graph",
+      "items": [
+        "Natal owns the complete immutable result",
+        "Palace owns placed stars and four transformation edges",
+        "Star owns origin and self transformations"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Stable invariants",
+      "items": [
+        "12 palaces and 18 unique StarKey values",
+        "Four A/B/C/D edges per palace",
+        "12 decades with 10 year/age entries each"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Outside core",
+      "items": [
+        "Query and relationship selection",
+        "Calendar, timezone, and i18n",
+        "Bindings, analysis, and plugin systems"
+      ]
+    }
+  ]
+}
