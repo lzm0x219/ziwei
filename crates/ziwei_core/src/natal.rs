@@ -83,7 +83,7 @@ impl NatalContext {
 ///
 /// let _ = Natal {};
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Natal {
     context: NatalContext,
     zodiac: Zodiac,
