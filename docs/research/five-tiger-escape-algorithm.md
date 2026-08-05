@@ -1,8 +1,8 @@
-# Research: 五虎遁算法核验
+# 五虎遁算法核验
 
-**Status:** research only
-**Scope:** `Stem::yin_head_stem`、`compute_palace_stems`，以及它们与来因宫固定表的边界
-**Conclusion:** 当前五虎遁实现正确；来因宫由独立表确定，但其宫干必须与生年天干一致
+- 状态：研究记录
+- 范围：`Stem::yin_head_stem`、`compute_palace_stems`，以及它们与来因宫固定表的边界
+- 结论：当前五虎遁实现正确；来因宫由独立表确定，但其宫干必须与生年天干一致
 
 ## 1. 结论
 
