@@ -117,14 +117,11 @@ stem = (寅宫起干下标 + 寅环下标) mod 10
 `Star::origin_transformation` 可直接由生年天干查四化表。由于上述宫干相等不变量，同一组
 四化也出现在 `origin_palace` 的 `PalaceTransformation` 中。
 
-## 5. 测试缺口
+## 5. 测试覆盖
 
-当前 `placement.rs` 测试间接调用 `compute_palace_stems`，但没有直接断言五组寅宫起干，
-也没有穷举十二支顺布结果。建议后续增加一条表驱动测试，锁定：
+`placement.rs` 的表驱动测试
+`palace_stems_follow_five_tiger_escape_for_every_year_stem_and_branch` 现已锁定：
 
 1. 五组年干共享各自的寅宫起干；
 2. 每组从寅至丑逐宫前进一干；
 3. 返回数组仍按 `Branch::index()` 的子序索引。
-
-在补充该测试前，本结论来自原典对照与当前源码逐项推演；现有测试通过不是这条不变量的
-独立证明。
