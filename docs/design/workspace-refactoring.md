@@ -30,14 +30,14 @@ ziwei_analysis -> ziwei_core + ziwei_query
 ziwei          -> ziwei_calendar + ziwei_core + ziwei_query + ziwei_analysis
 ```
 
-现有代码可以继续演化，不需要重写。
+现有实现只作为可编译基线，不继续作为目标结构演化。下一步按 [#280](https://github.com/matharts/ziwei/issues/280) 围绕不可变 `Ziwei` 重写 `ziwei_core`。
 
 ## 2. 主要问题
 
 - 排盘数据和领域查询仍集中在一个 crate，历法能力尚未实现。
 - `Ziwei` 同时负责数据、构造和查询，职责会继续增长。
 - 当前 Rust interface 不适合直接作为多语言契约。
-- 分析层尚未建立，未来规则不应进入 `Chart`。
+- 分析层尚未建立，未来规则不应进入 `Ziwei`。
 
 ## 3. 目标 workspace
 
@@ -62,7 +62,7 @@ ziwei 组合与转换
         ↓
 ziwei_core
         ↓
-生成 Chart
+生成 Ziwei
         ↓
 ziwei_query
         ↓
@@ -78,13 +78,13 @@ ziwei_analysis
 | Crate            | 负责                                                  | 不负责                   |
 | ---------------- | ----------------------------------------------------- | ------------------------ |
 | `ziwei_calendar` | 公历/农历转换、节气和独立历法结果                     | 紫微类型、排盘与分析     |
-| `ziwei_core`     | `Chart`、领域模型、安星、排盘、大限和流年计算         | 历法转换、关系查询与解释 |
-| `ziwei_query`    | 基于 `Chart` 的只读领域关系查询                       | 排盘与命理解释           |
-| `ziwei_analysis` | 格局、规则匹配、分析和解读结果                        | 排盘与修改 `Chart`       |
+| `ziwei_core`     | `Ziwei`、领域模型、安星、排盘、大限和流年计算         | 历法转换、关系查询与解释 |
+| `ziwei_query`    | 基于 `Ziwei` 的只读领域关系查询                       | 排盘与命理解释           |
+| `ziwei_analysis` | 格局、规则匹配、分析和解读结果                        | 排盘与修改 `Ziwei`       |
 | `ziwei`          | SDK facade、能力组合、公开 interface、features 和版本 | 领域规则与语言绑定       |
 | `bindings`       | FFI、类型转换、错误映射和 SDK 外观                    | 任何紫微领域规则         |
 
-`Chart` 是稳定、不可变的领域数据对象。领域查询由 `ziwei_query` 实现，不继续增加到 `Chart`。
+`Ziwei` 是稳定、不可变的领域数据对象。领域查询由 `ziwei_query` 实现，不继续增加到 `Ziwei`。
 
 ## 5. 依赖原则
 
@@ -112,7 +112,7 @@ Cargo 依赖与运行时数据流不是同一件事。外层先调用 calendar�
 
 ### 阶段 2：迁移 core 与建立 query
 
-[`ziwei_core` 首批迁移](ziwei-core-first-batch.md)已经完成。下一步重写 core；关系查询等 `Chart` 稳定后再迁入 `ziwei_query`，`ziwei` facade 始终保留统一入口。
+[`ziwei_core` 首批迁移](ziwei-core-first-batch.md)已经完成。下一步执行 [#280](https://github.com/matharts/ziwei/issues/280) 重写 core；关系查询等 `Ziwei` 数据模型稳定后再迁入 `ziwei_query`，`ziwei` facade 始终保留统一入口。
 
 ### 阶段 3：建立 calendar
 
@@ -128,13 +128,12 @@ Rust 公共 API 稳定后，再设计并实现 TypeScript、Python、Java 和 Sw
 
 每个阶段结束时，workspace 必须保持编译，并通过现有 Rust 测试。
 
-## 7. 下一步讨论
+## 7. 下一步
 
-按以下顺序继续细化：
+按以下顺序继续：
 
-1. `Chart` 包含哪些稳定数据（已确认）；
-2. `Stem`、`Branch` 归 `ziwei_core` 所有，calendar 保持独立（已确认）；
-3. `ziwei_query` 采用什么 interface（待现有 `ziwei` 稳定后讨论）；
-4. calendar 向 core 提供什么时间上下文；
-5. bindings 使用什么跨语言数据契约；
-6. 不同流派和规则版本如何进入 core 与 analysis。
+1. 执行 [#280](https://github.com/matharts/ziwei/issues/280)，围绕不可变 `Ziwei` 重写 `ziwei_core`；
+2. `ziwei_query` 采用什么 interface（待 `Ziwei` 数据模型稳定后讨论）；
+3. calendar 向 core 提供什么时间上下文；
+4. bindings 使用什么跨语言数据契约；
+5. 不同流派和规则版本如何进入 core 与 analysis。

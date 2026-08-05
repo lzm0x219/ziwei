@@ -29,4 +29,4 @@ ziwei_core
 
 ## 后续
 
-下一步直接重写 `ziwei_core`。等 `Chart` 稳定后，再设计 `ziwei_query` 的 interface，并将关系查询从 core 移出。
+下一步执行 [#280](https://github.com/matharts/ziwei/issues/280)，围绕不可变 `Ziwei` 重写 `ziwei_core`。等 `Ziwei` 数据模型稳定后，再设计 `ziwei_query` 的 interface，并将关系查询从 core 移出。
