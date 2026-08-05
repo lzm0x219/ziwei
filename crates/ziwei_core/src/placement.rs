@@ -172,6 +172,128 @@ mod tests {
     use super::*;
 
     #[test]
+    fn palace_stems_follow_five_tiger_escape_for_every_year_stem_and_branch() {
+        let branches_from_yin_to_chou = [
+            Branch::Yin,
+            Branch::Mao,
+            Branch::Chen,
+            Branch::Si,
+            Branch::Wu,
+            Branch::Wei,
+            Branch::Shen,
+            Branch::You,
+            Branch::Xu,
+            Branch::Hai,
+            Branch::Zi,
+            Branch::Chou,
+        ];
+        let cases = [
+            (
+                [Stem::Jia, Stem::Ji],
+                [
+                    Stem::Bing,
+                    Stem::Ding,
+                    Stem::Wu,
+                    Stem::Ji,
+                    Stem::Geng,
+                    Stem::Xin,
+                    Stem::Ren,
+                    Stem::Gui,
+                    Stem::Jia,
+                    Stem::Yi,
+                    Stem::Bing,
+                    Stem::Ding,
+                ],
+            ),
+            (
+                [Stem::Yi, Stem::Geng],
+                [
+                    Stem::Wu,
+                    Stem::Ji,
+                    Stem::Geng,
+                    Stem::Xin,
+                    Stem::Ren,
+                    Stem::Gui,
+                    Stem::Jia,
+                    Stem::Yi,
+                    Stem::Bing,
+                    Stem::Ding,
+                    Stem::Wu,
+                    Stem::Ji,
+                ],
+            ),
+            (
+                [Stem::Bing, Stem::Xin],
+                [
+                    Stem::Geng,
+                    Stem::Xin,
+                    Stem::Ren,
+                    Stem::Gui,
+                    Stem::Jia,
+                    Stem::Yi,
+                    Stem::Bing,
+                    Stem::Ding,
+                    Stem::Wu,
+                    Stem::Ji,
+                    Stem::Geng,
+                    Stem::Xin,
+                ],
+            ),
+            (
+                [Stem::Ding, Stem::Ren],
+                [
+                    Stem::Ren,
+                    Stem::Gui,
+                    Stem::Jia,
+                    Stem::Yi,
+                    Stem::Bing,
+                    Stem::Ding,
+                    Stem::Wu,
+                    Stem::Ji,
+                    Stem::Geng,
+                    Stem::Xin,
+                    Stem::Ren,
+                    Stem::Gui,
+                ],
+            ),
+            (
+                [Stem::Wu, Stem::Gui],
+                [
+                    Stem::Jia,
+                    Stem::Yi,
+                    Stem::Bing,
+                    Stem::Ding,
+                    Stem::Wu,
+                    Stem::Ji,
+                    Stem::Geng,
+                    Stem::Xin,
+                    Stem::Ren,
+                    Stem::Gui,
+                    Stem::Jia,
+                    Stem::Yi,
+                ],
+            ),
+        ];
+
+        for (birth_stems, expected_from_yin_to_chou) in cases {
+            for birth_stem in birth_stems {
+                let actual_by_branch = compute_palace_stems(birth_stem);
+
+                for (branch, expected_stem) in branches_from_yin_to_chou
+                    .into_iter()
+                    .zip(expected_from_yin_to_chou)
+                {
+                    assert_eq!(
+                        actual_by_branch[branch.index()],
+                        expected_stem,
+                        "birth_stem={birth_stem:?} branch={branch:?}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
     fn tianfu_mirrors_ziwei_for_every_supported_day_and_bureau() {
         for day in 1..=30u8 {
             for bureau_number in [2u8, 3, 4, 5, 6] {
