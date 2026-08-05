@@ -3,7 +3,6 @@
 use super::{
     branch::Branch,
     input::Gender,
-    palaces::Palaces,
     position::twelve_index,
     stem::Stem,
     view::{DecadeIndex, DecadeStep},
@@ -18,10 +17,9 @@ pub(crate) fn build_decade_steps(
     birth_stem: Stem,
     ming_branch: Branch,
     bureau_number: u8,
-    palaces: &Palaces,
 ) -> [DecadeStep; 12] {
     let forward = birth_stem.is_yang() == gender.is_yang();
-    let mut steps = [DecadeStep::new(DecadeIndex::FIRST, Branch::Zi, 0, Stem::Jia); 12];
+    let mut steps = [DecadeStep::new(DecadeIndex::FIRST, Branch::Zi, 0); 12];
 
     for raw_step in 0..12u8 {
         let step = DecadeIndex::try_new(raw_step).expect("0..12 循环只产生合法大限序号");
@@ -32,8 +30,7 @@ pub(crate) fn build_decade_steps(
         };
         let ming = Branch::from_index(twelve_index(ming_branch.index() as i32 + offset));
         let age_start = bureau_number.saturating_add(10u8.saturating_mul(raw_step));
-        steps[usize::from(raw_step)] =
-            DecadeStep::new(step, ming, age_start, palaces.get(ming).stem());
+        steps[usize::from(raw_step)] = DecadeStep::new(step, ming, age_start);
     }
     steps
 }

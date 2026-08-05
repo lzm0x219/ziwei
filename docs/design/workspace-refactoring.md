@@ -14,13 +14,13 @@
 
 | Crate            | 职责                                      |
 | ---------------- | ----------------------------------------- |
-| `ziwei`          | 当前仍承载既有实现，已开始转为统一 facade |
-| `ziwei_core`     | 领域核心骨架，尚未迁入业务代码            |
+| `ziwei`          | 统一 facade，显式导出当前 core interface  |
+| `ziwei_core`     | 已承载既有实现，等待按目标模型重写         |
 | `ziwei_calendar` | 独立历法骨架                              |
 | `ziwei_query`    | 领域查询骨架                              |
 | `ziwei_analysis` | 分析骨架                                  |
 
-既有实现仍集中在 `ziwei`，内部已经按 `placement`、`pipeline`、`decade`、`fly` 等模块分工。排盘逻辑只在 Rust 中实现，后续按职责逐步迁移，不重复实现。
+既有实现已整体迁入 `ziwei_core`，内部仍按 `placement`、`pipeline`、`decade`、`fly` 等模块分工。排盘逻辑只在 Rust 中实现，后续直接在 core 中重写，不重复实现。
 
 当前 Cargo 依赖方向为：
 
@@ -108,11 +108,11 @@ Cargo 依赖与运行时数据流不是同一件事。外层先调用 calendar�
 
 ### 阶段 1：整理现有 crate
 
-先在现有 `ziwei` 实现中分开命盘数据、排盘实现和查询实现。保持现有行为与测试，为迁移建立清晰边界。
+先按 [领域语义收口](domain-semantics-convergence.md)清理现有实现，再分开命盘数据、排盘实现和查询实现。保持 workspace 可编译，为迁移建立清晰边界。
 
 ### 阶段 2：迁移 core 与建立 query
 
-将稳定的领域模型与排盘实现迁入 `ziwei_core`，再将关系查询迁入 `ziwei_query`。每一步完成后由 `ziwei` facade 继续提供可用入口。
+[`ziwei_core` 首批迁移](ziwei-core-first-batch.md)已经完成。下一步重写 core；关系查询等 `Chart` 稳定后再迁入 `ziwei_query`，`ziwei` facade 始终保留统一入口。
 
 ### 阶段 3：建立 calendar
 

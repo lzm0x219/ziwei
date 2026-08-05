@@ -10,23 +10,21 @@
 //!
 //! # 查询原则（ADR-0004）
 //!
-//! 本命盘固定；[`ZiweiView`] 只改宫职贴标与层四化 overlay。
+//! 本命盘固定；[`ZiweiView`] 只改变宫职叠落到哪一地支。
 
 use super::{
     branch::Branch,
     five_element_bureau::FiveElementBureau,
     fly::ZiweiFly,
-    input::{Gender, ZiweiBirth, ZiweiInput, branch_from_year, stem_from_year},
+    input::{Gender, ZiweiBirth, ZiweiInput, branch_from_year},
     palace::{Palace, PalaceRole},
     palaces::Palaces,
     pipeline::build_chart_parts,
     position::twelve_index,
     star::Star,
     stem::Stem,
-    view::{
-        DecadeIndex, DecadeStep, DecadeYear, DecadeYearsError, LayerTransformation, ZiweiView,
-        stem_layer_transformations,
-    },
+    view::{DecadeIndex, DecadeStep, DecadeYear, DecadeYearsError, ZiweiView},
+    year_transformation::YearTransformation,
 };
 
 /// 可供调用者查询的紫微斗数命盘对象（本命真相源）。
@@ -51,6 +49,10 @@ pub struct Ziwei {
     birth_stem: Stem,
     /// 生年地支。
     birth_branch: Branch,
+    /// 来因宫叠落地支。
+    laiyin_branch: Branch,
+    /// 固定生年四化。
+    year_transformations: [YearTransformation; 4],
     /// 命主性别（大限顺逆）。
     gender: Gender,
     /// 十八星落宫，下标为 [`Star::index`]。
@@ -97,6 +99,8 @@ impl Ziwei {
             birth_year,
             birth_stem: parts.birth_stem,
             birth_branch: parts.birth_branch,
+            laiyin_branch: parts.laiyin_branch,
+            year_transformations: parts.year_transformations,
             gender: parts.gender,
             star_branches: parts.star_branches,
             flies: parts.flies,
@@ -160,17 +164,12 @@ impl Ziwei {
 
     /// 来因宫地支。
     pub const fn laiyin_branch(&self) -> Branch {
-        self.birth_stem.laiyin_branch()
+        self.laiyin_branch
     }
 
     /// 生年四化（固定，不随视图变）。
-    pub fn year_transformations(&self) -> [LayerTransformation; 4] {
-        self.stem_transformations(self.birth_stem)
-    }
-
-    /// 任意天干的层四化：四星及其在本命盘上的落宫（ADR-0003）。
-    pub fn stem_transformations(&self, stem: Stem) -> [LayerTransformation; 4] {
-        stem_layer_transformations(stem, &self.star_branches)
+    pub const fn year_transformations(&self) -> &[YearTransformation; 4] {
+        &self.year_transformations
     }
 
     /// 十二步大限。
@@ -230,17 +229,6 @@ impl Ziwei {
         self.palace_at(self.branch_of_role(role, view))
     }
 
-    /// 层四化 overlay：本命为 `None`；大限/流年为该层干四化。
-    pub fn overlay_transformations(&self, view: ZiweiView) -> Option<[LayerTransformation; 4]> {
-        match view {
-            ZiweiView::Natal => None,
-            ZiweiView::Decade(index) => {
-                Some(self.stem_transformations(self.decade_step(index).stem()))
-            }
-            ZiweiView::Annual { year } => Some(self.stem_transformations(stem_from_year(year))),
-        }
-    }
-
     /// 本命宫干飞全量边（恰好 48 条）。
     ///
     /// 布局：按 [`Branch::index`] 升序，每支连续 4 条，四化顺序与
@@ -277,6 +265,7 @@ mod tests {
     use crate::{
         Transformation,
         fly::SelfTransformation,
+        input::stem_from_year,
         position::{branch_from_yin0, branch_index_to_yin0, twelve_index},
     };
 
@@ -405,7 +394,7 @@ mod tests {
         );
     }
 
-    /// 福山堂等口诀源锁定的安命/局/紫微黄金（扩展：身、辅佐、飞边、大限、层四化）。
+    /// 福山堂等口诀源锁定的安命/局/紫微黄金（扩展：身、辅佐、飞边、大限、生年四化）。
     #[test]
     fn ziwei_star_goldens_fushantang() {
         // 己丑年 · 正月 · 廿七 · 戌时 → 命辰、木三、紫微戌
@@ -566,35 +555,31 @@ mod tests {
         let n = chart.bureau().number();
         assert_eq!(chart.decade_steps()[0].age_start(), n);
         assert_eq!(chart.decade_steps()[0].age_end(), n + 9);
-        // 大限干 = 该支本命宫干
-        for step in chart.decade_steps() {
-            assert_eq!(step.stem(), chart.palace_at(step.ming_branch()).stem());
-        }
     }
 
-    /// 生年四化与来因在视图切换下不变；overlay 不覆盖生年。
+    /// 生年四化、来因宫与飞边在视图切换下不变。
     fn assert_year_hua_stable_under_views(chart: &Ziwei) {
-        let year = chart.year_transformations();
+        let year = *chart.year_transformations();
         let laiyin = chart.laiyin_branch();
+        let flies = *chart.palace_flies();
         assert_eq!(year.len(), 4);
         assert_eq!(laiyin, chart.birth_stem().laiyin_branch());
         for xf in year {
             assert_eq!(xf.branch(), chart.branch_of_star(xf.star()));
         }
 
-        let decade_view = ZiweiView::Decade(DecadeIndex::FIRST);
-        let annual_view = ZiweiView::Annual {
-            year: 4 + chart.birth_stem().index() as i32,
-        };
-        assert_eq!(chart.year_transformations(), year);
-        assert_eq!(chart.laiyin_branch(), laiyin);
-        let decade_overlay = chart.overlay_transformations(decade_view).unwrap();
-        let annual_overlay = chart.overlay_transformations(annual_view).unwrap();
-        assert_eq!(decade_overlay.len(), 4);
-        assert_eq!(annual_overlay.len(), 4);
-        // overlay 是层四化，不是替换生年
-        assert_eq!(chart.year_transformations(), year);
-        assert!(chart.overlay_transformations(ZiweiView::Natal).is_none());
+        for view in [
+            ZiweiView::Natal,
+            ZiweiView::Decade(DecadeIndex::FIRST),
+            ZiweiView::Annual {
+                year: 4 + chart.birth_stem().index() as i32,
+            },
+        ] {
+            let _ = chart.branch_of_role(PalaceRole::Ming, view);
+            assert_eq!(chart.year_transformations(), &year);
+            assert_eq!(chart.laiyin_branch(), laiyin);
+            assert_eq!(chart.palace_flies(), &flies);
+        }
     }
 
     #[test]
@@ -660,10 +645,7 @@ mod tests {
             year_hua[0].branch(),
             chart.branch_of_star(year_hua[0].star())
         );
-        assert_eq!(
-            chart.stem_transformations(Stem::Jia),
-            chart.year_transformations()
-        );
+        assert_eq!(chart.birth_stem(), Stem::Jia);
     }
 
     #[test]
@@ -755,20 +737,9 @@ mod tests {
     }
 
     #[test]
-    fn overlay_empty_on_natal_and_stable_year_hua() {
+    fn views_do_not_change_fixed_chart_facts() {
         let chart = Ziwei::from_birth(sample_birth_march_chen());
-        let year_hua = chart.year_transformations();
-        assert!(chart.overlay_transformations(ZiweiView::Natal).is_none());
-        let decade_overlay = chart
-            .overlay_transformations(ZiweiView::Decade(DecadeIndex::FIRST))
-            .expect("大限应有 overlay");
-        assert_eq!(decade_overlay.len(), 4);
-        assert_eq!(chart.year_transformations(), year_hua);
-        let annual_overlay = chart
-            .overlay_transformations(ZiweiView::Annual { year: 1990 })
-            .expect("流年应有 overlay");
-        assert_eq!(annual_overlay.len(), 4);
-        assert_eq!(chart.laiyin_branch(), Stem::Jia.laiyin_branch());
+        assert_year_hua_stable_under_views(&chart);
     }
 
     #[test]
@@ -975,13 +946,16 @@ mod tests {
         assert_decade_direction(&chart, true);
         assert_year_hua_stable_under_views(&chart);
 
-        // 流年太岁命与大限 overlay 可叠加查询
+        // 流年太岁命与本命宫干飞化可叠加查询
         let annual = ZiweiView::Annual { year: 1996 };
         assert_eq!(
             chart.branch_of_role(PalaceRole::Ming, annual),
             branch_from_year(1996)
         );
-        assert!(chart.overlay_transformations(annual).is_some());
+        assert_eq!(
+            chart.flies_from_role(PalaceRole::Ming, annual).len(),
+            Transformation::ALL.len()
+        );
     }
 
     #[test]

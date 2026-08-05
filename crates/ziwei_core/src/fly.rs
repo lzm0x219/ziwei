@@ -3,7 +3,7 @@
 //! v1 只保留**一套**边集：十二宫本命宫干各查四化表，最多 48 条有向单跳。
 //! 大限/流年不重排宫干、不重算边，只通过视图把宫职映射到地支后再读边。
 //!
-//! 自化不单独存储：由源支与目标支的几何关系派生（本宫=出，对宫=入）。
+//! 自化在生成飞边时判定，并作为边的固定事实保存（本宫=出，对宫=入）。
 
 use super::{branch::Branch, palaces::Palaces, star::Star, transformation::Transformation};
 
@@ -23,9 +23,11 @@ pub struct ZiweiFly {
     target_branch: Branch,
     /// 被化星。
     star: Star,
+    /// 排盘时判定的自化标注。
+    self_transformation: SelfTransformation,
 }
 
-/// 自化标注：由边的源/目标几何派生，不入库。
+/// 随宫干飞化边保存的自化标注。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SelfTransformation {
     /// 目标为本宫 — 离心/出（飞出又落回本宫）。
@@ -44,11 +46,19 @@ impl ZiweiFly {
         target_branch: Branch,
         star: Star,
     ) -> Self {
+        let self_transformation = if target_branch.index() == source_branch.index() {
+            SelfTransformation::Out
+        } else if target_branch.index() == source_branch.opposite().index() {
+            SelfTransformation::In
+        } else {
+            SelfTransformation::None
+        };
         Self {
             source_branch,
             transformation,
             target_branch,
             star,
+            self_transformation,
         }
     }
 
@@ -72,19 +82,9 @@ impl ZiweiFly {
         self.star
     }
 
-    /// 由源支与目标支派生自化标注。
-    ///
-    /// 判定顺序：先本宫（出），再对宫（入），否则无自化。
+    /// 排盘时保存的自化标注。
     pub const fn self_transformation(self) -> SelfTransformation {
-        if self.target_branch.index() == self.source_branch.index() {
-            // 目标 == 源 → 自化出
-            SelfTransformation::Out
-        } else if self.target_branch.index() == self.source_branch.opposite().index() {
-            // 目标 == 源的对宫 → 自化入
-            SelfTransformation::In
-        } else {
-            SelfTransformation::None
-        }
+        self.self_transformation
     }
 }
 
@@ -112,4 +112,21 @@ pub(crate) fn build_palace_flies(
     }
     debug_assert_eq!(i, 48);
     edges
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn constructor_stores_self_transformation() {
+        let out = ZiweiFly::new(Branch::Zi, Transformation::A, Branch::Zi, Star::ZiWei);
+        let inward = ZiweiFly::new(Branch::Zi, Transformation::A, Branch::Wu, Star::ZiWei);
+        let none = ZiweiFly::new(Branch::Zi, Transformation::A, Branch::Chou, Star::ZiWei);
+
+        assert_eq!(out.self_transformation, SelfTransformation::Out);
+        assert_eq!(inward.self_transformation, SelfTransformation::In);
+        assert_eq!(none.self_transformation, SelfTransformation::None);
+        assert_eq!(out.self_transformation(), out.self_transformation);
+    }
 }
