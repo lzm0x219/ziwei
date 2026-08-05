@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="ziwei_core 不可变 Natal 模型的结构、所有权、公开 API 与边界参考。"
+      content="ziwei_core 不可变 Natal 的构造流程、数据结构、所有权、公开 API 与职责边界。"
     />
     <link
       rel="icon"
@@ -479,6 +479,78 @@
         font-family: var(--mono);
       }
 
+      .pipeline-flow {
+        margin: 32px 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .pipeline-step {
+        position: relative;
+        display: grid;
+        grid-template-columns: 54px minmax(170px, 0.72fr) minmax(0, 1.28fr);
+        gap: 20px;
+        padding-bottom: 28px;
+      }
+
+      .pipeline-step:not(:last-child)::after {
+        position: absolute;
+        top: 50px;
+        bottom: 4px;
+        left: 26px;
+        width: 2px;
+        background: linear-gradient(var(--jade-400), rgba(71, 137, 121, 0.16));
+        content: "";
+      }
+
+      .pipeline-index {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        place-items: center;
+        width: 52px;
+        height: 52px;
+        border: 1px solid rgba(11, 107, 86, 0.22);
+        border-radius: 50%;
+        color: var(--jade-700);
+        background: var(--paper);
+        font-family: var(--mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+      }
+
+      .pipeline-title {
+        padding-top: 4px;
+      }
+
+      .section-body .pipeline-title h3 {
+        margin: 0 0 7px;
+        font-size: 1.08rem;
+      }
+
+      .pipeline-title code {
+        color: var(--cinnabar);
+        font-size: 0.72rem;
+      }
+
+      .pipeline-detail {
+        padding: 15px 18px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--mist-50);
+      }
+
+      .pipeline-detail p {
+        margin: 0;
+      }
+
+      .pipeline-detail small {
+        display: block;
+        margin-top: 8px;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
       .scope-grid,
       .ownership-grid,
       .fact-grid {
@@ -843,6 +915,15 @@
           transform: rotate(90deg);
         }
 
+        .pipeline-step {
+          grid-template-columns: 54px minmax(0, 1fr);
+          gap: 14px 18px;
+        }
+
+        .pipeline-detail {
+          grid-column: 2;
+        }
+
         .ownership-grid,
         .fact-grid {
           grid-template-columns: 1fr;
@@ -977,15 +1058,16 @@
         <nav>
           <a href="#overview"><span>01</span>总览</a>
           <a href="#construction"><span>02</span>构造</a>
-          <a href="#natal"><span>03</span>Natal</a>
-          <a href="#palace"><span>04</span>宫位</a>
-          <a href="#star"><span>05</span>星曜</a>
-          <a href="#transformation"><span>06</span>四化</a>
-          <a href="#decade"><span>07</span>大限</a>
-          <a href="#api"><span>08</span>API</a>
-          <a href="#boundary"><span>09</span>边界</a>
+          <a href="#pipeline"><span>03</span>排盘</a>
+          <a href="#natal"><span>04</span>Natal</a>
+          <a href="#palace"><span>05</span>宫位</a>
+          <a href="#star"><span>06</span>星曜</a>
+          <a href="#transformation"><span>07</span>四化</a>
+          <a href="#decade"><span>08</span>大限</a>
+          <a href="#api"><span>09</span>API</a>
+          <a href="#boundary"><span>10</span>边界</a>
         </nav>
-        <p class="rail-note">基于 ADR 0011 与合并后的不可变 <code>Natal</code> 模型。</p>
+        <p class="rail-note">依据 ADR 0011 与当前的不可变 <code>Natal</code> 模型。</p>
       </aside>
 
       <main id="content">
@@ -994,7 +1076,7 @@
             <p class="eyebrow">Immutable domain graph · Rust</p>
             <h1>一份出生事实，<em>一张 Natal。</em></h1>
             <p class="hero-lead">
-              两种已验证输入进入同一条计算流水线。结果字段私有、结构只读；宫位拥有星曜与四化关系，星曜拥有生年四化与自化。
+              两种已验证输入共用一条排盘管线，最终得到只读的 <code>Natal</code>。每个宫位持有本宫星曜与宫干飞化关系；每颗星保存自己的生年四化与自化。
             </p>
             <div class="hero-rule" aria-label="核心结构数量">
               <div><strong>12</strong><span>Palace · 寅为零 · 逆步</span></div>
@@ -1028,38 +1110,38 @@
             <div class="section-label"><span>02 / INPUT</span><h2>构造入口</h2></div>
             <div class="section-body">
               <p class="lede">
-                <code>ZiweiBirth</code> 与 <code>ZiweiInput</code> 是仅有的公开输入。它们在边界完成校验，再归一化为只读 <code>NatalContext</code>。
+                <code>ZiweiBirth</code> 与 <code>ZiweiInput</code> 是仅有的公开输入。两者在创建时完成校验，再转为只读的 <code>NatalContext</code>。
               </p>
               <div class="flow" aria-label="构造流水线">
                 <div class="flow-node">
                   <code>ZiweiBirth</code>
-                  <small>性别、年份、月、日、时；core 从年份推导年干支。</small>
+                  <small>性别、农历年序号、月、日、时；core 由年份推导年干支。</small>
                 </div>
                 <div class="flow-arrow" aria-hidden="true">→</div>
                 <div class="flow-node">
                   <code>NatalContext</code>
-                  <small>统一上下文；私有构造，不是第三种输入。</small>
+                  <small>私有的统一上下文，不是第三种公开输入。</small>
                 </div>
                 <div class="flow-arrow" aria-hidden="true">→</div>
                 <div class="flow-node">
                   <code>Natal</code>
-                  <small>完整、不可变、只读的本命盘事实图。</small>
+                  <small>排盘完成后得到的不可变本命盘。</small>
                 </div>
               </div>
               <div class="flow" aria-label="原始量输入流水线">
                 <div class="flow-node">
                   <code>ZiweiInput</code>
-                  <small>性别、年干支、月、日、时；年干支必须组成六十甲子。</small>
+                  <small>性别、生年干支、月、日、时；年柱须符合六十甲子。</small>
                 </div>
                 <div class="flow-arrow" aria-hidden="true">→</div>
                 <div class="flow-node">
                   <code>NatalContext</code>
-                  <small><code>year = None</code>，但其余规则与出生年入口一致。</small>
+                  <small><code>year = None</code>；除绝对年份外，排盘规则与 <code>ZiweiBirth</code> 相同。</small>
                 </div>
                 <div class="flow-arrow" aria-hidden="true">→</div>
                 <div class="flow-node">
                   <code>Natal</code>
-                  <small>大限仍含虚岁；所有 <code>DecadeYear.year</code> 为 <code>None</code>。</small>
+                  <small>大限保留虚岁，所有 <code>DecadeYear.year</code> 均为 <code>None</code>。</small>
                 </div>
               </div>
 
@@ -1077,19 +1159,90 @@
                   <h3>年份能力</h3>
                   <ul>
                     <li><code>ZiweiBirth.year + 124</code> 必须可由 <code>i32</code> 表示</li>
-                    <li>历法、闰月、晚子时在 core 外消解</li>
-                    <li>验证成功后，两条 <code>Natal</code> 构造均无失败</li>
+                    <li>历法转换、闰月与晚子时由 core 外层处理</li>
+                    <li><code>Natal</code> 的两个构造函数接收已验证输入，直接返回结果</li>
                   </ul>
                 </div>
               </div>
             </div>
           </section>
 
-          <section class="section" id="natal">
-            <div class="section-label"><span>03 / ROOT</span><h2>Natal 根结构</h2></div>
+          <section class="section" id="pipeline">
+            <div class="section-label"><span>03 / PIPELINE</span><h2>排盘流程</h2></div>
             <div class="section-body">
               <p class="lede">
-                <code>Natal</code> 只保存无需查询即可成立的固定事实。名字与地支成对保存，所有坐标都能解析到同一张盘中的唯一宫位。
+                两种入口都先转为 <code>NatalContext</code>，随后调用同一个 <code>build_natal</code>。管线只计算一次：结果不会回填输入，查询层也不重复排盘。
+              </p>
+              <ol class="pipeline-flow" aria-label="从已验证输入到不可变 Natal 的排盘步骤">
+                <li class="pipeline-step">
+                  <div class="pipeline-index" aria-hidden="true">01</div>
+                  <div class="pipeline-title"><h3>归一化入口</h3><code>NatalContext</code></div>
+                  <div class="pipeline-detail">
+                    <p><code>Natal::from_birth</code> 由年份推导年干支，并在上下文中保留 <code>Some(year)</code>；<code>from_input</code> 直接使用给定年干支，年份记为 <code>None</code>。</p>
+                    <small>调用 <code>Natal</code> 构造函数前，<code>try_new</code> 已完成范围或六十甲子校验。</small>
+                  </div>
+                </li>
+                <li class="pipeline-step">
+                  <div class="pipeline-index" aria-hidden="true">02</div>
+                  <div class="pipeline-title"><h3>安命身，定宫干与五行局</h3><code>PalaceSeed[12]</code></div>
+                  <div class="pipeline-detail">
+                    <p>先定命宫、身宫落支和十二宫干，再由命宫与宫干定五行局。这些结果共同确定十二宫的宫名、地支与宫干。</p>
+                    <small><code>compute_ming_shen_branches</code> → <code>compute_palace_stems</code> → <code>bureau_from_ming_palace</code> → <code>build_palace_seeds</code></small>
+                  </div>
+                </li>
+                <li class="pipeline-step">
+                  <div class="pipeline-index" aria-hidden="true">03</div>
+                  <div class="pipeline-title"><h3>安十八星</h3><code>Branch[18]</code></div>
+                  <div class="pipeline-detail">
+                    <p>日数与五行局安十四主星，月、时安左辅、右弼、文昌、文曲。合并两组结果后，每个 <code>StarKey</code> 恰有一个落宫。</p>
+                    <small><code>place_major_stars</code> + <code>place_assistants</code> → <code>merge_assistants</code></small>
+                  </div>
+                </li>
+                <li class="pipeline-step">
+                  <div class="pipeline-index" aria-hidden="true">04</div>
+                  <div class="pipeline-title"><h3>记录星曜四化</h3><code>Star</code></div>
+                  <div class="pipeline-detail">
+                    <p>遍历 <code>StarKey::ALL</code>，为每颗星计算生年四化与入、出自化，再按落宫地支归入 <code>stars_by_branch</code>。</p>
+                    <small>这些结果在排盘时写入 <code>Star</code>，查询时直接读取。</small>
+                  </div>
+                </li>
+                <li class="pipeline-step">
+                  <div class="pipeline-index" aria-hidden="true">05</div>
+                  <div class="pipeline-title"><h3>装配十二宫</h3><code>Palace[12]</code></div>
+                  <div class="pipeline-detail">
+                    <p>按寅起环逐宫创建 <code>Palace</code>：写入宫名、地支、宫干和四条宫干飞化关系，再挂载落在该地支的星曜。</p>
+                    <small><code>build_palace_transformations</code> → <code>Palace::new</code></small>
+                  </div>
+                </li>
+                <li class="pipeline-step">
+                  <div class="pipeline-index" aria-hidden="true">06</div>
+                  <div class="pipeline-title"><h3>解析坐标并排大限</h3><code>Decade[12]</code></div>
+                  <div class="pipeline-detail">
+                    <p>查出命宫、身宫、来因宫的宫名与地支，再根据性别、年干、年份、命宫和五行局生成大限方向及十二个大限。</p>
+                    <small><code>ZiweiInput</code> 不含绝对年份，因此大限只保留虚岁，农历年均为 <code>None</code>。</small>
+                  </div>
+                </li>
+                <li class="pipeline-step">
+                  <div class="pipeline-index" aria-hidden="true">07</div>
+                  <div class="pipeline-title"><h3>构造 Natal</h3><code>Natal::new</code></div>
+                  <div class="pipeline-detail">
+                    <p><code>Natal::new</code> 接收出生上下文、生肖、十二宫、三组坐标、五行局、大限方向与十二个大限。</p>
+                    <small>构造后的 <code>Natal</code> 不可修改；core 也不提供半成品、builder 或结果注入入口。</small>
+                  </div>
+                </li>
+              </ol>
+              <div class="callout">
+                <strong>排盘顺序不等于结果的所有权层级。</strong>
+                <code>build_natal</code> 按上述顺序计算，结果则按 <code>Natal → Palace → Star / PalaceTransformation</code> 组织。
+              </div>
+            </div>
+          </section>
+
+          <section class="section" id="natal">
+            <div class="section-label"><span>04 / ROOT</span><h2>Natal 根结构</h2></div>
+            <div class="section-body">
+              <p class="lede">
+                <code>Natal</code> 保存由出生输入直接确定的本命盘结果。宫名与地支成对记录，因此命宫、身宫和来因宫都能定位到十二宫中的唯一宫位。
               </p>
               <div class="model-tree"><span class="type">Natal</span>
 ├─ context: <span class="type">NatalContext</span>
@@ -1105,17 +1258,17 @@
 └─ decades: [<span class="type">Decade</span>; 12]
    └─ years: [<span class="type">DecadeYear</span>; 10]</div>
               <div class="callout">
-                <strong>不变量由类型系统与装配管线保证。</strong>
-                外部代码不能直接构造或修改 <code>Natal</code>、<code>Palace</code>、<code>Star</code>、关系边或大限条目。
+                <strong>结果类型只能由 core 构造。</strong>
+                外部代码只能读取，不能直接创建或修改 <code>Natal</code>、<code>Palace</code>、<code>Star</code>、飞化关系或大限条目。
               </div>
             </div>
           </section>
 
           <section class="section" id="palace">
-            <div class="section-label"><span>04 / PALACE</span><h2>宫位坐标</h2></div>
+            <div class="section-label"><span>05 / PALACE</span><h2>宫位坐标</h2></div>
             <div class="section-body">
               <p class="lede">
-                <code>PalaceName</code> 表示宫名，<code>Branch</code> 表示空间地支。<code>palaces()</code> 的数组顺序固定以寅为零，索引递增时在盘面逆步；这与 <code>Branch::index()</code> 的子为零编码不同。
+                <code>PalaceName</code> 表示宫名，<code>Branch</code> 表示实际落支。<code>palaces()</code> 按寅为零排列，索引递增时在盘面逆步；<code>Branch::index()</code> 则以子为零。
               </p>
               <div class="order-strip" aria-label="Palace 数组顺序">
                 <div><strong>Yin</strong><span>0 · 寅</span></div>
@@ -1138,16 +1291,16 @@
 QianYi, JiaoYou, GuanLu, TianZhai, FuDe, FuMu</code></pre>
               </div>
               <p>
-                每个 <code>Palace</code> 保存 <code>name</code>、<code>branch</code>、<code>stem</code>、本宫 <code>stars</code>，以及以本宫为源宫的四条 <code>transformations</code>。
+                每个 <code>Palace</code> 保存宫名、地支、宫干、本宫星曜，以及从本宫飞出的四条 <code>transformations</code>。
               </p>
             </div>
           </section>
 
           <section class="section" id="star">
-            <div class="section-label"><span>05 / STAR</span><h2>身份与落位</h2></div>
+            <div class="section-label"><span>06 / STAR</span><h2>身份与落位</h2></div>
             <div class="section-body">
               <p class="lede">
-                <code>StarKey</code> 是稳定身份；<code>Star</code> 是某张盘内的落位事实。分类与斗系属于 key，生年四化与自化属于落位对象。
+                <code>StarKey</code> 标识星曜，<code>Star</code> 记录它在一张命盘中的落位。分类与斗系属于 <code>StarKey</code>；生年四化与自化属于 <code>Star</code>。
               </p>
               <div class="code-block">
                 <div class="code-head"><span>StarKey::ALL · stable order</span><button class="copy-button" type="button">复制</button></div>
@@ -1167,15 +1320,15 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
                   <ul>
                     <li>十四主星：<code>Major</code></li>
                     <li>左辅、右弼、文昌、文曲：<code>Minor</code></li>
-                    <li>首批没有 <code>Auxiliary</code> 成员</li>
+                    <li>当前没有 <code>Auxiliary</code> 成员</li>
                   </ul>
                 </div>
                 <div class="scope-block">
-                  <h3>稳定 key</h3>
+                  <h3>稳定标识</h3>
                   <ul>
                     <li><code>StarKey::as_str()</code> 返回 snake_case</li>
                     <li>示例：<code>ZiWei → "zi_wei"</code></li>
-                    <li>简繁体显示文案不在 core</li>
+                    <li>简繁体名称由外层提供</li>
                   </ul>
                 </div>
               </div>
@@ -1183,10 +1336,10 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
           </section>
 
           <section class="section" id="transformation">
-            <div class="section-label"><span>06 / HUA</span><h2>四化所有权</h2></div>
+            <div class="section-label"><span>07 / HUA</span><h2>四化所有权</h2></div>
             <div class="section-body">
               <p class="lede">
-                四化只使用稳定代码 <code>A / B / C / D</code>。生年天干与来因宫宫干一致，其飞出的四化同时表现为来因宫的四条关系和目标星的生年四化；其余宫位关系保存在源宫，自化保存在目标星。
+                <code>A / B / C / D</code> 是 core 中唯一的四化代码，外层再映射为禄、权、科、忌。来因宫宫干等于生年天干，因此它的四条飞化关系与四颗目标星上的生年四化一一对应。其他宫干飞化关系归源宫，自化归目标星。
               </p>
               <div class="transformation-row" aria-label="四化稳定代码">
                 <div><strong>A</strong><span>外层映射：禄</span></div>
@@ -1202,7 +1355,7 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
                     <li>全盘恰有四个 <code>Some</code></li>
                     <li>A、B、C、D 各出现一次</li>
                     <li>与来因宫的四条关系一一对应</li>
-                    <li>不再另存顶层数组</li>
+                    <li>生年四化只随目标星保存</li>
                   </ul>
                 </div>
                 <div class="ownership-card" data-owner="OWNER · PALACE">
@@ -1210,8 +1363,8 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
                   <p><code>Palace.transformations</code></p>
                   <ul>
                     <li>每宫固定四条，顺序 A–D</li>
-                    <li>保存完整源宫与目标宫坐标</li>
-                    <li><code>star_key</code> 在目标宫唯一解析</li>
+                    <li>每条关系都记录源宫和目标宫的宫名、地支</li>
+                    <li><code>star_key</code> 可在目标宫中定位唯一星曜</li>
                   </ul>
                 </div>
                 <div class="ownership-card" data-owner="OWNER · STAR">
@@ -1236,10 +1389,10 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
           </section>
 
           <section class="section" id="decade">
-            <div class="section-label"><span>07 / DECADE</span><h2>大限与年份</h2></div>
+            <div class="section-label"><span>08 / DECADE</span><h2>大限与年份</h2></div>
             <div class="section-body">
               <p class="lede">
-                十二个大限是命盘固定事实，因此保存在 core。每限只保存十个“年份 + 虚岁”条目，不提前构造完整流年盘。
+                出生输入可以直接确定十二个大限，因此它们随 <code>Natal</code> 保存。每限包含十个 <code>DecadeYear</code>，记录虚岁和可选农历年；core 不提前构造完整流年盘。
               </p>
               <div class="model-tree"><span class="type">Decade</span> {
   index: <span class="type">DecadeIndex</span>,               <span class="cm">// 0..=11</span>
@@ -1273,10 +1426,10 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
           </section>
 
           <section class="section" id="api">
-            <div class="section-label"><span>08 / API</span><h2>公开读取面</h2></div>
+            <div class="section-label"><span>09 / API</span><h2>公开读取面</h2></div>
             <div class="section-body">
               <p class="lede">
-                使用 <code>ziwei</code> facade 即可获得稳定公开面。小型值按值返回，聚合数组与集合按借用返回。
+                <code>ziwei</code> facade 重导出稳定的公开 API。小型 <code>Copy</code> 值按值返回，数组和集合通过借用读取。
               </p>
               <div class="code-block">
                 <div class="code-head"><span>Rust · minimal usage</span><button class="copy-button" type="button">复制</button></div>
@@ -1306,19 +1459,19 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
               <table class="api-table">
                 <thead><tr><th>类型</th><th>公开入口 / getter</th><th>语义</th></tr></thead>
                 <tbody>
-                  <tr><td>ZiweiBirth</td><td>try_new(gender, year, month, day, hour)</td><td>含真实年份的验证输入</td></tr>
-                  <tr><td>ZiweiInput</td><td>try_new(gender, stem, branch, month, day, hour)</td><td>含年干支、不含年份的验证输入</td></tr>
-                  <tr><td>Natal</td><td>from_birth / from_input</td><td>两条无失败构造入口</td></tr>
-                  <tr><td>Natal</td><td>context / zodiac / palaces / decades</td><td>上下文与主要聚合</td></tr>
-                  <tr><td>Natal</td><td>ming_palace(_branch) / shen_palace(_branch) / origin_palace(_branch)</td><td>三组宫名 + 地支坐标</td></tr>
+                  <tr><td>ZiweiBirth</td><td>try_new(gender, year, month, day, hour)</td><td>带农历年序号的已验证输入</td></tr>
+                  <tr><td>ZiweiInput</td><td>try_new(gender, stem, branch, month, day, hour)</td><td>带生年干支、不带农历年序号的已验证输入</td></tr>
+                  <tr><td>Natal</td><td>from_birth / from_input</td><td>从两种已验证输入直接构造命盘</td></tr>
+                  <tr><td>Natal</td><td>context / zodiac / palaces / decades</td><td>出生上下文、生肖、十二宫与大限</td></tr>
+                  <tr><td>Natal</td><td>ming_palace(_branch) / shen_palace(_branch) / origin_palace(_branch)</td><td>命宫、身宫、来因宫的宫名与地支</td></tr>
                   <tr><td>Natal</td><td>bureau / decade_direction</td><td>五行局与大限方向</td></tr>
-                  <tr><td>Palace</td><td>name / branch / stem / stars / transformations</td><td>完整宫位事实</td></tr>
-                  <tr><td>PalaceTransformation</td><td>source_name / source_branch / transformation / target_name / target_branch / star_key</td><td>完整四化关系边</td></tr>
-                  <tr><td>Star</td><td>key / origin_transformation / self_transformations</td><td>盘内星曜事实</td></tr>
-                  <tr><td>StarKey</td><td>ALL / as_str / star_type / galaxy</td><td>稳定身份与固有元数据</td></tr>
-                  <tr><td>StarSelfTransformations</td><td>inward / outward</td><td>向心与离心自化</td></tr>
+                  <tr><td>Palace</td><td>name / branch / stem / stars / transformations</td><td>宫名、地支、宫干、星曜与飞化关系</td></tr>
+                  <tr><td>PalaceTransformation</td><td>source_name / source_branch / transformation / target_name / target_branch / star_key</td><td>一条宫干飞化关系的源宫、目标宫与星曜</td></tr>
+                  <tr><td>Star</td><td>key / origin_transformation / self_transformations</td><td>一颗星的落位、生年四化与自化</td></tr>
+                  <tr><td>StarKey</td><td>ALL / as_str / star_type / galaxy</td><td>星曜标识及其固有元数据</td></tr>
+                  <tr><td>StarSelfTransformations</td><td>inward / outward</td><td>入、出自化</td></tr>
                   <tr><td>Decade</td><td>index / ming_palace_branch / years / age_start / age_end</td><td>一个十年大限</td></tr>
-                  <tr><td>DecadeYear</td><td>year / age</td><td>可选年份与虚岁</td></tr>
+                  <tr><td>DecadeYear</td><td>year / age</td><td>虚岁与可选农历年</td></tr>
                   <tr><td>DecadeIndex</td><td>try_new / get</td><td>验证后的 0..=11 索引</td></tr>
                 </tbody>
               </table>
@@ -1326,10 +1479,10 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
           </section>
 
           <section class="section" id="boundary">
-            <div class="section-label"><span>09 / SCOPE</span><h2>边界与来源</h2></div>
+            <div class="section-label"><span>10 / SCOPE</span><h2>边界与来源</h2></div>
             <div class="section-body">
               <p class="lede">
-                core 的职责是构造可靠事实图，不是把所有消费方式都变成方法。查询与展示留在外层，避免反向污染存储结构。
+                <code>ziwei_core</code> 只负责把已验证输入构造成 <code>Natal</code>。条件查询、历法转换和展示由外层 crate 组合，避免改变 core 的存储模型。
               </p>
               <div class="scope-grid">
                 <div class="scope-block">
@@ -1339,7 +1492,7 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
                     <li>十二宫、十八星与五行局</li>
                     <li>生年四化、宫位关系、自化</li>
                     <li>生肖、大限方向与最小年份/虚岁</li>
-                    <li>维护结果图不变量</li>
+                    <li>保证 <code>Natal</code>、<code>Palace</code>、<code>Star</code> 之间的结构不变量</li>
                   </ul>
                 </div>
                 <div class="scope-block is-out">
@@ -1355,11 +1508,11 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
               </div>
               <h3>Workspace 方向</h3>
               <div class="flow" aria-label="crate 依赖方向">
-                <div class="flow-node"><code>ziwei_core</code><small>计算不可变 Natal</small></div>
+                <div class="flow-node"><code>ziwei_core</code><small>构造不可变 Natal</small></div>
                 <div class="flow-arrow" aria-hidden="true">←</div>
-                <div class="flow-node"><code>ziwei</code><small>选择性重导出稳定公开面</small></div>
+                <div class="flow-node"><code>ziwei</code><small>重导出稳定公开 API</small></div>
                 <div class="flow-arrow" aria-hidden="true">←</div>
-                <div class="flow-node"><code>consumers</code><small>未来组合 query / calendar / analysis</small></div>
+                <div class="flow-node"><code>consumers</code><small>按需组合 query / calendar / analysis</small></div>
               </div>
               <div class="sources" aria-label="权威来源">
                 <a href="../design/ziwei-model.md">ziwei-model.md</a>
@@ -1375,7 +1528,7 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
 
         <footer>
           <span>Ziwei Core · Immutable Natal reference</span>
-          <span>机器身份留在 core，显示语言留在外层。</span>
+          <span>稳定标识留在 core，显示名称由外层提供。</span>
         </footer>
       </main>
     </div>
