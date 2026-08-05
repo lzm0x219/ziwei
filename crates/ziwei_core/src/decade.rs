@@ -93,7 +93,7 @@ impl DecadeYear {
         Self { year, age }
     }
 
-    /// 农历年份；输入未提供出生年份时为 `None`。
+    /// 历法层归一化后的农历年序号；输入未提供该序号时为 `None`。
     pub const fn year(self) -> Option<i32> {
         self.year
     }

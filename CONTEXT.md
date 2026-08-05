@@ -6,8 +6,8 @@
 
 | 术语 | 含义 |
 | --- | --- |
-| `ZiweiBirth` | 含公历年份的公开输入；可计算年份与虚岁 |
-| `ZiweiInput` | 不含公历年份的公开输入；只计算虚岁 |
+| `ZiweiBirth` | 历法层归一化后的公开农历出生资料；`year` 是农历年序号，可计算各大限的农历年份与虚岁 |
+| `ZiweiInput` | 不含绝对农历年序号的公开输入；只计算虚岁 |
 | `NatalContext` | 两种输入归一化后的私有只读上下文，不是第三种公开输入 |
 | `Natal` | `ziwei_core` 产出的不可变本命盘 |
 | `PalaceName` | 十二宫名；枚举成员沿用原十二宫职顺序 |
@@ -18,7 +18,7 @@
 | `PalaceTransformation` | 一条从源宫到目标星曜所在宫的四化关系 |
 | `StarSelfTransformations` | 星曜的向心、离心自化结果 |
 | `Decade` | 一个十年大限，包含大限命宫地支与十个年份/虚岁条目 |
-| `DecadeYear` | 大限中的最小流年事实：可选年份与虚岁 |
+| `DecadeYear` | 大限中的最小流年事实：可选 `year`（农历年序号）与虚岁 |
 
 ## 上下文边界
 
@@ -28,7 +28,7 @@
 - 安十二宫与十八颗首批星曜；
 - 计算生年四化、宫位四化关系与星曜自化；
 - 计算生肖、五行局、大限方向及十二个大限；
-- 在有出生年份时计算每个大限的年份与虚岁，没有年份时只保留虚岁。
+- 在有农历出生年序号时计算每个大限的 `year` 与虚岁，没有绝对年序号时只保留虚岁。
 
 `ziwei_core` 不负责：
 
@@ -48,6 +48,6 @@
 - 每宫恰有四条 `PalaceTransformation`，顺序固定为 `A / B / C / D`。
 - 全盘恰有四颗星的 `origin_transformation` 为 `Some(A/B/C/D)`，每类一次。
 - `ming_palace`、`body_palace`、`origin_palace` 的宫名与地支必须能解析到同一个 `Palace`。
-- 十二个大限按 `DecadeIndex(0..=11)` 排列，每个大限恰有十个连续虚岁条目；同一张盘的年份必须全部为 `Some` 或全部为 `None`。
+- 十二个大限按 `DecadeIndex(0..=11)` 排列，每个大限恰有十个连续虚岁条目；同一张盘的 `year` 必须全部为 `Some` 或全部为 `None`。
 
 历史算法与边界决策见 `docs/adr/`；当前结果模型以 [ADR 0011](docs/adr/0011-immutable-natal-model.md) 和 `docs/design/ziwei-model.md` 为准。

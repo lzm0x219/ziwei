@@ -35,7 +35,8 @@ impl Gender {
 pub struct ZiweiBirth {
     /// 命主的性别。
     gender: Gender,
-    /// 农历年序号；年干支由 `(year - 4).rem_euclid(10|12)` 推导。
+    /// 历法层归一化后的农历年序号（不是原始公历日期的年份）；
+    /// 年干支由 `(year - 4).rem_euclid(10|12)` 推导。
     year: i32,
     /// 农历月，`0..=11`，正月 = 0。
     month: u8,
@@ -48,7 +49,8 @@ pub struct ZiweiBirth {
 impl ZiweiBirth {
     /// 创建月/日/时已校验的农历出生资料。
     ///
-    /// `year` 必须能表示十二个大限中的全部年份；年干支仍由公式取模。
+    /// `year` 是历法层归一化后的农历年序号，必须能表示十二个大限中的全部年份；
+    /// 年干支仍由公式取模。
     ///
     /// # Errors
     ///
@@ -76,7 +78,7 @@ impl ZiweiBirth {
         self.gender
     }
 
-    /// 农历年序号。
+    /// 历法层归一化后的农历年序号，不是原始公历日期的年份。
     pub const fn year(self) -> i32 {
         self.year
     }
@@ -191,7 +193,7 @@ impl ZiweiInput {
 /// 创建输入或排盘构造时可能发生的验证错误。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ZiweiInputError {
-    /// 出生年份无法表示十二个大限中的全部年份。
+    /// 归一化后的农历出生年序号无法表示十二个大限中的全部年份。
     YearOutOfRange {
         /// 不合法的值。
         value: i32,
@@ -252,7 +254,7 @@ impl fmt::Display for ZiweiInputError {
 
 impl std::error::Error for ZiweiInputError {}
 
-/// 校验出生年份可以覆盖十二大限的最大年份偏移 `+124`。
+/// 校验农历出生年份可以覆盖十二大限的最大年份偏移 `+124`。
 const fn validate_birth_year(year: i32) -> Result<(), ZiweiInputError> {
     if year.checked_add(124).is_some() {
         Ok(())

@@ -43,7 +43,7 @@ impl NatalContext {
         self.gender
     }
 
-    /// 农历出生年；从 [`ZiweiInput`] 构造时为 `None`。
+    /// 历法层归一化后的农历年序号；从 [`ZiweiInput`] 构造时为 `None`。
     pub const fn year(self) -> Option<i32> {
         self.year
     }
@@ -100,14 +100,14 @@ pub struct Natal {
 }
 
 impl Natal {
-    /// 从含真实出生年份的已验证输入构造本命盘。
+    /// 从含历法层归一化农历年序号的已验证输入构造本命盘。
     pub fn from_birth(birth: ZiweiBirth) -> Self {
         let year = birth.year();
         let input = ZiweiInput::from_birth(birth);
         build_natal(NatalContext::from_input(input, Some(year)))
     }
 
-    /// 从含生年干支但不含真实出生年份的已验证输入构造本命盘。
+    /// 从含生年干支但不含农历年序号的已验证输入构造本命盘。
     pub fn from_input(input: ZiweiInput) -> Self {
         build_natal(NatalContext::from_input(input, None))
     }

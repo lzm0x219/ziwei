@@ -2,7 +2,7 @@
 
 ## 状态
 
-此前的机械拆分已经完成：workspace、`ziwei_core`、`ziwei` 门面及空的后续 crate 边界均已建立。当前工作是 #280 跟踪的首个真正领域重写切片。
+不可变 `Natal` 重写由 [#280](https://github.com/matharts/ziwei/issues/280) 跟踪，并已通过 [#282](https://github.com/matharts/ziwei/pull/282) 落地完成。下文保留为已完成切片的范围与验收记录。
 
 ## 本切片目标
 

@@ -23,3 +23,7 @@ jobs:
         run: mise exec -- cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - name: Run tests
         run: mise exec -- cargo test --workspace --locked
+      - name: Build documentation
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+        run: mise exec -- cargo doc --workspace --no-deps --locked

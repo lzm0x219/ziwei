@@ -9,9 +9,5 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 
-[dependencies]
-ziwei_core.workspace = true
-ziwei_query.workspace = true
-
 [lints]
 workspace = true
