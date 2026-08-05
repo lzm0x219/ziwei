@@ -58,11 +58,11 @@ pub enum StarType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum StarGalaxy {
     /// 南斗。
-    S,
+    South,
     /// 北斗。
-    N,
+    North,
     /// 中斗。
-    C,
+    Central,
 }
 
 impl StarKey {
@@ -124,13 +124,13 @@ impl StarKey {
     pub const fn galaxy(self) -> Option<StarGalaxy> {
         match self {
             Self::ZiWei | Self::ZuoFu | Self::YouBi | Self::WenChang | Self::WenQu => {
-                Some(StarGalaxy::C)
+                Some(StarGalaxy::Central)
             }
             Self::TianJi | Self::TaiYang | Self::WuQu | Self::TianTong | Self::LianZhen => {
-                Some(StarGalaxy::N)
+                Some(StarGalaxy::North)
             }
             Self::TaiYin | Self::TanLang | Self::JuMen | Self::TianLiang | Self::PoJun => {
-                Some(StarGalaxy::S)
+                Some(StarGalaxy::South)
             }
             Self::TianFu | Self::TianXiang | Self::QiSha => None,
         }
@@ -234,9 +234,9 @@ mod tests {
     fn star_keys_have_stable_identity_metadata() {
         assert_eq!(StarKey::ALL.len(), 18);
         assert_eq!(StarKey::ZiWei.as_str(), "zi_wei");
-        assert_eq!(StarKey::PoJun.galaxy(), Some(StarGalaxy::S));
-        assert_eq!(StarKey::TianJi.galaxy(), Some(StarGalaxy::N));
-        assert_eq!(StarKey::WenQu.galaxy(), Some(StarGalaxy::C));
+        assert_eq!(StarKey::PoJun.galaxy(), Some(StarGalaxy::South));
+        assert_eq!(StarKey::TianJi.galaxy(), Some(StarGalaxy::North));
+        assert_eq!(StarKey::WenQu.galaxy(), Some(StarGalaxy::Central));
         assert_eq!(StarKey::TianFu.galaxy(), None);
         assert_eq!(StarKey::ZuoFu.star_type(), StarType::Minor);
         assert_eq!(StarKey::QiSha.star_type(), StarType::Major);
