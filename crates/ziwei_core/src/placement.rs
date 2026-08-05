@@ -11,9 +11,9 @@ use super::{
 
 /// 命宫与身宫地支。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) struct MingBody {
+pub(crate) struct MingShenBranches {
     pub(crate) ming: Branch,
-    pub(crate) body: Branch,
+    pub(crate) shen: Branch,
 }
 
 /// 尚未附加星曜与四化关系的宫位坐标。
@@ -34,12 +34,12 @@ pub(crate) struct AssistantStars {
 }
 
 /// 寅起正月；命宫逆时、身宫顺时。
-pub(crate) fn compute_ming_body(month: u8, hour: u8) -> MingBody {
+pub(crate) fn compute_ming_shen_branches(month: u8, hour: u8) -> MingShenBranches {
     let ming_yin0 = twelve_index(i32::from(month) - i32::from(hour));
-    let body_yin0 = twelve_index(i32::from(month) + i32::from(hour));
-    MingBody {
+    let shen_yin0 = twelve_index(i32::from(month) + i32::from(hour));
+    MingShenBranches {
         ming: branch_from_yin0(ming_yin0),
-        body: branch_from_yin0(body_yin0),
+        shen: branch_from_yin0(shen_yin0),
     }
 }
 
@@ -332,18 +332,18 @@ mod tests {
     }
 
     #[test]
-    fn ming_body_and_assistants_follow_all_month_hour_formulas() {
+    fn ming_shen_branches_and_assistants_follow_all_month_hour_formulas() {
         for month in 0..12u8 {
             for hour in 0..12u8 {
-                let ming_body = compute_ming_body(month, hour);
+                let ming_shen_branches = compute_ming_shen_branches(month, hour);
                 let assistants = place_assistants(month, hour);
 
                 assert_eq!(
-                    ming_body.ming,
+                    ming_shen_branches.ming,
                     branch_from_yin0(twelve_index(i32::from(month) - i32::from(hour)))
                 );
                 assert_eq!(
-                    ming_body.body,
+                    ming_shen_branches.shen,
                     branch_from_yin0(twelve_index(i32::from(month) + i32::from(hour)))
                 );
                 assert_eq!(

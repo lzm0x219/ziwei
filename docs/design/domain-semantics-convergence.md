@@ -18,7 +18,7 @@
 
 ```text
 ming_palace / ming_palace_branch
-body_palace / body_palace_branch
+shen_palace / shen_palace_branch
 origin_palace / origin_palace_branch
 ```
 

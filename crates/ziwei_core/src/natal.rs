@@ -90,8 +90,8 @@ pub struct Natal {
     palaces: [Palace; 12],
     ming_palace: PalaceName,
     ming_palace_branch: Branch,
-    body_palace: PalaceName,
-    body_palace_branch: Branch,
+    shen_palace: PalaceName,
+    shen_palace_branch: Branch,
     origin_palace: PalaceName,
     origin_palace_branch: Branch,
     bureau: FiveElementBureau,
@@ -120,8 +120,8 @@ impl Natal {
         palaces: [Palace; 12],
         ming_palace: PalaceName,
         ming_palace_branch: Branch,
-        body_palace: PalaceName,
-        body_palace_branch: Branch,
+        shen_palace: PalaceName,
+        shen_palace_branch: Branch,
         origin_palace: PalaceName,
         origin_palace_branch: Branch,
         bureau: FiveElementBureau,
@@ -134,8 +134,8 @@ impl Natal {
             palaces,
             ming_palace,
             ming_palace_branch,
-            body_palace,
-            body_palace_branch,
+            shen_palace,
+            shen_palace_branch,
             origin_palace,
             origin_palace_branch,
             bureau,
@@ -170,13 +170,13 @@ impl Natal {
     }
 
     /// 身宫叠落的宫名。
-    pub const fn body_palace(&self) -> PalaceName {
-        self.body_palace
+    pub const fn shen_palace(&self) -> PalaceName {
+        self.shen_palace
     }
 
     /// 身宫地支。
-    pub const fn body_palace_branch(&self) -> Branch {
-        self.body_palace_branch
+    pub const fn shen_palace_branch(&self) -> Branch {
+        self.shen_palace_branch
     }
 
     /// 来因宫叠落的宫名。
@@ -306,13 +306,13 @@ mod tests {
         let natal = Natal::from_birth(sample_birth());
         let coordinates = [
             (natal.ming_palace(), natal.ming_palace_branch()),
-            (natal.body_palace(), natal.body_palace_branch()),
+            (natal.shen_palace(), natal.shen_palace_branch()),
             (natal.origin_palace(), natal.origin_palace_branch()),
         ];
 
         assert_eq!(natal.ming_palace(), PalaceName::Ming);
         assert_eq!(natal.ming_palace_branch(), Branch::Zi);
-        assert_eq!(natal.body_palace_branch(), Branch::Shen);
+        assert_eq!(natal.shen_palace_branch(), Branch::Shen);
         for (name, branch) in coordinates {
             assert_eq!(
                 natal
@@ -354,10 +354,10 @@ mod tests {
             ),
         ];
 
-        for (input, ming, body, bureau, ziwei) in cases {
+        for (input, ming, shen, bureau, ziwei) in cases {
             let natal = Natal::from_input(input);
             assert_eq!(natal.ming_palace_branch(), ming);
-            assert_eq!(natal.body_palace_branch(), body);
+            assert_eq!(natal.shen_palace_branch(), shen);
             assert_eq!(natal.bureau(), bureau);
             assert_eq!(find_star(&natal, StarKey::ZiWei).0.branch(), ziwei);
         }

@@ -1098,7 +1098,7 @@
 │  ├─ stars: Vec&lt;<span class="type">Star</span>&gt;
 │  └─ transformations: [<span class="type">PalaceTransformation</span>; 4]
 ├─ <span class="accent">ming_palace</span> + ming_palace_branch
-├─ <span class="accent">body_palace</span> + body_palace_branch
+├─ <span class="accent">shen_palace</span> + shen_palace_branch
 ├─ <span class="accent">origin_palace</span> + origin_palace_branch
 ├─ bureau: <span class="type">FiveElementBureau</span>
 ├─ decade_direction: <span class="type">DecadeDirection</span>
@@ -1310,7 +1310,7 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
                   <tr><td>ZiweiInput</td><td>try_new(gender, stem, branch, month, day, hour)</td><td>含年干支、不含年份的验证输入</td></tr>
                   <tr><td>Natal</td><td>from_birth / from_input</td><td>两条无失败构造入口</td></tr>
                   <tr><td>Natal</td><td>context / zodiac / palaces / decades</td><td>上下文与主要聚合</td></tr>
-                  <tr><td>Natal</td><td>ming_palace(_branch) / body_palace(_branch) / origin_palace(_branch)</td><td>三组宫名 + 地支坐标</td></tr>
+                  <tr><td>Natal</td><td>ming_palace(_branch) / shen_palace(_branch) / origin_palace(_branch)</td><td>三组宫名 + 地支坐标</td></tr>
                   <tr><td>Natal</td><td>bureau / decade_direction</td><td>五行局与大限方向</td></tr>
                   <tr><td>Palace</td><td>name / branch / stem / stars / transformations</td><td>完整宫位事实</td></tr>
                   <tr><td>PalaceTransformation</td><td>source_name / source_branch / transformation / target_name / target_branch / star_key</td><td>完整四化关系边</td></tr>

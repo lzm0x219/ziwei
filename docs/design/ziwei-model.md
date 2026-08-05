@@ -12,8 +12,8 @@ pub struct Natal {
 
     ming_palace: PalaceName,
     ming_palace_branch: Branch,
-    body_palace: PalaceName,
-    body_palace_branch: Branch,
+    shen_palace: PalaceName,
+    shen_palace_branch: Branch,
     origin_palace: PalaceName,
     origin_palace_branch: Branch,
 

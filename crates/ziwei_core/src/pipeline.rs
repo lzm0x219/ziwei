@@ -6,7 +6,7 @@ use super::{
     natal::{Natal, NatalContext},
     palace::{Palace, PalaceName, PalaceTransformation},
     placement::{
-        PalaceSeed, build_palace_seeds, bureau_from_ming_stems, compute_ming_body,
+        PalaceSeed, build_palace_seeds, bureau_from_ming_stems, compute_ming_shen_branches,
         compute_palace_stems, merge_assistants, place_assistants, place_major_stars,
     },
     position::branch_from_yin0,
@@ -18,10 +18,10 @@ use super::{
 
 /// 由归一化上下文计算完整本命盘。
 pub(crate) fn build_natal(context: NatalContext) -> Natal {
-    let ming_body = compute_ming_body(context.month(), context.hour());
+    let ming_shen_branches = compute_ming_shen_branches(context.month(), context.hour());
     let palace_stems = compute_palace_stems(context.birth_stem());
-    let bureau = bureau_from_ming_stems(ming_body.ming, &palace_stems);
-    let palace_seeds = build_palace_seeds(ming_body.ming, &palace_stems);
+    let bureau = bureau_from_ming_stems(ming_shen_branches.ming, &palace_stems);
+    let palace_seeds = build_palace_seeds(ming_shen_branches.ming, &palace_stems);
     let star_branches = merge_assistants(
         place_major_stars(context.day(), bureau.number()),
         place_assistants(context.month(), context.hour()),
@@ -54,14 +54,14 @@ pub(crate) fn build_natal(context: NatalContext) -> Natal {
     });
 
     let origin_palace_branch = context.birth_stem().origin_palace_branch();
-    let ming_palace = palace_name_at(ming_body.ming, &palace_seeds);
-    let body_palace = palace_name_at(ming_body.body, &palace_seeds);
+    let ming_palace = palace_name_at(ming_shen_branches.ming, &palace_seeds);
+    let shen_palace = palace_name_at(ming_shen_branches.shen, &palace_seeds);
     let origin_palace = palace_name_at(origin_palace_branch, &palace_seeds);
     let (decade_direction, decades) = build_decades(
         context.gender(),
         context.birth_stem(),
         context.year(),
-        ming_body.ming,
+        ming_shen_branches.ming,
         bureau.number(),
     );
 
@@ -70,9 +70,9 @@ pub(crate) fn build_natal(context: NatalContext) -> Natal {
         Zodiac::from_branch(context.birth_branch()),
         palaces,
         ming_palace,
-        ming_body.ming,
-        body_palace,
-        ming_body.body,
+        ming_shen_branches.ming,
+        shen_palace,
+        ming_shen_branches.shen,
         origin_palace,
         origin_palace_branch,
         bureau,
