@@ -1,18 +1,18 @@
-# Chart 应保存哪些领域数据
+# Ziwei 应保存哪些领域数据
 
 > 状态：已确认（2026-08-05）
 >
-> 目标：只确定 `Chart` 的数据范围，不设计具体 Rust 类型或序列化格式。
+> 目标：只确定 `Ziwei` 的数据范围，不设计具体 Rust 类型或序列化格式。
 
 ## 判断原则
 
-`Chart` 保存满足以下条件的事实：
+`Ziwei` 保存满足以下条件的事实：
 
 - 由 `ziwei_core` 的排盘规则生成；
 - 生成后不随查询和时间视图改变；
 - 若不保存，重新获得该事实需要再次执行领域规则。
 
-`ziwei_query` 负责从这些事实推导关系，不修改 `Chart`。
+`ziwei_query` 负责从这些事实推导关系，不修改 `Ziwei`。
 
 ## 建议的数据分组
 
@@ -42,7 +42,7 @@
 
 这些数据由出生事实确定，不因调用者切换视图而改变。
 
-## 不进入 Chart
+## 不进入 Ziwei
 
 - 当前选中的本命、大限或流年视图；
 - 对宫、三方四正等关系查询结果；
@@ -54,21 +54,21 @@
 
 ## 与当前实现的关系
 
-现有 `Ziwei` 已保存大部分建议数据，可以渐进迁移：
+现有 `Ziwei` 已保存大部分建议数据，重写时保留这些固定事实：
 
 - 宫位、身宫、五行局、星位、来因宫、生年四化、宫干飞化和大限继续作为 core 数据，视为固定排盘事实；
 - `ming_branch` 等内部缓存可以保留，但不成为跨语言领域契约；
-- 时间视图与关系方法从 `Chart` 移到 `ziwei_query`。
+- 时间视图与关系方法从 `Ziwei` 移到 `ziwei_query`。
 
 ## 已确认
 
-确认 `Chart` 采用以下顶层结构：
+确认 `Ziwei` 采用以下顶层结构：
 
 ```text
-Chart
+Ziwei
 ├── 计算上下文
 ├── 本命事实
 └── 固定时间结构
 ```
 
-[领域语义收口](domain-semantics-convergence.md)与 [`ziwei_core` 首批迁移](ziwei-core-first-batch.md)已经完成。下一步重写 core，`ziwei_query` 的 interface 继续延后。
+[领域语义收口](domain-semantics-convergence.md)与 [`ziwei_core` 首批迁移](ziwei-core-first-batch.md)已经完成。下一步执行 [#280](https://github.com/matharts/ziwei/issues/280)，围绕不可变 `Ziwei` 重写 core；`ziwei_query` 的 interface 继续延后。
