@@ -10,7 +10,7 @@
 | ---- | -------------------------- |
 | `Palace` | 宫职逆布 + 宫支 + 五虎遁宫干一致 |
 | `PalaceTransformation` | 源宫宫干 × 四化 → 星 → 本命落宫为目标宫；源、目标坐标一致 |
-| `Star` | 星曜身份、落宫、生年四化与自化结果一致 |
+| `Star` | 星曜身份、落宫、自化结果一致；生年四化与来因宫的对应 `PalaceTransformation` 一致 |
 | `Decade` | `age_end = age_start + 9`；`ming_palace_branch` 为大限命宫叠落地支 |
 | `DecadeYear` | `year = birth_year + age - 1`（仅 `from_birth`；二者均为农历年序号） |
 

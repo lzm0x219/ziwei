@@ -15,6 +15,7 @@
 | `StarKey` | 十八颗首批星曜的稳定身份 |
 | `Star` | 星曜在本命盘中的落位事实，包含生年四化与自化 |
 | `Transformation` | 四化稳定代码 `A / B / C / D`；展示层可映射为禄、权、科、忌 |
+| `origin_transformation` | 由生年天干飞化并落在目标 `Star` 上的生年四化；生年天干与来因宫宫干一致，因此同一事实也是 `origin_palace` 那一宫中对应的 `PalaceTransformation` |
 | `PalaceTransformation` | 一条从源宫到目标星曜所在宫的四化关系 |
 | `StarSelfTransformations` | 星曜的向心、离心自化结果 |
 | `Decade` | 一个十年大限，包含大限命宫地支与十个年份/虚岁条目 |
@@ -48,6 +49,7 @@
 - 每宫恰有四条 `PalaceTransformation`，顺序固定为 `A / B / C / D`。
 - 全盘恰有四颗星的 `origin_transformation` 为 `Some(A/B/C/D)`，每类一次。
 - `ming_palace`、`body_palace`、`origin_palace` 的宫名与地支必须能解析到同一个 `Palace`。
+- `origin_palace` 所在宫位的天干必须与生年天干一致。
 - 十二个大限按 `DecadeIndex(0..=11)` 排列，每个大限恰有十个连续虚岁条目；同一张盘的 `year` 必须全部为 `Some` 或全部为 `None`。
 
 历史算法与边界决策见 `docs/adr/`；当前结果模型以 [ADR 0011](docs/adr/0011-immutable-natal-model.md) 和 `docs/design/ziwei-model.md` 为准。

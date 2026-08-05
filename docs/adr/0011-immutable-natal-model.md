@@ -7,7 +7,7 @@
 1. `ZiweiBirth` 与 `ZiweiInput` 是仅有的公开输入。两者归一化为私有只读 `NatalContext`，再进入同一计算流水线。
 2. `Natal` 保存十二宫、生肖、命宫/身宫/来因宫坐标、五行局、大限方向及十二个大限。
 3. `Palace` 保存宫名、支、干、落宫 `Star` 与四条 `PalaceTransformation`。
-4. 星曜身份使用 `StarKey`；盘内 `Star` 保存生年四化与向心/离心自化。
+4. 星曜身份使用 `StarKey`；盘内 `Star.origin_transformation` 保存由生年天干所飞化的生年四化。来因宫与五虎遁宫干各自独立计算，但来因宫宫干必须与生年天干一致，因此 `origin_transformation` 同时对应 `origin_palace` 那一宫的 `PalaceTransformation`；`Star` 还保存向心/离心自化。
 5. 四化身份固定为 `Transformation::A/B/C/D`。生年四化不另存顶层数组，自化不另存宫位或边标记。
 6. `Decade` 保存十个最小 `DecadeYear { year: Option<i32>, age: u8 }`；`year` 是农历年序号。core 不保存或计算完整流年盘。
 7. 所有多字段结果字段私有，仅由 core 构造并对外只读。

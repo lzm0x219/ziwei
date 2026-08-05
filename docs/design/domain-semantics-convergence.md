@@ -6,7 +6,7 @@
 
 - `Transformation` 只使用稳定代码 `A / B / C / D`。
 - 禄、权、科、忌及简繁体文案属于外层 i18n，不进入 `ziwei_core`。
-- 生年四化只存为 `Star.origin_transformation`，不再定义 `YearTransformation` 或 `OriginTransformation` 结果类型。
+- 生年天干所飞化的生年四化存为目标 `Star.origin_transformation`；生年天干与来因宫宫干一致，因此它与 `origin_palace` 那一宫中对应的 `PalaceTransformation` 一一对应。不再定义 `YearTransformation` 或 `OriginTransformation` 结果类型。
 - 宫位四化关系只存为源 `Palace.transformations`，每宫固定四条。
 - 自化只存为目标 `Star.self_transformations`，不在 `Palace` 或关系边上重复保存。
 
@@ -23,6 +23,8 @@ origin_palace / origin_palace_branch
 ```
 
 三组坐标都必须解析到同一张盘中的唯一 `Palace`。`palaces` 对外顺序固定以寅为零，避免公开数组顺序依赖 `Branch` 的内部编码。
+
+来因宫与五虎遁宫干独立计算，但 `origin_palace` 所在宫位的天干必须与生年天干一致。
 
 ## 星曜身份与落位
 

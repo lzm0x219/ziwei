@@ -215,7 +215,7 @@ impl Star {
         self.key
     }
 
-    /// 生年四化；不化时为 `None`。
+    /// 生年天干所飞化的生年四化；生年天干与来因宫宫干一致，故同时对应来因宫中同一星曜的宫位四化关系，不化时为 `None`。
     pub const fn origin_transformation(self) -> Option<Transformation> {
         self.origin_transformation
     }
