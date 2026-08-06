@@ -6,9 +6,8 @@ use super::{
         PalaceStars, PalaceTransformation, Star, StarKey, StarSelfTransformations, Stem,
         Transformation, Zodiac, build_decades,
         placement::{
-            PalacePlacement, branch_from_yin0, bureau_from_ming_palace,
-            compute_major_star_branches, compute_ming_shen_branches, compute_minor_star_branches,
-            compute_palace_placements, compute_palace_stems, merge_star_branches,
+            PalacePlacement, bureau_from_ming_palace, compute_ming_shen_branches,
+            compute_palace_placements, compute_palace_stems, compute_star_branches,
         },
     },
     input::{ZiweiBirth, ZiweiInput},
@@ -127,10 +126,8 @@ impl Natal {
         let bureau = bureau_from_ming_palace(ming_shen.ming_palace, &palace_stems_by_branch);
         let placements_by_branch =
             compute_palace_placements(ming_shen.ming_palace, &palace_stems_by_branch);
-        let branches_by_star = merge_star_branches(
-            compute_major_star_branches(context.day(), bureau.number()),
-            compute_minor_star_branches(context.month(), context.hour()),
-        );
+        let branches_by_star =
+            compute_star_branches(context.day(), bureau, context.month(), context.hour());
         let origin_palace_branch = context.birth_stem().origin_palace_branch();
         let transformation_facts = build_transformation_facts(
             origin_palace_branch,
@@ -151,18 +148,31 @@ impl Natal {
                 .expect("a palace contains at most six supported stars");
         }
 
-        let palaces = std::array::from_fn(|yin0| {
-            let yin0 = u8::try_from(yin0).expect("twelve palaces fit in u8");
-            let branch = branch_from_yin0(yin0);
-            let palace_placement = placements_by_branch[branch.index()];
-            Palace::new(
-                palace_placement.name,
-                palace_placement.branch,
-                palace_placement.stem,
-                std::mem::take(&mut stars_by_branch[branch.index()]),
-                transformation_facts.palace_transformations_by_branch[branch.index()],
+        // 对外宫序固定为寅至丑。端到端基准与发布构建汇编均显示：显式展开可直接组装
+        // 672 B 宫位数组，而 `array::from_fn` 会保留一次整数组搬移；实际构造仍集中在
+        // `take_palace_at_branch`，避免十二份规则实现。
+        let mut take_palace = |branch| {
+            take_palace_at_branch(
+                branch,
+                &placements_by_branch,
+                &mut stars_by_branch,
+                &transformation_facts,
             )
-        });
+        };
+        let palaces = [
+            take_palace(Branch::Yin),
+            take_palace(Branch::Mao),
+            take_palace(Branch::Chen),
+            take_palace(Branch::Si),
+            take_palace(Branch::Wu),
+            take_palace(Branch::Wei),
+            take_palace(Branch::Shen),
+            take_palace(Branch::You),
+            take_palace(Branch::Xu),
+            take_palace(Branch::Hai),
+            take_palace(Branch::Zi),
+            take_palace(Branch::Chou),
+        ];
 
         let ming_palace = palace_name_at(ming_shen.ming_palace, &placements_by_branch);
         let shen_palace = palace_name_at(ming_shen.shen_palace, &placements_by_branch);
@@ -254,6 +264,22 @@ impl Natal {
 
 fn palace_name_at(branch: Branch, placements_by_branch: &[PalacePlacement; 12]) -> PalaceName {
     placements_by_branch[branch.index()].name
+}
+
+fn take_palace_at_branch(
+    branch: Branch,
+    placements_by_branch: &[PalacePlacement; 12],
+    stars_by_branch: &mut [PalaceStars; 12],
+    transformation_facts: &TransformationFacts,
+) -> Palace {
+    let palace_placement = placements_by_branch[branch.index()];
+    Palace::new(
+        palace_placement.name,
+        palace_placement.branch,
+        palace_placement.stem,
+        std::mem::take(&mut stars_by_branch[branch.index()]),
+        transformation_facts.palace_transformations_by_branch[branch.index()],
+    )
 }
 
 fn build_transformation_facts(
