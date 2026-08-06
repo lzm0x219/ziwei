@@ -1,21 +1,17 @@
 //! 不可变本命盘及归一化出生上下文。
 
 use super::{
-    branch::Branch,
-    decade::{Decade, DecadeDirection, build_decades},
-    five_element_bureau::FiveElementBureau,
-    input::{Gender, ZiweiBirth, ZiweiInput},
-    palace::{Palace, PalaceName, PalaceStars, PalaceTransformation},
-    placement::{
-        PalacePlacement, bureau_from_ming_palace, compute_major_star_branches,
-        compute_ming_shen_branches, compute_minor_star_branches, compute_palace_placements,
-        compute_palace_stems, merge_star_branches,
+    domain::{
+        Branch, Decade, DecadeDirection, FiveElementBureau, Gender, Palace, PalaceName,
+        PalaceStars, PalaceTransformation, Star, StarKey, StarSelfTransformations, Stem,
+        Transformation, Zodiac, build_decades,
+        placement::{
+            PalacePlacement, branch_from_yin0, bureau_from_ming_palace,
+            compute_major_star_branches, compute_ming_shen_branches, compute_minor_star_branches,
+            compute_palace_placements, compute_palace_stems, merge_star_branches,
+        },
     },
-    position::branch_from_yin0,
-    star::{Star, StarKey, StarSelfTransformations},
-    stem::Stem,
-    transformation::Transformation,
-    zodiac::Zodiac,
+    input::{ZiweiBirth, ZiweiInput},
 };
 
 /// 两种公开输入归一化后的出生上下文。

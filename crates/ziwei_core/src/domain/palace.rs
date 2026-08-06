@@ -198,7 +198,7 @@ impl Palace {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::star::StarSelfTransformations;
+    use crate::domain::star::StarSelfTransformations;
 
     #[test]
     fn palace_exposes_read_only_nested_facts() {
