@@ -135,4 +135,4 @@ pub struct DecadeYear {
 
 十二个大限按 `DecadeIndex(0..=11)` 排列。每个大限存十个连续虚岁；`age_start()` 和 `age_end()` 分别读取首尾条目，不重复存储。`from_birth` 的 `year` 为 `birth_year + age - 1`，`from_input` 的 `year` 全部为 `None`；这里的年份均指农历年序号。
 
-这里只保存“年份 + 虚岁”的最小流年事实。流年宫位、星曜、四化和按年份/年龄选择大限属于 `ziwei_query` 或后续独立计算，不进入本切片。
+这里只保存“年份 + 虚岁”的最小流年事实。流年宫位、星曜、四化和按年份/年龄选择大限属于 `ziwei_query` 或后续独立计算，不进入 `Natal`。

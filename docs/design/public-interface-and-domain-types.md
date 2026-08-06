@@ -49,4 +49,4 @@ DecadeYear.year() / age()
 
 ## 门面
 
-`ziwei` crate 只选择性重导出已经确认的 core 公开类型，避免 glob 导出内部实现细节。其他 workspace crate 在本切片中保持空边界，不提前建设。
+`ziwei` crate 只选择性重导出已经确认的 core 公开类型，避免 glob 导出内部实现细节。其他 workspace crate 当前只保留空边界，不提前建设。

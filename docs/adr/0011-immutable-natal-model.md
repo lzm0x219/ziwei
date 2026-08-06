@@ -11,7 +11,7 @@
 5. 四化身份固定为 `Transformation::A/B/C/D`。生年四化不另存顶层数组，自化不另存宫位或边标记。
 6. `Decade` 保存十个最小 `DecadeYear { year: Option<i32>, age: u8 }`。紫微斗数语境下，`year` 固定指农历年序号，`age` 固定指虚岁；公开接口沿用短名，不增加 `lunar_year` / `virtual_age` 别名。core 不保存或计算完整流年盘。
 7. 所有多字段结果字段私有，仅由 core 构造并对外只读。
-8. 条件查询、i18n、历法、bindings 和分析均在 core 之外，且不在首批重写中提前建设。
+8. 条件查询、i18n、历法、bindings 和分析均在 core 之外，不提前建设。
 
 ## 理由
 
