@@ -1,14 +1,14 @@
 //! 命盘输入资料与边界校验（ADR-0001、ADR-0002）。
 //!
-//! - **`ZiweiBirth`**：`from_birth` 适配入口；年序号推生年干支后组 [`ZiweiInput`]。
-//! - **`ZiweiInput`**：排盘实现所用的原始量；禁止注入命宫/紫微等结果。
+//! - **`ZiweiBirth`**：`create_from_birth` 入口；年序号推生年干支后组 [`ZiweiInput`]。
+//! - **`ZiweiInput`**：`create_from_input` 所用的原始量；禁止注入命宫/紫微等结果。
 //! - 历法换算、闰月、晚子时均在引擎外消解后再传入。
 
 use core::fmt;
 
 use super::domain::{Branch, Gender, Stem};
 
-/// 供 `from_birth` 使用的农历出生资料（打平字段，无嵌套日期对象）。
+/// 供 `create_from_birth` 使用的农历出生资料（打平字段，无嵌套日期对象）。
 ///
 /// 月以正月为 0，时辰以子时为 0，日以初一为 1；历法换算与闰月/晚子时由调用方消解。
 ///
@@ -56,32 +56,32 @@ impl ZiweiBirth {
     }
 
     /// 命主性别。
-    pub const fn gender(self) -> Gender {
+    pub(crate) const fn gender(self) -> Gender {
         self.gender
     }
 
     /// 历法层归一化后的农历年序号，不是原始公历日期的年份。
-    pub const fn year(self) -> i32 {
+    pub(crate) const fn year(self) -> i32 {
         self.year
     }
 
     /// 农历月（正月 = 0）。
-    pub const fn month(self) -> u8 {
+    pub(crate) const fn month(self) -> u8 {
         self.month
     }
 
     /// 农历日（初一 = 1）。
-    pub const fn day(self) -> u8 {
+    pub(crate) const fn day(self) -> u8 {
         self.day
     }
 
     /// 时辰（子时 = 0）。
-    pub const fn hour(self) -> u8 {
+    pub(crate) const fn hour(self) -> u8 {
         self.hour
     }
 }
 
-/// `from_input` 的原始量捷径：性别、生年干支、月/日/时。
+/// `create_from_input` 的原始量捷径：性别、生年干支、月/日/时。
 ///
 /// 字段私有，只能经 [`Self::try_new`] 构造，保证范围与六十甲子合法性。
 /// 不含命宫、紫微等排盘结果（ADR-0002）。

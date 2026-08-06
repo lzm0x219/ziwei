@@ -6,7 +6,7 @@
 
 - `Transformation` 只使用稳定代码 `A / B / C / D`。
 - 禄、权、科、忌及简繁体文案属于外层 i18n，不进入 `ziwei_core`。
-- 生年天干所飞化的生年四化存为目标 `Star.origin_transformation`；生年天干与来因宫宫干一致，因此它与 `origin_palace` 那一宫中对应的 `PalaceTransformation` 一一对应。不再定义 `YearTransformation` 或 `OriginTransformation` 结果类型。
+- 生年天干所飞化的生年四化存为目标 `Star.origin_transformation`；生年天干与来因宫宫干一致，因此它与 `origin_palace_name` 所指宫位中对应的 `PalaceTransformation` 一一对应。不再定义 `YearTransformation` 或 `OriginTransformation` 结果类型。
 - 宫位四化关系只存为源 `Palace.transformations`，每宫固定四条。
 - 自化只存为目标 `Star.self_transformations`，不在 `Palace` 或关系边上重复保存。
 
@@ -14,21 +14,21 @@
 
 ## 宫位坐标
 
-`PalaceName` 表示宫名，`Branch` 表示空间地支。`Natal` 明确保存命宫、身宫、来因宫各自的宫名和地支：
+`PalaceName` 表示宫名，`Branch` 表示空间地支。命宫宫名恒为 `PalaceName::Ming`，`Natal` 只保存其地支；身宫和来因宫分别保存宫名与地支：
 
 ```text
-ming_palace / ming_palace_branch
-shen_palace / shen_palace_branch
-origin_palace / origin_palace_branch
+ming_palace_branch
+shen_palace_name / shen_palace_branch
+origin_palace_name / origin_palace_branch
 ```
 
-三组坐标都必须解析到同一张盘中的唯一 `Palace`。`palaces` 对外顺序固定以寅为零，避免公开数组顺序依赖 `Branch` 的内部编码。
+`ming_palace_branch` 必须解析到宫名为 `PalaceName::Ming` 的唯一 `Palace`；身宫和来因宫的宫名、地支也必须分别解析到同一张盘中的唯一 `Palace`。`palaces` 对外顺序固定以寅为零，避免公开数组顺序依赖 `Branch` 的内部编码。
 
-来因宫与五虎遁宫干独立计算，但 `origin_palace` 所在宫位的天干必须与生年天干一致。
+来因宫与五虎遁宫干独立计算，但 `origin_palace_name` 所指宫位的天干必须与生年天干一致。
 
 ## 星曜身份与落位
 
-`StarKey` 是星曜身份；`Star` 是一张具体本命盘内的落位结果。分类与斗系是 `StarKey` 的固有元数据，生年四化与自化是 `Star` 的盘内事实。
+`StarName` 是星曜身份；`Star` 是一张具体本命盘内的星曜事实，保存类别、斗系、生年四化与自化。
 
 这一区分避免：
 

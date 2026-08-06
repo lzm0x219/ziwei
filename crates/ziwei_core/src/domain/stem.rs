@@ -4,81 +4,81 @@
 //! - **四化星表**：十干 × 禄权科忌 → 星（与仓库已锁定测例一致；庚/壬取全集系）。
 //! - **五虎遁**：生年干 → 寅宫起干，再顺布十二宫干。
 
-use super::{branch::Branch, star::StarKey, transformation::Transformation};
+use super::{branch::Branch, star::StarName, transformation::Transformation};
 
 /// 生年干四化星表：行 = 甲…癸，列 = 禄/权/科/忌。
 ///
 /// 下标与 [`Stem::index`]、[`Transformation::index`] 对齐。
-const TRANSFORMAT_STARS: [[StarKey; 4]; 10] = [
+const TRANSFORMAT_STARS: [[StarName; 4]; 10] = [
     // 甲
     [
-        StarKey::LianZhen,
-        StarKey::PoJun,
-        StarKey::WuQu,
-        StarKey::TaiYang,
+        StarName::LianZhen,
+        StarName::PoJun,
+        StarName::WuQu,
+        StarName::TaiYang,
     ],
     // 乙
     [
-        StarKey::TianJi,
-        StarKey::TianLiang,
-        StarKey::ZiWei,
-        StarKey::TaiYin,
+        StarName::TianJi,
+        StarName::TianLiang,
+        StarName::ZiWei,
+        StarName::TaiYin,
     ],
     // 丙
     [
-        StarKey::TianTong,
-        StarKey::TianJi,
-        StarKey::WenChang,
-        StarKey::LianZhen,
+        StarName::TianTong,
+        StarName::TianJi,
+        StarName::WenChang,
+        StarName::LianZhen,
     ],
     // 丁
     [
-        StarKey::TaiYin,
-        StarKey::TianTong,
-        StarKey::TianJi,
-        StarKey::JuMen,
+        StarName::TaiYin,
+        StarName::TianTong,
+        StarName::TianJi,
+        StarName::JuMen,
     ],
     // 戊
     [
-        StarKey::TanLang,
-        StarKey::TaiYin,
-        StarKey::YouBi,
-        StarKey::TianJi,
+        StarName::TanLang,
+        StarName::TaiYin,
+        StarName::YouBi,
+        StarName::TianJi,
     ],
     // 己
     [
-        StarKey::WuQu,
-        StarKey::TanLang,
-        StarKey::TianLiang,
-        StarKey::WenQu,
+        StarName::WuQu,
+        StarName::TanLang,
+        StarName::TianLiang,
+        StarName::WenQu,
     ],
     // 庚（全集/南派：阳武阴同）
     [
-        StarKey::TaiYang,
-        StarKey::WuQu,
-        StarKey::TaiYin,
-        StarKey::TianTong,
+        StarName::TaiYang,
+        StarName::WuQu,
+        StarName::TaiYin,
+        StarName::TianTong,
     ],
     // 辛
     [
-        StarKey::JuMen,
-        StarKey::TaiYang,
-        StarKey::WenQu,
-        StarKey::WenChang,
+        StarName::JuMen,
+        StarName::TaiYang,
+        StarName::WenQu,
+        StarName::WenChang,
     ],
     // 壬（全集系：梁紫左武）
     [
-        StarKey::TianLiang,
-        StarKey::ZiWei,
-        StarKey::ZuoFu,
-        StarKey::WuQu,
+        StarName::TianLiang,
+        StarName::ZiWei,
+        StarName::ZuoFu,
+        StarName::WuQu,
     ],
     // 癸
     [
-        StarKey::PoJun,
-        StarKey::JuMen,
-        StarKey::TaiYin,
-        StarKey::TanLang,
+        StarName::PoJun,
+        StarName::JuMen,
+        StarName::TaiYin,
+        StarName::TanLang,
     ],
 ];
 
@@ -129,7 +129,7 @@ impl Stem {
     }
 
     /// 返回该天干在指定四化象下对应的星曜（查十干×禄权科忌四化星表）。
-    pub(crate) const fn transformation_star(self, transformation: Transformation) -> StarKey {
+    pub(crate) const fn transformation_star(self, transformation: Transformation) -> StarName {
         TRANSFORMAT_STARS[self.index()][transformation.index()]
     }
 
@@ -219,91 +219,91 @@ mod tests {
             (
                 Stem::Jia,
                 [
-                    StarKey::LianZhen,
-                    StarKey::PoJun,
-                    StarKey::WuQu,
-                    StarKey::TaiYang,
+                    StarName::LianZhen,
+                    StarName::PoJun,
+                    StarName::WuQu,
+                    StarName::TaiYang,
                 ],
             ),
             (
                 Stem::Yi,
                 [
-                    StarKey::TianJi,
-                    StarKey::TianLiang,
-                    StarKey::ZiWei,
-                    StarKey::TaiYin,
+                    StarName::TianJi,
+                    StarName::TianLiang,
+                    StarName::ZiWei,
+                    StarName::TaiYin,
                 ],
             ),
             (
                 Stem::Bing,
                 [
-                    StarKey::TianTong,
-                    StarKey::TianJi,
-                    StarKey::WenChang,
-                    StarKey::LianZhen,
+                    StarName::TianTong,
+                    StarName::TianJi,
+                    StarName::WenChang,
+                    StarName::LianZhen,
                 ],
             ),
             (
                 Stem::Ding,
                 [
-                    StarKey::TaiYin,
-                    StarKey::TianTong,
-                    StarKey::TianJi,
-                    StarKey::JuMen,
+                    StarName::TaiYin,
+                    StarName::TianTong,
+                    StarName::TianJi,
+                    StarName::JuMen,
                 ],
             ),
             (
                 Stem::Wu,
                 [
-                    StarKey::TanLang,
-                    StarKey::TaiYin,
-                    StarKey::YouBi,
-                    StarKey::TianJi,
+                    StarName::TanLang,
+                    StarName::TaiYin,
+                    StarName::YouBi,
+                    StarName::TianJi,
                 ],
             ),
             (
                 Stem::Ji,
                 [
-                    StarKey::WuQu,
-                    StarKey::TanLang,
-                    StarKey::TianLiang,
-                    StarKey::WenQu,
+                    StarName::WuQu,
+                    StarName::TanLang,
+                    StarName::TianLiang,
+                    StarName::WenQu,
                 ],
             ),
             (
                 Stem::Geng,
                 [
-                    StarKey::TaiYang,
-                    StarKey::WuQu,
-                    StarKey::TaiYin,
-                    StarKey::TianTong,
+                    StarName::TaiYang,
+                    StarName::WuQu,
+                    StarName::TaiYin,
+                    StarName::TianTong,
                 ],
             ),
             (
                 Stem::Xin,
                 [
-                    StarKey::JuMen,
-                    StarKey::TaiYang,
-                    StarKey::WenQu,
-                    StarKey::WenChang,
+                    StarName::JuMen,
+                    StarName::TaiYang,
+                    StarName::WenQu,
+                    StarName::WenChang,
                 ],
             ),
             (
                 Stem::Ren,
                 [
-                    StarKey::TianLiang,
-                    StarKey::ZiWei,
-                    StarKey::ZuoFu,
-                    StarKey::WuQu,
+                    StarName::TianLiang,
+                    StarName::ZiWei,
+                    StarName::ZuoFu,
+                    StarName::WuQu,
                 ],
             ),
             (
                 Stem::Gui,
                 [
-                    StarKey::PoJun,
-                    StarKey::JuMen,
-                    StarKey::TaiYin,
-                    StarKey::TanLang,
+                    StarName::PoJun,
+                    StarName::JuMen,
+                    StarName::TaiYin,
+                    StarName::TanLang,
                 ],
             ),
         ];

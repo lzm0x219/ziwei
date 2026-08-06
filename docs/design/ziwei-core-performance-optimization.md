@@ -34,8 +34,8 @@ cargo bench -p ziwei_core --bench natal_allocations
 
 | 构造入口 | 60 盘耗时 | 单盘折算 | 吞吐量 |
 | --- | ---: | ---: | ---: |
-| `Natal::from_input` | 约 `14.631 µs` | 约 `244 ns` | 约 `4.10 Melem/s` |
-| `Natal::from_birth` | 约 `14.486 µs` | 约 `241 ns` | 约 `4.14 Melem/s` |
+| `create_from_input` | 约 `14.631 µs` | 约 `244 ns` | 约 `4.10 Melem/s` |
+| `create_from_birth` | 约 `14.486 µs` | 约 `241 ns` | 约 `4.14 Melem/s` |
 
 两个入口当前都保持：
 
@@ -203,7 +203,7 @@ year = year_start.map(|year_start| year_start + i)
 
 - 两个构造入口产生相同的本命事实；
 - 十二宫顺序、宫名、宫干和宫支不变；
-- 十八颗星各落一宫，宫内顺序仍遵循 `StarKey::ALL`；
+- 十八颗星各落一宫，宫内顺序仍遵循 `StarName::ALL`；
 - 每宫固定四条四化，顺序仍为 `Transformation::ALL`；
 - 生年四化、自化和来因宫对应关系不变；
 - 十二个大限的方向、宫位、起止虚岁和可选农历年序号不变；

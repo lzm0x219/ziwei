@@ -14,13 +14,14 @@ pub use branch::Branch;
 pub use decade::{Decade, DecadeDirection, DecadeIndex, DecadeIndexError, DecadeYear};
 pub use five_element_bureau::FiveElementBureau;
 pub use palace::{Palace, PalaceName, PalaceTransformation};
-pub use star::{Star, StarGalaxy, StarKey, StarSelfTransformations, StarType};
+pub use star::{Star, StarCategory, StarGalaxy, StarName, StarSelfTransformations};
 pub use stem::Stem;
 pub use transformation::Transformation;
 pub use zodiac::Zodiac;
 
 pub(crate) use decade::build_decades;
 pub(crate) use palace::PalaceStars;
+pub(crate) use star::{star_category, star_galaxy};
 
 /// 命主的性别（阴阳）。
 ///

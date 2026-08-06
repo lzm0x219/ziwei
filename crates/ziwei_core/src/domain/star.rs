@@ -4,7 +4,7 @@ use super::transformation::Transformation;
 
 /// 首批十八颗星曜的稳定身份。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum StarKey {
+pub enum StarName {
     /// 紫微。
     ZiWei,
     /// 天机。
@@ -43,9 +43,9 @@ pub enum StarKey {
     WenQu,
 }
 
-/// 星曜层级。
+/// 星曜类别。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum StarType {
+pub enum StarCategory {
     /// 十四主星。
     Major,
     /// 首批辅星：左辅、右弼、文昌、文曲。
@@ -65,7 +65,7 @@ pub enum StarGalaxy {
     Central,
 }
 
-impl StarKey {
+impl StarName {
     /// 首批十八星全集；顺序也是落宫数组和宫内星曜的稳定遍历顺序。
     pub const ALL: [Self; 18] = [
         Self::ZiWei,
@@ -87,54 +87,6 @@ impl StarKey {
         Self::WenChang,
         Self::WenQu,
     ];
-
-    /// 返回稳定的 snake_case 机器 key。
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::ZiWei => "zi_wei",
-            Self::TianJi => "tian_ji",
-            Self::TaiYang => "tai_yang",
-            Self::WuQu => "wu_qu",
-            Self::TianTong => "tian_tong",
-            Self::LianZhen => "lian_zhen",
-            Self::TianFu => "tian_fu",
-            Self::TaiYin => "tai_yin",
-            Self::TanLang => "tan_lang",
-            Self::JuMen => "ju_men",
-            Self::TianXiang => "tian_xiang",
-            Self::TianLiang => "tian_liang",
-            Self::QiSha => "qi_sha",
-            Self::PoJun => "po_jun",
-            Self::ZuoFu => "zuo_fu",
-            Self::YouBi => "you_bi",
-            Self::WenChang => "wen_chang",
-            Self::WenQu => "wen_qu",
-        }
-    }
-
-    /// 返回星曜层级。
-    pub const fn star_type(self) -> StarType {
-        match self {
-            Self::ZuoFu | Self::YouBi | Self::WenChang | Self::WenQu => StarType::Minor,
-            _ => StarType::Major,
-        }
-    }
-
-    /// 返回斗系；没有斗系的星曜返回 `None`。
-    pub const fn galaxy(self) -> Option<StarGalaxy> {
-        match self {
-            Self::ZiWei | Self::ZuoFu | Self::YouBi | Self::WenChang | Self::WenQu => {
-                Some(StarGalaxy::Central)
-            }
-            Self::TianJi | Self::TaiYang | Self::WuQu | Self::TianTong | Self::LianZhen => {
-                Some(StarGalaxy::North)
-            }
-            Self::TaiYin | Self::TanLang | Self::JuMen | Self::TianLiang | Self::PoJun => {
-                Some(StarGalaxy::South)
-            }
-            Self::TianFu | Self::TianXiang | Self::QiSha => None,
-        }
-    }
 
     /// 落宫数组下标，与 [`Self::ALL`] 对齐。
     pub(crate) const fn index(self) -> usize {
@@ -158,6 +110,36 @@ impl StarKey {
             Self::WenChang => 16,
             Self::WenQu => 17,
         }
+    }
+}
+
+pub(crate) const fn star_category(name: StarName) -> StarCategory {
+    match name {
+        StarName::ZuoFu | StarName::YouBi | StarName::WenChang | StarName::WenQu => {
+            StarCategory::Minor
+        }
+        _ => StarCategory::Major,
+    }
+}
+
+pub(crate) const fn star_galaxy(name: StarName) -> Option<StarGalaxy> {
+    match name {
+        StarName::ZiWei
+        | StarName::ZuoFu
+        | StarName::YouBi
+        | StarName::WenChang
+        | StarName::WenQu => Some(StarGalaxy::Central),
+        StarName::TianJi
+        | StarName::TaiYang
+        | StarName::WuQu
+        | StarName::TianTong
+        | StarName::LianZhen => Some(StarGalaxy::North),
+        StarName::TaiYin
+        | StarName::TanLang
+        | StarName::JuMen
+        | StarName::TianLiang
+        | StarName::PoJun => Some(StarGalaxy::South),
+        StarName::TianFu | StarName::TianXiang | StarName::QiSha => None,
     }
 }
 
@@ -191,7 +173,9 @@ impl StarSelfTransformations {
 /// 一张具体本命盘内的星曜事实。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Star {
-    key: StarKey,
+    name: StarName,
+    category: StarCategory,
+    galaxy: Option<StarGalaxy>,
     origin_transformation: Option<Transformation>,
     self_transformations: StarSelfTransformations,
 }
@@ -199,20 +183,34 @@ pub struct Star {
 impl Star {
     /// 由内核装配星曜落位事实。
     pub(crate) const fn new(
-        key: StarKey,
+        name: StarName,
+        category: StarCategory,
+        galaxy: Option<StarGalaxy>,
         origin_transformation: Option<Transformation>,
         self_transformations: StarSelfTransformations,
     ) -> Self {
         Self {
-            key,
+            name,
+            category,
+            galaxy,
             origin_transformation,
             self_transformations,
         }
     }
 
     /// 星曜稳定身份。
-    pub const fn key(self) -> StarKey {
-        self.key
+    pub const fn name(self) -> StarName {
+        self.name
+    }
+
+    /// 星曜类别。
+    pub const fn category(self) -> StarCategory {
+        self.category
+    }
+
+    /// 星曜斗系；没有斗系的星曜返回 `None`。
+    pub const fn galaxy(self) -> Option<StarGalaxy> {
+        self.galaxy
     }
 
     /// 生年天干所飞化的生年四化；生年天干与来因宫宫干一致，故同时对应来因宫中同一星曜的宫位四化关系，不化时为 `None`。
@@ -231,15 +229,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn star_keys_have_stable_identity_metadata() {
-        assert_eq!(StarKey::ALL.len(), 18);
-        assert_eq!(StarKey::ZiWei.as_str(), "zi_wei");
-        assert_eq!(StarKey::PoJun.galaxy(), Some(StarGalaxy::South));
-        assert_eq!(StarKey::TianJi.galaxy(), Some(StarGalaxy::North));
-        assert_eq!(StarKey::WenQu.galaxy(), Some(StarGalaxy::Central));
-        assert_eq!(StarKey::TianFu.galaxy(), None);
-        assert_eq!(StarKey::ZuoFu.star_type(), StarType::Minor);
-        assert_eq!(StarKey::QiSha.star_type(), StarType::Major);
+    fn star_metadata_is_derived_from_name() {
+        assert_eq!(StarName::ALL.len(), 18);
+        assert_eq!(star_galaxy(StarName::PoJun), Some(StarGalaxy::South));
+        assert_eq!(star_galaxy(StarName::TianJi), Some(StarGalaxy::North));
+        assert_eq!(star_galaxy(StarName::WenQu), Some(StarGalaxy::Central));
+        assert_eq!(star_galaxy(StarName::TianFu), None);
+        assert_eq!(star_category(StarName::ZuoFu), StarCategory::Minor);
+        assert_eq!(star_category(StarName::QiSha), StarCategory::Major);
     }
 
     #[test]
@@ -247,12 +244,16 @@ mod tests {
         let self_transformations =
             StarSelfTransformations::new(Some(Transformation::C), Some(Transformation::A));
         let star = Star::new(
-            StarKey::ZiWei,
+            StarName::ZiWei,
+            StarCategory::Major,
+            Some(StarGalaxy::Central),
             Some(Transformation::B),
             self_transformations,
         );
 
-        assert_eq!(star.key(), StarKey::ZiWei);
+        assert_eq!(star.name(), StarName::ZiWei);
+        assert_eq!(star.category(), StarCategory::Major);
+        assert_eq!(star.galaxy(), Some(StarGalaxy::Central));
         assert_eq!(star.origin_transformation(), Some(Transformation::B));
         assert_eq!(star.self_transformations(), self_transformations);
     }

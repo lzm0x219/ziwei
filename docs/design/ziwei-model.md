@@ -10,11 +10,10 @@ pub struct Natal {
     zodiac: Zodiac,
     palaces: [Palace; 12],
 
-    ming_palace: PalaceName,
     ming_palace_branch: Branch,
-    shen_palace: PalaceName,
+    shen_palace_name: PalaceName,
     shen_palace_branch: Branch,
-    origin_palace: PalaceName,
+    origin_palace_name: PalaceName,
     origin_palace_branch: Branch,
 
     bureau: FiveElementBureau,
@@ -23,7 +22,7 @@ pub struct Natal {
 }
 ```
 
-所有字段私有。`Natal::from_birth(ZiweiBirth)` 与 `Natal::from_input(ZiweiInput)` 是两条公开、无失败的构造入口；两者必须进入同一条归一化计算流水线。
+所有字段私有。`create_from_birth(ZiweiBirth)` 与 `create_from_input(ZiweiInput)` 是两条公开、无失败的构造入口；两者必须进入同一条归一化计算流水线。
 
 ```rust
 pub struct NatalContext {
@@ -51,7 +50,9 @@ pub struct Palace {
 }
 
 pub struct Star {
-    key: StarKey,
+    name: StarName,
+    category: StarCategory,
+    galaxy: Option<StarGalaxy>,
     origin_transformation: Option<Transformation>,
     self_transformations: StarSelfTransformations,
 }
@@ -76,15 +77,14 @@ QianYi, JiaoYou, GuanLu, TianZhai, FuDe, FuMu
 6 Shen, 7 You, 8 Xu, 9 Hai, 10 Zi, 11 Chou
 ```
 
-每宫的 `stars` 只存落在该宫的星曜，并按 `StarKey::ALL` 的相对次序稳定排列。全盘十八个 `StarKey` 各出现一次。
+每宫的 `stars` 只存落在该宫的星曜，并按 `StarName::ALL` 的相对次序稳定排列。全盘十八个 `StarName` 各出现一次。
 
-`StarKey` 只承载稳定身份及领域分类：
+`StarName` 只承载稳定身份。类别与斗系存储在 `Star`：
 
-- `StarType`: `Major / Minor / Auxiliary`；十四主星为 `Major`，左辅、右弼、文昌、文曲为 `Minor`，首批没有 `Auxiliary` 成员。
+- `StarCategory`: `Major / Minor / Auxiliary`；十四主星为 `Major`，左辅、右弼、文昌、文曲为 `Minor`，首批没有 `Auxiliary` 成员。
 - `StarGalaxy`: `South / North / Central`，分别表示南斗、北斗、中斗；没有斗系的星返回 `None`。
-- `as_str()` 返回稳定 snake_case key，不提供简繁体显示文案。
 
-`StarKey::ALL` 沿用当前十八星算法顺序，不参与决定安星先后；安星结果由计算规则决定，数组只提供稳定遍历顺序。
+`StarName::ALL` 沿用当前十八星算法顺序，不参与决定安星先后；安星结果由计算规则决定，数组只提供稳定遍历顺序。
 
 ## 四化关系
 
@@ -97,13 +97,13 @@ pub struct PalaceTransformation {
     transformation: Transformation,
     target_name: PalaceName,
     target_branch: Branch,
-    star_key: StarKey,
+    star_name: StarName,
 }
 ```
 
-`A / B / C / D` 是领域稳定代码，展示层可映射为禄、权、科、忌。每个 `Palace` 保存以自身为源宫的四条关系，顺序为 `A / B / C / D`。每条关系的目标宫必须包含且只包含对应 `star_key`。
+`A / B / C / D` 是领域稳定代码，展示层可映射为禄、权、科、忌。每个 `Palace` 保存以自身为源宫的四条关系，顺序为 `A / B / C / D`。每条关系的目标宫必须包含且只包含对应 `star_name`。
 
-由生年天干所飞化的生年四化直接存于目标 `Star.origin_transformation`。来因宫与五虎遁宫干各自独立计算，但来因宫宫干必须与生年天干一致，因此同一组四化也存在于 `origin_palace` 那一宫的 `PalaceTransformation` 中，两者按目标 `star_key` 与 `transformation` 一一对应。全盘恰有四个 `Some`，并且 `A / B / C / D` 各一次，不再另存顶层数组。
+由生年天干所飞化的生年四化直接存于目标 `Star.origin_transformation`。来因宫与五虎遁宫干各自独立计算，但来因宫宫干必须与生年天干一致，因此同一组四化也存在于 `origin_palace_name` 所指宫位的 `PalaceTransformation` 中，两者按目标 `star_name` 与 `transformation` 一一对应。全盘恰有四个 `Some`，并且 `A / B / C / D` 各一次，不再另存顶层数组。
 
 自化也存于目标星曜：
 
@@ -133,6 +133,6 @@ pub struct DecadeYear {
 
 `DecadeDirection::Forward` 当且仅当出生年干阴阳与性别阴阳相同。第零大限命宫地支等于本命命宫地支，后续按方向逐宫移动。
 
-十二个大限按 `DecadeIndex(0..=11)` 排列。每个大限存十个连续虚岁；`age_start()` 和 `age_end()` 分别读取首尾条目，不重复存储。`from_birth` 的 `year` 为 `birth_year + age - 1`，`from_input` 的 `year` 全部为 `None`；这里的年份均指农历年序号。
+十二个大限按 `DecadeIndex(0..=11)` 排列。每个大限存十个连续虚岁；`age_start()` 和 `age_end()` 分别读取首尾条目，不重复存储。`create_from_birth` 的 `year` 为 `birth_year + age - 1`，`create_from_input` 的 `year` 全部为 `None`；这里的年份均指农历年序号。
 
 这里只保存“年份 + 虚岁”的最小流年事实。流年宫位、星曜、四化和按年份/年龄选择大限属于 `ziwei_query` 或后续独立计算，不进入 `Natal`。

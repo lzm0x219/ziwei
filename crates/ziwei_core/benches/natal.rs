@@ -3,7 +3,7 @@
 use std::hint::black_box;
 
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
-use ziwei_core::Natal;
+use ziwei_core::{create_from_birth, create_from_input};
 
 mod support;
 
@@ -17,17 +17,17 @@ fn benchmark_natal(c: &mut Criterion) {
         u64::try_from(CASE_COUNT).expect("case count fits in u64"),
     ));
 
-    group.bench_function("from_input", |b| {
+    group.bench_function("create_from_input", |b| {
         b.iter(|| {
             for input in black_box(&inputs) {
-                black_box(Natal::from_input(black_box(*input)));
+                black_box(create_from_input(black_box(*input)));
             }
         });
     });
-    group.bench_function("from_birth", |b| {
+    group.bench_function("create_from_birth", |b| {
         b.iter(|| {
             for birth in black_box(&births) {
-                black_box(Natal::from_birth(black_box(*birth)));
+                black_box(create_from_birth(black_box(*birth)));
             }
         });
     });

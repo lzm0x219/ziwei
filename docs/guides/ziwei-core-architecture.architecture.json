@@ -36,8 +36,8 @@
     {
       "id": "natal_constructors",
       "type": "backend",
-      "label": "Natal Constructors",
-      "sublabel": "from_birth · from_input",
+      "label": "Natal Creation Functions",
+      "sublabel": "create_from_birth · create_from_input",
       "sources": [{ "path": "crates/ziwei_core/src/natal.rs" }],
       "pos": [460, 330],
       "size": [170, 78]
@@ -77,7 +77,7 @@
       "id": "stable_codes",
       "type": "database",
       "label": "Stable Domain Codes",
-      "sublabel": "PalaceName · StarKey · A/B/C/D",
+      "sublabel": "PalaceName · StarName · A/B/C/D",
       "sources": [
         { "path": "crates/ziwei_core/src/domain/palace.rs" },
         { "path": "crates/ziwei_core/src/domain/star.rs" },
@@ -240,7 +240,7 @@
       "dot": "violet",
       "title": "Stable invariants",
       "items": [
-        "12 palaces and 18 unique StarKey values",
+        "12 palaces and 18 unique StarName values",
         "Four A/B/C/D edges per palace",
         "12 decades with 10 year/age entries each"
       ]

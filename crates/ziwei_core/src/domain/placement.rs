@@ -10,7 +10,7 @@
 //! 分解表避免了完整输入笛卡尔积的体积；表值由下方公式生成，不手工维护。
 //! 修改表结构或恢复运行时公式时，应以 `benches/natal.rs` 的端到端基准重新验证。
 
-use super::{Branch, FiveElementBureau, PalaceName, StarKey, Stem};
+use super::{Branch, FiveElementBureau, PalaceName, StarName, Stem};
 
 /// 子序 → 寅环：子(0)→10 … 寅(2)→0 … 亥(11)→9。
 const BRANCH_INDEX_TO_YIN0: [u8; 12] = [10, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
@@ -25,7 +25,7 @@ const ZI_WEI_YIN0_BY_BUREAU_DAY: [[u8; 30]; 5] = build_zi_wei_yin0_by_bureau_day
 
 /// 紫微星寅环坐标 → 十四主星落宫。
 ///
-/// 行为紫微星的寅环坐标 `0..12`，列与 [`StarKey::index`] 对齐；`0..14` 是十四主星，
+/// 行为紫微星的寅环坐标 `0..12`，列与 [`StarName::index`] 对齐；`0..14` 是十四主星，
 /// `14..18` 是编译期占位槽，运行时必由辅星表覆盖后才返回。
 const MAJOR_BRANCHES_BY_ZI_WEI_YIN0: [[Branch; 18]; 12] = build_major_branches_by_zi_wei_yin0();
 
@@ -51,13 +51,6 @@ pub(crate) const fn branch_from_yin0(yin0: u8) -> Branch {
     Branch::from_index(yin0_to_branch_index(yin0))
 }
 
-/// 命宫与身宫地支。
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) struct MingShenBranches {
-    pub(crate) ming_palace: Branch,
-    pub(crate) shen_palace: Branch,
-}
-
 /// 尚未附加星曜与四化关系的宫位落位。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct PalacePlacement {
@@ -66,14 +59,16 @@ pub(crate) struct PalacePlacement {
     pub(crate) stem: Stem,
 }
 
-/// 寅起正月；命宫逆时、身宫顺时。
-pub(crate) fn compute_ming_shen_branches(month: u8, hour: u8) -> MingShenBranches {
+/// 寅起正月，逆时安命宫。
+pub(crate) fn compute_ming_palace_branch(month: u8, hour: u8) -> Branch {
     let ming_palace_yin0 = (i32::from(month) - i32::from(hour)).rem_euclid(12) as u8;
+    branch_from_yin0(ming_palace_yin0)
+}
+
+/// 寅起正月，顺时安身宫。
+pub(crate) fn compute_shen_palace_branch(month: u8, hour: u8) -> Branch {
     let shen_palace_yin0 = (i32::from(month) + i32::from(hour)).rem_euclid(12) as u8;
-    MingShenBranches {
-        ming_palace: branch_from_yin0(ming_palace_yin0),
-        shen_palace: branch_from_yin0(shen_palace_yin0),
-    }
+    branch_from_yin0(shen_palace_yin0)
 }
 
 /// 五虎遁：按子为零的地支下标生成十二宫干。
@@ -127,7 +122,7 @@ pub(crate) fn compute_palace_placements(
 /// 一次完成十四主星与首批四颗辅星的落宫计算和十八槽组装。
 ///
 /// 输入沿用已验证出生上下文的编码：`day` 为 `1..=30`，`month` 与 `hour` 为 `0..=11`；
-/// 返回数组与 [`StarKey::index`] 对齐。
+/// 返回数组与 [`StarName::index`] 对齐。
 ///
 /// 热路径依次查询四张分解表并覆盖四个辅星槽，不执行安星公式中的除法和环形取模。
 pub(crate) fn compute_star_branches(
@@ -145,10 +140,10 @@ pub(crate) fn compute_star_branches(
 
     let [zuo_fu, you_bi] = ZUO_YOU_BY_MONTH[usize::from(month)];
     let [wen_chang, wen_qu] = CHANG_QU_BY_HOUR[usize::from(hour)];
-    branches_by_star[StarKey::ZuoFu.index()] = zuo_fu;
-    branches_by_star[StarKey::YouBi.index()] = you_bi;
-    branches_by_star[StarKey::WenChang.index()] = wen_chang;
-    branches_by_star[StarKey::WenQu.index()] = wen_qu;
+    branches_by_star[StarName::ZuoFu.index()] = zuo_fu;
+    branches_by_star[StarName::YouBi.index()] = you_bi;
+    branches_by_star[StarName::WenChang.index()] = wen_chang;
+    branches_by_star[StarName::WenQu.index()] = wen_qu;
     branches_by_star
 }
 
@@ -214,19 +209,19 @@ const fn compute_major_branches_from_zi_wei_yin0(zi_wei_yin0: u8) -> [Branch; 18
 
     // 数值为相对紫微星的逆行步数。
     let zi_wei_series = [
-        (StarKey::ZiWei, 0),
-        (StarKey::TianJi, 1),
-        (StarKey::TaiYang, 3),
-        (StarKey::WuQu, 4),
-        (StarKey::TianTong, 5),
-        (StarKey::LianZhen, 8),
+        (StarName::ZiWei, 0),
+        (StarName::TianJi, 1),
+        (StarName::TaiYang, 3),
+        (StarName::WuQu, 4),
+        (StarName::TianTong, 5),
+        (StarName::LianZhen, 8),
     ];
     let mut series_index = 0;
     while series_index < zi_wei_series.len() {
-        let (star_key, yin0_offset) = zi_wei_series[series_index];
+        let (star_name, yin0_offset) = zi_wei_series[series_index];
         set_star_branch(
             &mut branches_by_star,
-            star_key,
+            star_name,
             (zi_wei_yin0_i32 - yin0_offset).rem_euclid(12) as u8,
         );
         series_index += 1;
@@ -234,21 +229,21 @@ const fn compute_major_branches_from_zi_wei_yin0(zi_wei_yin0: u8) -> [Branch; 18
 
     // 数值为相对天府星的顺行步数。
     let tian_fu_series = [
-        (StarKey::TianFu, 0),
-        (StarKey::TaiYin, 1),
-        (StarKey::TanLang, 2),
-        (StarKey::JuMen, 3),
-        (StarKey::TianXiang, 4),
-        (StarKey::TianLiang, 5),
-        (StarKey::QiSha, 6),
-        (StarKey::PoJun, 10),
+        (StarName::TianFu, 0),
+        (StarName::TaiYin, 1),
+        (StarName::TanLang, 2),
+        (StarName::JuMen, 3),
+        (StarName::TianXiang, 4),
+        (StarName::TianLiang, 5),
+        (StarName::QiSha, 6),
+        (StarName::PoJun, 10),
     ];
     series_index = 0;
     while series_index < tian_fu_series.len() {
-        let (star_key, yin0_offset) = tian_fu_series[series_index];
+        let (star_name, yin0_offset) = tian_fu_series[series_index];
         set_star_branch(
             &mut branches_by_star,
-            star_key,
+            star_name,
             (tian_fu_yin0_i32 + yin0_offset).rem_euclid(12) as u8,
         );
         series_index += 1;
@@ -285,8 +280,8 @@ const fn build_chang_qu_by_hour() -> [[Branch; 2]; 12] {
     table
 }
 
-const fn set_star_branch(branches_by_star: &mut [Branch; 18], star_key: StarKey, yin0: u8) {
-    branches_by_star[star_key.index()] = branch_from_yin0(yin0);
+const fn set_star_branch(branches_by_star: &mut [Branch; 18], star_name: StarName, yin0: u8) {
+    branches_by_star[star_name.index()] = branch_from_yin0(yin0);
 }
 
 #[cfg(test)]
@@ -320,44 +315,44 @@ mod tests {
         let tian_fu_yin0 = (-i32::from(zi_wei_yin0)).rem_euclid(12) as u8;
 
         let mut branches_by_star = [Branch::Zi; 18];
-        for (star_key, yin0_offset) in [
-            (StarKey::ZiWei, 0),
-            (StarKey::TianJi, 1),
-            (StarKey::TaiYang, 3),
-            (StarKey::WuQu, 4),
-            (StarKey::TianTong, 5),
-            (StarKey::LianZhen, 8),
+        for (star_name, yin0_offset) in [
+            (StarName::ZiWei, 0),
+            (StarName::TianJi, 1),
+            (StarName::TaiYang, 3),
+            (StarName::WuQu, 4),
+            (StarName::TianTong, 5),
+            (StarName::LianZhen, 8),
         ] {
             set_star_branch(
                 &mut branches_by_star,
-                star_key,
+                star_name,
                 (i32::from(zi_wei_yin0) - yin0_offset).rem_euclid(12) as u8,
             );
         }
-        for (star_key, yin0_offset) in [
-            (StarKey::TianFu, 0),
-            (StarKey::TaiYin, 1),
-            (StarKey::TanLang, 2),
-            (StarKey::JuMen, 3),
-            (StarKey::TianXiang, 4),
-            (StarKey::TianLiang, 5),
-            (StarKey::QiSha, 6),
-            (StarKey::PoJun, 10),
+        for (star_name, yin0_offset) in [
+            (StarName::TianFu, 0),
+            (StarName::TaiYin, 1),
+            (StarName::TanLang, 2),
+            (StarName::JuMen, 3),
+            (StarName::TianXiang, 4),
+            (StarName::TianLiang, 5),
+            (StarName::QiSha, 6),
+            (StarName::PoJun, 10),
         ] {
             set_star_branch(
                 &mut branches_by_star,
-                star_key,
+                star_name,
                 (i32::from(tian_fu_yin0) + yin0_offset).rem_euclid(12) as u8,
             );
         }
 
-        branches_by_star[StarKey::ZuoFu.index()] =
+        branches_by_star[StarName::ZuoFu.index()] =
             branch_from_yin0((2 + i32::from(month)).rem_euclid(12) as u8);
-        branches_by_star[StarKey::YouBi.index()] =
+        branches_by_star[StarName::YouBi.index()] =
             branch_from_yin0((8 - i32::from(month)).rem_euclid(12) as u8);
-        branches_by_star[StarKey::WenChang.index()] =
+        branches_by_star[StarName::WenChang.index()] =
             branch_from_yin0((8 - i32::from(hour)).rem_euclid(12) as u8);
-        branches_by_star[StarKey::WenQu.index()] =
+        branches_by_star[StarName::WenQu.index()] =
             branch_from_yin0((2 + i32::from(hour)).rem_euclid(12) as u8);
         branches_by_star
     }
@@ -500,11 +495,11 @@ mod tests {
             for bureau in BUREAUS {
                 let star_branches = compute_star_branches(day, bureau, 0, 0);
                 let zi_wei_yin0 = branch_index_to_yin0(
-                    u8::try_from(star_branches[StarKey::ZiWei.index()].index())
+                    u8::try_from(star_branches[StarName::ZiWei.index()].index())
                         .expect("branch index fits in u8"),
                 );
                 let tian_fu_yin0 = branch_index_to_yin0(
-                    u8::try_from(star_branches[StarKey::TianFu.index()].index())
+                    u8::try_from(star_branches[StarName::TianFu.index()].index())
                         .expect("branch index fits in u8"),
                 );
                 assert_eq!(
@@ -541,17 +536,15 @@ mod tests {
     }
 
     #[test]
-    fn ming_shen_branches_follow_all_month_hour_formulas() {
+    fn palace_branch_formulas_cover_all_month_hours() {
         for month in 0..12u8 {
             for hour in 0..12u8 {
-                let ming_shen = compute_ming_shen_branches(month, hour);
-
                 assert_eq!(
-                    ming_shen.ming_palace,
+                    compute_ming_palace_branch(month, hour),
                     branch_from_yin0((i32::from(month) - i32::from(hour)).rem_euclid(12) as u8)
                 );
                 assert_eq!(
-                    ming_shen.shen_palace,
+                    compute_shen_palace_branch(month, hour),
                     branch_from_yin0((i32::from(month) + i32::from(hour)).rem_euclid(12) as u8)
                 );
             }
@@ -566,19 +559,19 @@ mod tests {
                     compute_star_branches(1, FiveElementBureau::WaterTwo, month, hour);
 
                 assert_eq!(
-                    star_branches[StarKey::ZuoFu.index()],
+                    star_branches[StarName::ZuoFu.index()],
                     branch_from_yin0((2 + i32::from(month)).rem_euclid(12) as u8)
                 );
                 assert_eq!(
-                    star_branches[StarKey::YouBi.index()],
+                    star_branches[StarName::YouBi.index()],
                     branch_from_yin0((8 - i32::from(month)).rem_euclid(12) as u8)
                 );
                 assert_eq!(
-                    star_branches[StarKey::WenChang.index()],
+                    star_branches[StarName::WenChang.index()],
                     branch_from_yin0((8 - i32::from(hour)).rem_euclid(12) as u8)
                 );
                 assert_eq!(
-                    star_branches[StarKey::WenQu.index()],
+                    star_branches[StarName::WenQu.index()],
                     branch_from_yin0((2 + i32::from(hour)).rem_euclid(12) as u8)
                 );
             }

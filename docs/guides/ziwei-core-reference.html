@@ -1080,7 +1080,7 @@
             </p>
             <div class="hero-rule" aria-label="核心结构数量">
               <div><strong>12</strong><span>Palace · 寅为零 · 逆步</span></div>
-              <div><strong>18</strong><span>StarKey · 各一次</span></div>
+              <div><strong>18</strong><span>StarName · 各一次</span></div>
               <div><strong>4×12</strong><span>PalaceTransformation</span></div>
               <div><strong>12×10</strong><span>DecadeYear</span></div>
             </div>
@@ -1178,7 +1178,7 @@
                   <div class="pipeline-index" aria-hidden="true">01</div>
                   <div class="pipeline-title"><h3>归一化入口</h3><code>NatalContext</code></div>
                   <div class="pipeline-detail">
-                    <p><code>Natal::from_birth</code> 由年份推导年干支，并在上下文中保留 <code>Some(year)</code>；<code>from_input</code> 直接使用给定年干支，年份记为 <code>None</code>。</p>
+                    <p><code>create_from_birth</code> 由年份推导年干支，并在上下文中保留 <code>Some(year)</code>；<code>create_from_input</code> 直接使用给定年干支，年份记为 <code>None</code>。</p>
                     <small>调用 <code>Natal</code> 构造函数前，<code>try_new</code> 已完成范围或六十甲子校验。</small>
                   </div>
                 </li>
@@ -1187,14 +1187,14 @@
                   <div class="pipeline-title"><h3>安命身，定宫干与五行局</h3><code>PalacePlacement[12]</code></div>
                   <div class="pipeline-detail">
                     <p>先定命宫、身宫落支和十二宫干，再由命宫与宫干定五行局。这些结果共同确定十二宫的宫名、地支与宫干。</p>
-                    <small><code>compute_ming_shen_branches</code> → <code>compute_palace_stems</code> → <code>bureau_from_ming_palace</code> → <code>compute_palace_placements</code></small>
+                    <small><code>compute_ming_palace_branch</code> / <code>compute_shen_palace_branch</code> → <code>compute_palace_stems</code> → <code>bureau_from_ming_palace</code> → <code>compute_palace_placements</code></small>
                   </div>
                 </li>
                 <li class="pipeline-step">
                   <div class="pipeline-index" aria-hidden="true">03</div>
                   <div class="pipeline-title"><h3>安十八星</h3><code>Branch[18]</code></div>
                   <div class="pipeline-detail">
-                    <p>日数与五行局安十四主星，月、时安左辅、右弼、文昌、文曲。合并两组结果后，每个 <code>StarKey</code> 恰有一个落宫。</p>
+                    <p>日数与五行局安十四主星，月、时安左辅、右弼、文昌、文曲。合并两组结果后，每个 <code>StarName</code> 恰有一个落宫。</p>
                     <small><code>compute_major_star_branches</code> + <code>compute_minor_star_branches</code> → <code>merge_star_branches</code></small>
                   </div>
                 </li>
@@ -1202,7 +1202,7 @@
                   <div class="pipeline-index" aria-hidden="true">04</div>
                   <div class="pipeline-title"><h3>记录星曜四化</h3><code>Star</code></div>
                   <div class="pipeline-detail">
-                    <p>遍历 <code>StarKey::ALL</code>，为每颗星计算生年四化与入、出自化，再按落宫地支归入 <code>stars_by_branch</code>。</p>
+                    <p>遍历 <code>StarName::ALL</code>，为每颗星计算生年四化与入、出自化，再按落宫地支归入 <code>stars_by_branch</code>。</p>
                     <small>这些结果在排盘时写入 <code>Star</code>，查询时直接读取。</small>
                   </div>
                 </li>
@@ -1250,9 +1250,9 @@
 ├─ palaces: [<span class="type">Palace</span>; 12]
 │  ├─ stars: Vec&lt;<span class="type">Star</span>&gt;
 │  └─ transformations: [<span class="type">PalaceTransformation</span>; 4]
-├─ <span class="accent">ming_palace</span> + ming_palace_branch
-├─ <span class="accent">shen_palace</span> + shen_palace_branch
-├─ <span class="accent">origin_palace</span> + origin_palace_branch
+├─ <span class="accent">ming_palace_branch</span> → PalaceName::Ming
+├─ <span class="accent">shen_palace_name</span> + shen_palace_branch
+├─ <span class="accent">origin_palace_name</span> + origin_palace_branch
 ├─ bureau: <span class="type">FiveElementBureau</span>
 ├─ decade_direction: <span class="type">DecadeDirection</span>
 └─ decades: [<span class="type">Decade</span>; 12]
@@ -1300,10 +1300,10 @@ QianYi, JiaoYou, GuanLu, TianZhai, FuDe, FuMu</code></pre>
             <div class="section-label"><span>06 / STAR</span><h2>身份与落位</h2></div>
             <div class="section-body">
               <p class="lede">
-                <code>StarKey</code> 标识星曜，<code>Star</code> 记录它在一张命盘中的落位。分类与斗系属于 <code>StarKey</code>；生年四化与自化属于 <code>Star</code>。
+                <code>StarName</code> 只标识星曜；<code>Star</code> 保存类别、斗系、生年四化与自化。
               </p>
               <div class="code-block">
-                <div class="code-head"><span>StarKey::ALL · stable order</span><button class="copy-button" type="button">复制</button></div>
+                <div class="code-head"><span>StarName::ALL · stable order</span><button class="copy-button" type="button">复制</button></div>
                 <pre><code>ZiWei, TianJi, TaiYang, WuQu, TianTong, LianZhen,
 TianFu, TaiYin, TanLang, JuMen, TianXiang, TianLiang,
 QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
@@ -1316,7 +1316,7 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
               </div>
               <div class="scope-grid">
                 <div class="scope-block">
-                  <h3>StarType</h3>
+                  <h3>StarCategory</h3>
                   <ul>
                     <li>十四主星：<code>Major</code></li>
                     <li>左辅、右弼、文昌、文曲：<code>Minor</code></li>
@@ -1324,10 +1324,9 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
                   </ul>
                 </div>
                 <div class="scope-block">
-                  <h3>稳定标识</h3>
+                  <h3>领域身份</h3>
                   <ul>
-                    <li><code>StarKey::as_str()</code> 返回 snake_case</li>
-                    <li>示例：<code>ZiWei → "zi_wei"</code></li>
+                    <li><code>StarName</code> 标识星曜</li>
                     <li>简繁体名称由外层提供</li>
                   </ul>
                 </div>
@@ -1364,7 +1363,7 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
                   <ul>
                     <li>每宫固定四条，顺序 A–D</li>
                     <li>每条关系都记录源宫和目标宫的宫名、地支</li>
-                    <li><code>star_key</code> 可在目标宫中定位唯一星曜</li>
+                    <li><code>star_name</code> 可在目标宫中定位唯一星曜</li>
                   </ul>
                 </div>
                 <div class="ownership-card" data-owner="OWNER · STAR">
@@ -1383,7 +1382,7 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
   transformation: <span class="type">Transformation</span>,
   target_name: <span class="type">PalaceName</span>,
   target_branch: <span class="type">Branch</span>,
-  star_key: <span class="type">StarKey</span>,
+  star_name: <span class="type">StarName</span>,
 }</div>
             </div>
           </section>
@@ -1416,8 +1415,8 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
                 <div class="fact-card">
                   <h3>年份能力</h3>
                   <ul>
-                    <li><code>from_birth</code>：<code>year = birth_year + age - 1</code></li>
-                    <li><code>from_input</code>：所有 <code>year = None</code></li>
+                    <li><code>create_from_birth</code>：<code>year = birth_year + age - 1</code></li>
+                    <li><code>create_from_input</code>：所有 <code>year = None</code></li>
                     <li>同一张盘不混用 <code>Some</code> 与 <code>None</code></li>
                   </ul>
                 </div>
@@ -1433,7 +1432,7 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
               </p>
               <div class="code-block">
                 <div class="code-head"><span>Rust · minimal usage</span><button class="copy-button" type="button">复制</button></div>
-                <pre><code><span class="kw">use</span> ziwei::{<span class="ty">Gender</span>, <span class="ty">Natal</span>, <span class="ty">ZiweiBirth</span>};
+                <pre><code><span class="kw">use</span> ziwei::{<span class="fn">create_from_birth</span>, <span class="ty">Gender</span>, <span class="ty">ZiweiBirth</span>};
 
 <span class="kw">fn</span> <span class="fn">main</span>() -&gt; <span class="ty">Result</span>&lt;(), <span class="ty">Box</span>&lt;<span class="kw">dyn</span> std::error::Error&gt;&gt; {
     <span class="kw">let</span> birth = <span class="ty">ZiweiBirth</span>::<span class="fn">try_new</span>(
@@ -1443,12 +1442,12 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
         1,  <span class="cm">// 初一</span>
         4,  <span class="cm">// 辰时，子时 = 0</span>
     )?;
-    <span class="kw">let</span> natal = <span class="ty">Natal</span>::<span class="fn">from_birth</span>(birth);
+    <span class="kw">let</span> natal = <span class="fn">create_from_birth</span>(birth);
 
     <span class="kw">for</span> palace <span class="kw">in</span> natal.<span class="fn">palaces</span>() {
         println!(<span class="cm">"{:?} {:?}"</span>, palace.<span class="fn">name</span>(), palace.<span class="fn">branch</span>());
         <span class="kw">for</span> star <span class="kw">in</span> palace.<span class="fn">stars</span>() {
-            println!(<span class="cm">"  {}"</span>, star.<span class="fn">key</span>().<span class="fn">as_str</span>());
+            println!(<span class="cm">"  {:?}"</span>, star.<span class="fn">name</span>());
         }
     }
 
@@ -1461,14 +1460,14 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
                 <tbody>
                   <tr><td>ZiweiBirth</td><td>try_new(gender, year, month, day, hour)</td><td>带农历年序号的已验证输入</td></tr>
                   <tr><td>ZiweiInput</td><td>try_new(gender, stem, branch, month, day, hour)</td><td>带生年干支、不带农历年序号的已验证输入</td></tr>
-                  <tr><td>Natal</td><td>from_birth / from_input</td><td>从两种已验证输入直接构造命盘</td></tr>
+                  <tr><td>创建函数</td><td>create_from_birth / create_from_input</td><td>从两种已验证输入直接构造命盘</td></tr>
                   <tr><td>Natal</td><td>context / zodiac / palaces / decades</td><td>出生上下文、生肖、十二宫与大限</td></tr>
-                  <tr><td>Natal</td><td>ming_palace(_branch) / shen_palace(_branch) / origin_palace(_branch)</td><td>命宫、身宫、来因宫的宫名与地支</td></tr>
+                  <tr><td>Natal</td><td>ming_palace_branch / shen_palace_name / shen_palace_branch / origin_palace_name / origin_palace_branch</td><td>命宫地支，以及身宫、来因宫的宫名与地支</td></tr>
                   <tr><td>Natal</td><td>bureau / decade_direction</td><td>五行局与大限方向</td></tr>
                   <tr><td>Palace</td><td>name / branch / stem / stars / transformations</td><td>宫名、地支、宫干、星曜与飞化关系</td></tr>
-                  <tr><td>PalaceTransformation</td><td>source_name / source_branch / transformation / target_name / target_branch / star_key</td><td>一条宫干飞化关系的源宫、目标宫与星曜</td></tr>
-                  <tr><td>Star</td><td>key / origin_transformation / self_transformations</td><td>一颗星的落位、生年四化与自化</td></tr>
-                  <tr><td>StarKey</td><td>ALL / as_str / star_type / galaxy</td><td>星曜标识及其固有元数据</td></tr>
+                  <tr><td>PalaceTransformation</td><td>source_name / source_branch / transformation / target_name / target_branch / star_name</td><td>一条宫干飞化关系的源宫、目标宫与星曜</td></tr>
+                  <tr><td>Star</td><td>name / category / galaxy / origin_transformation / self_transformations</td><td>一颗星的身份、类别、斗系、生年四化与自化</td></tr>
+                  <tr><td>StarName</td><td>ALL</td><td>星曜标识与稳定遍历顺序</td></tr>
                   <tr><td>StarSelfTransformations</td><td>inward / outward</td><td>入、出自化</td></tr>
                   <tr><td>Decade</td><td>index / ming_palace_branch / years / age_start / age_end</td><td>一个十年大限</td></tr>
                   <tr><td>DecadeYear</td><td>year / age</td><td>虚岁与可选农历年</td></tr>
