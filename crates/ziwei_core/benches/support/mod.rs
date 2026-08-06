@@ -47,8 +47,8 @@ pub(crate) fn representative_inputs() -> [ZiweiInput; CASE_COUNT] {
     std::array::from_fn(|index| {
         ZiweiInput::try_new(
             gender(index),
-            STEMS[index % STEMS.len()],
-            BRANCHES[index % BRANCHES.len()],
+            STEMS[index.rem_euclid(STEMS.len())],
+            BRANCHES[index.rem_euclid(BRANCHES.len())],
             month(index),
             day(index),
             hour(index),
@@ -58,7 +58,7 @@ pub(crate) fn representative_inputs() -> [ZiweiInput; CASE_COUNT] {
 }
 
 const fn gender(index: usize) -> Gender {
-    if index % 4 < 2 {
+    if index.rem_euclid(4) < 2 {
         Gender::Yang
     } else {
         Gender::Yin
@@ -66,13 +66,13 @@ const fn gender(index: usize) -> Gender {
 }
 
 fn month(index: usize) -> u8 {
-    u8::try_from(index * 5 % 12).expect("month fits in u8")
+    u8::try_from((index * 5).rem_euclid(12)).expect("month fits in u8")
 }
 
 fn day(index: usize) -> u8 {
-    u8::try_from(index * 7 % 30 + 1).expect("day fits in u8")
+    u8::try_from((index * 7).rem_euclid(30) + 1).expect("day fits in u8")
 }
 
 fn hour(index: usize) -> u8 {
-    u8::try_from((index * 7 + 3) % 12).expect("hour fits in u8")
+    u8::try_from((index * 7 + 3).rem_euclid(12)).expect("hour fits in u8")
 }

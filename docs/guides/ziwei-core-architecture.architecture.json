@@ -55,7 +55,7 @@
       "id": "coordinate_algebra",
       "type": "backend",
       "label": "Coordinate Algebra",
-      "sublabel": "Branch · Stem · twelve_index",
+      "sublabel": "Branch · Stem · rem_euclid(12)",
       "sources": [
         { "path": "crates/ziwei_core/src/position.rs" },
         { "path": "crates/ziwei_core/src/branch.rs" },

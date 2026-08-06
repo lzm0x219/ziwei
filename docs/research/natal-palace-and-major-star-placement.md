@@ -58,7 +58,7 @@
 | `crates/ziwei_core/src/input.rs` 中的 `ZiweiInput` | 预处理路径中的性别、年干支、月位、时位、命宫位置和紫微位置 |
 | `FiveElementBureau::from_ming_palace` | 命宫干支 → 五行局（纳音局数表） |
 | `Stem::transformation_star` | 生年干四化表，用于对照 §7 的冲突注记 |
-| `position::twelve_index` | 将下标折叠到 `0..=11` |
+| `rem_euclid(12)` | 将下标折叠到 `0..=11` |
 
 ---
 
@@ -87,7 +87,7 @@ branch_index_zi0   = (yin0_index + 2) mod 12   // 寅=0 → 子=0 系
 yin0_index         = (branch_index_zi0 + 10) mod 12
 ```
 
-`twelve_index` 已经通过欧几里得取模将有符号偏移折叠到 `0..=11`。
+`rem_euclid(12)` 将有符号偏移折叠到 `0..=11`。
 
 ---
 
@@ -426,7 +426,7 @@ s = \begin{cases}0 & e=0\\ -1 & e\text{ odd}\\ +1 & e\text{ even}\end{cases}
 
 | 步骤 | 候选模块（按当时的架构草案） | 已有接口 |
 | --- | --- | --- |
-| A 命身 | `rules` 中的本命宫规则 | `ZiweiInput` 的月/时、`twelve_index` |
+| A 命身 | `rules` 中的本命宫规则 | `ZiweiInput` 的月/时、`rem_euclid(12)` |
 | B 十二职 | `rules`，填充 `Palace::role()` | `PalaceRole` |
 | C 宫干 | `rules` 中的五虎遁规则 | `Stem`、`Palace::stem()` |
 | D 局 | 已有纯函数 | `FiveElementBureau` |

@@ -1184,10 +1184,10 @@
                 </li>
                 <li class="pipeline-step">
                   <div class="pipeline-index" aria-hidden="true">02</div>
-                  <div class="pipeline-title"><h3>安命身，定宫干与五行局</h3><code>PalaceSeed[12]</code></div>
+                  <div class="pipeline-title"><h3>安命身，定宫干与五行局</h3><code>PalacePlacement[12]</code></div>
                   <div class="pipeline-detail">
                     <p>先定命宫、身宫落支和十二宫干，再由命宫与宫干定五行局。这些结果共同确定十二宫的宫名、地支与宫干。</p>
-                    <small><code>compute_ming_shen_branches</code> → <code>compute_palace_stems</code> → <code>bureau_from_ming_palace</code> → <code>build_palace_seeds</code></small>
+                    <small><code>compute_ming_shen_branches</code> → <code>compute_palace_stems</code> → <code>bureau_from_ming_palace</code> → <code>compute_palace_placements</code></small>
                   </div>
                 </li>
                 <li class="pipeline-step">
@@ -1195,7 +1195,7 @@
                   <div class="pipeline-title"><h3>安十八星</h3><code>Branch[18]</code></div>
                   <div class="pipeline-detail">
                     <p>日数与五行局安十四主星，月、时安左辅、右弼、文昌、文曲。合并两组结果后，每个 <code>StarKey</code> 恰有一个落宫。</p>
-                    <small><code>place_major_stars</code> + <code>place_assistants</code> → <code>merge_assistants</code></small>
+                    <small><code>compute_major_star_branches</code> + <code>compute_minor_star_branches</code> → <code>merge_star_branches</code></small>
                   </div>
                 </li>
                 <li class="pipeline-step">

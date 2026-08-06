@@ -57,8 +57,8 @@ impl Branch {
 
     /// 由子序下标还原地支；`index` 会先对 12 取模，故任意 `u8` 皆安全。
     pub(crate) const fn from_index(index: u8) -> Self {
-        // `% 12` 保证落入 0..=11；`_` 分支对应 11（亥）。
-        match index % 12 {
+        // `rem_euclid(12)` 保证落入 0..=11；`_` 分支对应 11（亥）。
+        match index.rem_euclid(12) {
             0 => Self::Zi,
             1 => Self::Chou,
             2 => Self::Yin,
@@ -78,6 +78,6 @@ impl Branch {
     ///
     /// 飞宫自化「入」判定：目标落在源支的对宫。
     pub(crate) const fn opposite(self) -> Self {
-        Self::from_index((self.index() as u8).wrapping_add(6) % 12)
+        Self::from_index((self.index() as u8).wrapping_add(6).rem_euclid(12))
     }
 }

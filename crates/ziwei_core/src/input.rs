@@ -6,7 +6,7 @@
 
 use core::fmt;
 
-use super::{branch::Branch, position::twelve_index, stem::Stem};
+use super::{branch::Branch, stem::Stem};
 
 /// 命主的性别（阴阳）。
 ///
@@ -279,16 +279,16 @@ pub(crate) fn validate_month_day_hour(month: u8, day: u8, hour: u8) -> Result<()
 
 /// 六十甲子要求干支下标同奇偶（甲子、乙丑合法；甲丑非法）。
 pub(crate) fn validate_year_pillar(stem: Stem, branch: Branch) -> Result<(), ZiweiInputError> {
-    if stem.index() % 2 == branch.index() % 2 {
+    if stem.index().rem_euclid(2) == branch.index().rem_euclid(2) {
         Ok(())
     } else {
         Err(ZiweiInputError::InvalidYearPillar { stem, branch })
     }
 }
 
-/// `position` 已是规范的 0..=11 环下标时为真（与 `twelve_index` 往返一致）。
+/// `position` 已是规范的 0..=11 环下标时为真。
 const fn is_valid_ring_position(position: u8) -> bool {
-    twelve_index(position as i32) == position
+    position.rem_euclid(12) == position
 }
 
 /// 先折叠到小环再减 4，等价于 `(year - 4).rem_euclid(modulus)`，且极值不溢出。
