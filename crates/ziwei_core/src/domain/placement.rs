@@ -1,13 +1,27 @@
-//! 本命安宫与安星的纯计算规则。
+//! 本命安宫、安星与十二宫环形坐标的纯计算规则。
+//!
+//! 本模块内部同时使用两套零点（ADR-0007）：
+//! 子序以子为零，用于宫数组下标；寅环以寅为零，用于口诀安命、安星与五虎遁顺布。
 
-use super::{
-    branch::Branch,
-    five_element_bureau::FiveElementBureau,
-    palace::PalaceName,
-    position::{branch_from_yin0, branch_index_to_yin0},
-    star::StarKey,
-    stem::Stem,
-};
+use super::{Branch, FiveElementBureau, PalaceName, StarKey, Stem};
+
+/// 子序 → 寅环：子(0)→10 … 寅(2)→0 … 亥(11)→9。
+const BRANCH_INDEX_TO_YIN0: [u8; 12] = [10, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+/// 寅环 → 子序：寅(0)→2 … 子(10)→0，丑(11)→1。
+const YIN0_TO_BRANCH_INDEX: [u8; 12] = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1];
+
+const fn branch_index_to_yin0(branch_index: u8) -> u8 {
+    BRANCH_INDEX_TO_YIN0[branch_index.rem_euclid(12) as usize]
+}
+
+const fn yin0_to_branch_index(yin0: u8) -> u8 {
+    YIN0_TO_BRANCH_INDEX[yin0.rem_euclid(12) as usize]
+}
+
+pub(crate) const fn branch_from_yin0(yin0: u8) -> Branch {
+    Branch::from_index(yin0_to_branch_index(yin0))
+}
 
 /// 命宫与身宫地支。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -169,6 +183,16 @@ const fn set_star_branch(branches_by_star: &mut [Branch; 18], star_key: StarKey,
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn coordinate_conversions_round_trip_all_twelve_positions() {
+        for branch_index in 0..12 {
+            let yin0 = branch_index_to_yin0(branch_index);
+
+            assert_eq!(yin0_to_branch_index(yin0), branch_index);
+            assert_eq!(branch_from_yin0(yin0).index(), usize::from(branch_index));
+        }
+    }
 
     #[test]
     fn palace_stems_follow_five_tiger_escape_for_every_year_stem_and_branch() {

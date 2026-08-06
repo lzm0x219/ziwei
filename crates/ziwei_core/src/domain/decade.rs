@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use super::{branch::Branch, input::Gender, stem::Stem};
+use super::{Branch, Gender, Stem};
 
 /// 大限推进方向。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

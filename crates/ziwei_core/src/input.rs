@@ -6,25 +6,7 @@
 
 use core::fmt;
 
-use super::{branch::Branch, stem::Stem};
-
-/// 命主的性别（阴阳）。
-///
-/// 与大限顺逆一致：阳对应男、阴对应女；年干阴阳与性别同性则顺行，异性逆行（ADR-0006）。
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Gender {
-    /// 阴（女）。
-    Yin,
-    /// 阳（男）。
-    Yang,
-}
-
-impl Gender {
-    /// 是否为阳（男）。
-    pub(crate) const fn is_yang(self) -> bool {
-        matches!(self, Self::Yang)
-    }
-}
+use super::domain::{Branch, Gender, Stem};
 
 /// 供 `from_birth` 使用的农历出生资料（打平字段，无嵌套日期对象）。
 ///

@@ -57,9 +57,9 @@
       "label": "Coordinate Algebra",
       "sublabel": "Branch · Stem · rem_euclid(12)",
       "sources": [
-        { "path": "crates/ziwei_core/src/position.rs" },
-        { "path": "crates/ziwei_core/src/branch.rs" },
-        { "path": "crates/ziwei_core/src/stem.rs" }
+        { "path": "crates/ziwei_core/src/domain/placement.rs" },
+        { "path": "crates/ziwei_core/src/domain/branch.rs" },
+        { "path": "crates/ziwei_core/src/domain/stem.rs" }
       ],
       "pos": [360, 90],
       "size": [190, 78]
@@ -69,7 +69,7 @@
       "type": "backend",
       "label": "Placement Rules",
       "sublabel": "命身 · 宫干 · 主辅星",
-      "sources": [{ "path": "crates/ziwei_core/src/placement.rs" }],
+      "sources": [{ "path": "crates/ziwei_core/src/domain/placement.rs" }],
       "pos": [690, 90],
       "size": [180, 78]
     },
@@ -79,9 +79,9 @@
       "label": "Stable Domain Codes",
       "sublabel": "PalaceName · StarKey · A/B/C/D",
       "sources": [
-        { "path": "crates/ziwei_core/src/palace.rs" },
-        { "path": "crates/ziwei_core/src/star.rs" },
-        { "path": "crates/ziwei_core/src/transformation.rs" }
+        { "path": "crates/ziwei_core/src/domain/palace.rs" },
+        { "path": "crates/ziwei_core/src/domain/star.rs" },
+        { "path": "crates/ziwei_core/src/domain/transformation.rs" }
       ],
       "pos": [670, 580],
       "size": [220, 82]
@@ -93,8 +93,8 @@
       "sublabel": "Palace → Stars + Transformations",
       "tag": "12 palaces · 18 stars",
       "sources": [
-        { "path": "crates/ziwei_core/src/palace.rs" },
-        { "path": "crates/ziwei_core/src/star.rs" }
+        { "path": "crates/ziwei_core/src/domain/palace.rs" },
+        { "path": "crates/ziwei_core/src/domain/star.rs" }
       ],
       "pos": [940, 120],
       "size": [190, 82]
@@ -104,7 +104,7 @@
       "type": "database",
       "label": "Decades",
       "sublabel": "12 × Decade · 10 × DecadeYear",
-      "sources": [{ "path": "crates/ziwei_core/src/decade.rs" }],
+      "sources": [{ "path": "crates/ziwei_core/src/domain/decade.rs" }],
       "pos": [940, 330],
       "size": [190, 78]
     },
@@ -114,8 +114,8 @@
       "label": "Derived Facts",
       "sublabel": "Zodiac · FiveElementBureau",
       "sources": [
-        { "path": "crates/ziwei_core/src/zodiac.rs" },
-        { "path": "crates/ziwei_core/src/five_element_bureau.rs" }
+        { "path": "crates/ziwei_core/src/domain/zodiac.rs" },
+        { "path": "crates/ziwei_core/src/domain/five_element_bureau.rs" }
       ],
       "pos": [940, 540],
       "size": [190, 78]

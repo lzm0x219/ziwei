@@ -6,8 +6,8 @@
 
 ## 1. 结论
 
-[`Stem::yin_head_stem`](../../crates/ziwei_core/src/stem.rs) 与
-[`compute_palace_stems`](../../crates/ziwei_core/src/placement.rs) 共同实现了标准五虎遁：
+[`Stem::yin_head_stem`](../../crates/ziwei_core/src/domain/stem.rs) 与
+[`compute_palace_stems`](../../crates/ziwei_core/src/domain/placement.rs) 共同实现了标准五虎遁：
 
 | 生年干 | 寅宫起干 |
 | ------ | -------- |
@@ -75,7 +75,7 @@ Wu  | Gui  -> Jia
 ### 3.2 `compute_palace_stems`
 
 仓库公开宫位数组采用子序，即 `子=0、丑=1、寅=2、…、亥=11`；五虎遁运算采用
-寅环，即 `寅=0、卯=1、…、丑=11`。[`position.rs`](../../crates/ziwei_core/src/position.rs)
+寅环，即 `寅=0、卯=1、…、丑=11`。[`placement.rs` 中的坐标转换](../../crates/ziwei_core/src/domain/placement.rs)
 中的 `branch_index_to_yin0` 映射为：
 
 ```text
@@ -107,7 +107,7 @@ stem = (寅宫起干下标 + 寅环下标) mod 10
 五虎遁和来因宫固定表是两条独立规则：
 
 - 五虎遁回答：某生年干下，十二地支宫各是什么宫干。
-- [`origin_palace_branch`](../../crates/ziwei_core/src/stem.rs) 与
+- [`origin_palace_branch`](../../crates/ziwei_core/src/domain/stem.rs) 与
   [ADR-0005](../adr/0005-laiyin-palace.md) 回答：该生年干的来因宫落在哪一地支。
 
 项目同时要求两条规则的结果满足不变量：来因宫宫干等于生年天干。因此丙年的
