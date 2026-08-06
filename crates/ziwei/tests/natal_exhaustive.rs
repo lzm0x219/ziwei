@@ -46,11 +46,11 @@ const STEMS: [Stem; 10] = [
 ];
 
 fn palace_at_branch(natal: &Natal, branch: Branch) -> &Palace {
-    &natal.palaces()[(branch.index() + 10) % 12]
+    &natal.palaces()[(branch.index() + 10).rem_euclid(12)]
 }
 
 fn opposite(branch: Branch) -> Branch {
-    BRANCHES[(branch.index() + 6) % 12]
+    BRANCHES[(branch.index() + 6).rem_euclid(12)]
 }
 
 fn star_index(key: StarKey) -> usize {
@@ -157,9 +157,9 @@ fn assert_natal_graph_invariants(natal: &Natal, birth_stem: Stem) {
 #[ignore = "exhaustive optimization baseline; run explicitly in release mode"]
 fn every_valid_normalized_input_preserves_natal_graph_invariants() {
     for gender in [Gender::Yin, Gender::Yang] {
-        for cycle_index in 0..60 {
-            let stem = STEMS[cycle_index % STEMS.len()];
-            let branch = BRANCHES[cycle_index % BRANCHES.len()];
+        for cycle_index in 0usize..60 {
+            let stem = STEMS[cycle_index.rem_euclid(STEMS.len())];
+            let branch = BRANCHES[cycle_index.rem_euclid(BRANCHES.len())];
 
             for month in 0..12 {
                 for day in 1..=30 {

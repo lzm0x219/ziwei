@@ -2,7 +2,7 @@
 
 use core::fmt;
 
-use super::{branch::Branch, input::Gender, position::twelve_index, stem::Stem};
+use super::{branch::Branch, input::Gender, stem::Stem};
 
 /// 大限推进方向。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -168,9 +168,9 @@ pub(crate) fn build_decades(
             DecadeDirection::Forward => i32::from(raw_index),
             DecadeDirection::Reverse => -i32::from(raw_index),
         };
-        let ming_palace_branch = Branch::from_index(twelve_index(
-            ming_palace_branch.index() as i32 + branch_offset,
-        ));
+        let ming_palace_branch = Branch::from_index(
+            (ming_palace_branch.index() as i32 + branch_offset).rem_euclid(12) as u8,
+        );
         let decade_offset = raw_index
             .checked_mul(10)
             .expect("twelve decade offsets fit in u8");

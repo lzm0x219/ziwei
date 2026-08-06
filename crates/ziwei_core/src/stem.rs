@@ -151,7 +151,7 @@ impl Stem {
 
     /// 由下标还原天干；先对 10 取模。
     pub(crate) const fn from_index(index: u8) -> Self {
-        match index % 10 {
+        match index.rem_euclid(10) {
             0 => Self::Jia,
             1 => Self::Yi,
             2 => Self::Bing,
