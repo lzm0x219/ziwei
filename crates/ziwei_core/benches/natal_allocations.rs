@@ -1,4 +1,4 @@
-//! Representative `Natal` construction allocation baselines.
+//! Representative `Natal` creation allocation baselines.
 
 use std::{hint::black_box, mem::size_of};
 

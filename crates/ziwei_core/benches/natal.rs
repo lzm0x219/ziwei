@@ -1,4 +1,4 @@
-//! Representative `Natal` construction latency baselines.
+//! Representative `Natal` creation latency baselines.
 
 use std::hint::black_box;
 
