@@ -7,7 +7,7 @@
 1. `ZiweiBirth` 与 `ZiweiInput` 是仅有的公开输入。两者归一化为私有只读 `NatalContext`，再进入同一计算流水线。
 2. `Natal` 保存十二宫、生肖、命宫/身宫/来因宫坐标、五行局、大限方向及十二个大限。
 3. `Palace` 保存宫名、支、干、落宫 `Star` 与四条 `PalaceTransformation`。
-4. 星曜身份使用 `StarKey`；盘内 `Star.origin_transformation` 保存由生年天干所飞化的生年四化。来因宫与五虎遁宫干各自独立计算，但来因宫宫干必须与生年天干一致，因此 `origin_transformation` 同时对应 `origin_palace` 那一宫的 `PalaceTransformation`；`Star` 还保存向心/离心自化。
+4. 星曜身份使用 `StarName`；盘内 `Star.origin_transformation` 保存由生年天干所飞化的生年四化。来因宫与五虎遁宫干各自独立计算，但来因宫宫干必须与生年天干一致，因此 `origin_transformation` 同时对应 `origin_palace_name` 所指宫位的 `PalaceTransformation`；`Star` 还保存向心/离心自化。
 5. 四化身份固定为 `Transformation::A/B/C/D`。生年四化不另存顶层数组，自化不另存宫位或边标记。
 6. `Decade` 保存十个最小 `DecadeYear { year: Option<i32>, age: u8 }`。紫微斗数语境下，`year` 固定指农历年序号，`age` 固定指虚岁；公开接口沿用短名，不增加 `lunar_year` / `virtual_age` 别名。core 不保存或计算完整流年盘。
 7. 所有多字段结果字段私有，仅由 core 构造并对外只读。
@@ -23,7 +23,7 @@
 
 - 旧 `Ziwei`、`PalaceRole`、`DecadeStep`、`ZiweiFly`、`YearTransformation`、`ZiweiView` 及相关查询方法被删除，无别名。
 - 调用方从 `Natal` 的只读结构读取完整事实；条件查询等待 `ziwei_query` 的真实用例。
-- 出生年份输入必须提前验证能表示十二个大限的全部年份，使 `Natal::from_birth` 保持无失败。
+- 出生年份输入必须提前验证能表示十二个大限的全部年份，使 `create_from_birth` 保持无失败。
 - 结果模型的公开顺序与唯一性成为测试契约。
 
 本决策取代 ADR 0003、0004、0008、0009、0010 中关于结果存储形态、查询公开面和类型命名的部分；这些 ADR 中已经确认的计算公式与领域规则仍然有效。

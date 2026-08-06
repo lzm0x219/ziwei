@@ -1,6 +1,9 @@
 //! Exhaustive public-contract baseline for `Natal` construction.
 
-use ziwei::{Branch, Gender, Natal, Palace, StarKey, Stem, Transformation, ZiweiInput};
+use ziwei::{
+    Branch, Gender, Natal, Palace, PalaceName, StarName, Stem, Transformation, ZiweiInput,
+    create_from_input,
+};
 
 const BRANCHES: [Branch; 12] = [
     Branch::Zi,
@@ -53,22 +56,22 @@ fn opposite(branch: Branch) -> Branch {
     BRANCHES[(branch.index() + 6).rem_euclid(12)]
 }
 
-fn star_index(key: StarKey) -> usize {
-    StarKey::ALL
+fn star_index(name: StarName) -> usize {
+    StarName::ALL
         .iter()
-        .position(|candidate| *candidate == key)
-        .expect("StarKey::ALL contains every published star identity")
+        .position(|candidate| *candidate == name)
+        .expect("StarName::ALL contains every published star identity")
 }
 
 fn expected_transformation_from(
     natal: &Natal,
     source: Branch,
-    key: StarKey,
+    name: StarName,
 ) -> Option<Transformation> {
     palace_at_branch(natal, source)
         .transformations()
         .iter()
-        .find(|relation| relation.star_key() == key)
+        .find(|relation| relation.star_name() == name)
         .map(|relation| relation.transformation())
 }
 
@@ -86,18 +89,18 @@ fn assert_natal_graph_invariants(natal: &Natal, birth_stem: Stem) {
     let mut star_branches = [None; 18];
     for palace in natal.palaces() {
         for star in palace.stars() {
-            let previous = star_branches[star_index(star.key())].replace(palace.branch());
+            let previous = star_branches[star_index(star.name())].replace(palace.branch());
             assert_eq!(
                 previous,
                 None,
                 "star appears more than once: {:?}",
-                star.key()
+                star.name()
             );
         }
     }
     assert!(
         star_branches.iter().all(Option::is_some),
-        "every StarKey appears exactly once",
+        "every StarName appears exactly once",
     );
 
     for palace in natal.palaces() {
@@ -108,7 +111,7 @@ fn assert_natal_graph_invariants(natal: &Natal, birth_stem: Stem) {
             assert_eq!(relation.source_branch(), palace.branch());
             assert_eq!(relation.transformation(), expected_transformation);
 
-            let target_branch = star_branches[star_index(relation.star_key())]
+            let target_branch = star_branches[star_index(relation.star_name())]
                 .expect("every transformation target star has a placement");
             assert_eq!(relation.target_branch(), target_branch);
             assert_eq!(
@@ -119,9 +122,9 @@ fn assert_natal_graph_invariants(natal: &Natal, birth_stem: Stem) {
     }
 
     for (name, branch) in [
-        (natal.ming_palace(), natal.ming_palace_branch()),
-        (natal.shen_palace(), natal.shen_palace_branch()),
-        (natal.origin_palace(), natal.origin_palace_branch()),
+        (PalaceName::Ming, natal.ming_palace_branch()),
+        (natal.shen_palace_name(), natal.shen_palace_branch()),
+        (natal.origin_palace_name(), natal.origin_palace_branch()),
     ] {
         assert_eq!(palace_at_branch(natal, branch).name(), name);
     }
@@ -129,26 +132,26 @@ fn assert_natal_graph_invariants(natal: &Natal, birth_stem: Stem) {
     let origin = palace_at_branch(natal, natal.origin_palace_branch());
     assert_eq!(origin.stem(), birth_stem);
 
-    for key in StarKey::ALL {
-        let target_branch = star_branches[star_index(key)]
+    for name in StarName::ALL {
+        let target_branch = star_branches[star_index(name)]
             .expect("every published star identity has one placement");
         let star = palace_at_branch(natal, target_branch)
             .stars()
             .iter()
-            .find(|star| star.key() == key)
+            .find(|star| star.name() == name)
             .expect("the indexed branch contains the star");
 
         assert_eq!(
             star.origin_transformation(),
-            expected_transformation_from(natal, natal.origin_palace_branch(), key),
+            expected_transformation_from(natal, natal.origin_palace_branch(), name),
         );
         assert_eq!(
             star.self_transformations().outward(),
-            expected_transformation_from(natal, target_branch, key),
+            expected_transformation_from(natal, target_branch, name),
         );
         assert_eq!(
             star.self_transformations().inward(),
-            expected_transformation_from(natal, opposite(target_branch), key),
+            expected_transformation_from(natal, opposite(target_branch), name),
         );
     }
 }
@@ -166,7 +169,7 @@ fn every_valid_normalized_input_preserves_natal_graph_invariants() {
                     for hour in 0..12 {
                         let input = ZiweiInput::try_new(gender, stem, branch, month, day, hour)
                             .expect("sexagenary cycle and lunar fields are valid");
-                        let natal = Natal::from_input(input);
+                        let natal = create_from_input(input);
 
                         assert_natal_graph_invariants(&natal, stem);
                     }

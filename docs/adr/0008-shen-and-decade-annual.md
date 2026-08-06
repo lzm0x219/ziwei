@@ -36,11 +36,11 @@ years_in_decade(index: DecadeIndex) -> Result<[DecadeYear; 10], DecadeYearsError
 // DecadeYear：lunar_year() / virtual_age()；字段私有（ADR-0010）
 // virtual_age 从 age_start 到 age_end
 // lunar_year = birth_lunar_year + virtual_age - 1
-// BirthYearUnavailable：命盘来自 from_input，没有真实出生年
+// BirthYearUnavailable：命盘来自 create_from_input，没有真实出生年
 // LunarYearOutOfRange：lunar_year 超出 i32
 ```
 
-绝对流年序号能力只属于 `from_birth` 路径（ADR-0009）。成功列表中的 `lunar_year` 可直接作为历史草图中的 `ZiweiView::Annual { year }` 参数。
+绝对流年序号能力只属于 `create_from_birth` 路径（ADR-0009）。成功列表中的 `lunar_year` 可直接作为历史草图中的 `ZiweiView::Annual { year }` 参数。
 
 ## 流年宫职
 

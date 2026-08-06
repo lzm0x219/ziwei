@@ -4,7 +4,7 @@
 
 pub use ziwei_core::{
     Branch, Decade, DecadeDirection, DecadeIndex, DecadeIndexError, DecadeYear, FiveElementBureau,
-    Gender, Natal, NatalContext, Palace, PalaceName, PalaceTransformation, Star, StarGalaxy,
-    StarKey, StarSelfTransformations, StarType, Stem, Transformation, ZiweiBirth, ZiweiInput,
-    ZiweiInputError, Zodiac,
+    Gender, Natal, NatalContext, Palace, PalaceName, PalaceTransformation, Star, StarCategory,
+    StarGalaxy, StarName, StarSelfTransformations, Stem, Transformation, ZiweiBirth, ZiweiInput,
+    ZiweiInputError, Zodiac, create_from_birth, create_from_input,
 };

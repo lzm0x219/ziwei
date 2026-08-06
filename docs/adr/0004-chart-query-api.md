@@ -39,7 +39,7 @@ flies_from_role(role, view) -> &[ZiweiFly; 4]
 
 1. 切换 `view` 不重建 `Ziwei`，不重算飞边 / 星位 / 生年四化 / 来因。
 2. 生年四化与来因宫固定挂在本命盘上；大限/流年不产生额外四化。
-3. 构造仍走 `from_birth` / `from_input`（ADR-0001、0002）；结果一律引擎算。
+3. 构造仍走 `create_from_birth` / `create_from_input`（ADR-0001、0002）；结果一律引擎算。
 
 ## 必过场景
 

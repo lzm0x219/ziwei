@@ -4,7 +4,7 @@ use arrayvec::ArrayVec;
 
 use super::{
     branch::Branch,
-    star::{Star, StarKey},
+    star::{Star, StarName},
     stem::Stem,
     transformation::Transformation,
 };
@@ -85,7 +85,7 @@ pub struct PalaceTransformation {
     transformation: Transformation,
     target_name: PalaceName,
     target_branch: Branch,
-    star_key: StarKey,
+    star_name: StarName,
 }
 
 impl PalaceTransformation {
@@ -96,7 +96,7 @@ impl PalaceTransformation {
         transformation: Transformation,
         target_name: PalaceName,
         target_branch: Branch,
-        star_key: StarKey,
+        star_name: StarName,
     ) -> Self {
         Self {
             source_name,
@@ -104,7 +104,7 @@ impl PalaceTransformation {
             transformation,
             target_name,
             target_branch,
-            star_key,
+            star_name,
         }
     }
 
@@ -134,8 +134,8 @@ impl PalaceTransformation {
     }
 
     /// 被化星曜身份。
-    pub const fn star_key(self) -> StarKey {
-        self.star_key
+    pub const fn star_name(self) -> StarName {
+        self.star_name
     }
 }
 
@@ -184,7 +184,7 @@ impl Palace {
         self.stem
     }
 
-    /// 落在本宫的星曜，顺序遵循 [`StarKey::ALL`]。
+    /// 落在本宫的星曜，顺序遵循 [`StarName::ALL`]。
     pub fn stars(&self) -> &[Star] {
         self.stars.as_slice()
     }
@@ -198,12 +198,14 @@ impl Palace {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::star::StarSelfTransformations;
+    use crate::domain::{StarCategory, StarGalaxy, star::StarSelfTransformations};
 
     #[test]
     fn palace_exposes_read_only_nested_facts() {
         let star = Star::new(
-            StarKey::ZiWei,
+            StarName::ZiWei,
+            StarCategory::Major,
+            Some(StarGalaxy::Central),
             Some(Transformation::A),
             StarSelfTransformations::new(None, None),
         );
@@ -213,7 +215,7 @@ mod tests {
             Transformation::A,
             PalaceName::Ming,
             Branch::Zi,
-            StarKey::ZiWei,
+            StarName::ZiWei,
         );
         let mut stars = PalaceStars::new();
         stars.push(star);

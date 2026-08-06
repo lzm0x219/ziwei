@@ -111,11 +111,11 @@ stem = (寅宫起干下标 + 寅环下标) mod 10
   [ADR-0005](../adr/0005-laiyin-palace.md) 回答：该生年干的来因宫落在哪一地支。
 
 项目同时要求两条规则的结果满足不变量：来因宫宫干等于生年天干。因此丙年的
-`origin_palace` 是申；五虎遁独立算得申宫干为丙。实现仍按固定表确定来因宫，不在运行时
+`origin_palace_branch` 是申；五虎遁独立算得申宫干为丙。实现仍按固定表确定来因宫，不在运行时
 扫描宫干。
 
 `Star::origin_transformation` 可直接由生年天干查四化表。由于上述宫干相等不变量，同一组
-四化也出现在 `origin_palace` 的 `PalaceTransformation` 中。
+四化也出现在 `origin_palace_name` 所指宫位的 `PalaceTransformation` 中。
 
 ## 5. 测试覆盖
 

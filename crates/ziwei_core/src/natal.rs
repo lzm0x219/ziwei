@@ -3,12 +3,14 @@
 use super::{
     domain::{
         Branch, Decade, DecadeDirection, FiveElementBureau, Gender, Palace, PalaceName,
-        PalaceStars, PalaceTransformation, Star, StarKey, StarSelfTransformations, Stem,
+        PalaceStars, PalaceTransformation, Star, StarName, StarSelfTransformations, Stem,
         Transformation, Zodiac, build_decades,
         placement::{
-            PalacePlacement, bureau_from_ming_palace, compute_ming_shen_branches,
-            compute_palace_placements, compute_palace_stems, compute_star_branches,
+            PalacePlacement, bureau_from_ming_palace, compute_ming_palace_branch,
+            compute_palace_placements, compute_palace_stems, compute_shen_palace_branch,
+            compute_star_branches,
         },
+        star_category, star_galaxy,
     },
     input::{ZiweiBirth, ZiweiInput},
 };
@@ -90,11 +92,10 @@ pub struct Natal {
     context: NatalContext,
     zodiac: Zodiac,
     palaces: [Palace; 12],
-    ming_palace: PalaceName,
     ming_palace_branch: Branch,
-    shen_palace: PalaceName,
+    shen_palace_name: PalaceName,
     shen_palace_branch: Branch,
-    origin_palace: PalaceName,
+    origin_palace_name: PalaceName,
     origin_palace_branch: Branch,
     bureau: FiveElementBureau,
     decade_direction: DecadeDirection,
@@ -107,100 +108,101 @@ struct TransformationFacts {
     self_transformations_by_star: [StarSelfTransformations; 18],
 }
 
-impl Natal {
-    /// 从含历法层归一化农历年序号的已验证输入构造本命盘。
-    pub fn from_birth(birth: ZiweiBirth) -> Self {
-        let year = birth.year();
-        let input = ZiweiInput::from_birth(birth);
-        Self::from_context(NatalContext::from_input(input, Some(year)))
+/// 从含历法层归一化农历年序号的已验证输入创建本命盘。
+pub fn create_from_birth(birth: ZiweiBirth) -> Natal {
+    let year = birth.year();
+    let input = ZiweiInput::from_birth(birth);
+    create_from_context(NatalContext::from_input(input, Some(year)))
+}
+
+/// 从含生年干支但不含农历年序号的已验证输入创建本命盘。
+pub fn create_from_input(input: ZiweiInput) -> Natal {
+    create_from_context(NatalContext::from_input(input, None))
+}
+
+fn create_from_context(context: NatalContext) -> Natal {
+    let ming_palace_branch = compute_ming_palace_branch(context.month(), context.hour());
+    let shen_palace_branch = compute_shen_palace_branch(context.month(), context.hour());
+    let palace_stems_by_branch = compute_palace_stems(context.birth_stem());
+    let bureau = bureau_from_ming_palace(ming_palace_branch, &palace_stems_by_branch);
+    let placements_by_branch =
+        compute_palace_placements(ming_palace_branch, &palace_stems_by_branch);
+    let branches_by_star =
+        compute_star_branches(context.day(), bureau, context.month(), context.hour());
+    let origin_palace_branch = context.birth_stem().origin_palace_branch();
+    let transformation_facts = build_transformation_facts(
+        origin_palace_branch,
+        &placements_by_branch,
+        &branches_by_star,
+    );
+
+    let mut stars_by_branch: [PalaceStars; 12] = std::array::from_fn(|_| PalaceStars::new());
+    for name in StarName::ALL {
+        let branch = branches_by_star[name.index()];
+        let star = Star::new(
+            name,
+            star_category(name),
+            star_galaxy(name),
+            transformation_facts.origin_transformations_by_star[name.index()],
+            transformation_facts.self_transformations_by_star[name.index()],
+        );
+        stars_by_branch[branch.index()]
+            .try_push(star)
+            .expect("a palace contains at most six supported stars");
     }
 
-    /// 从含生年干支但不含农历年序号的已验证输入构造本命盘。
-    pub fn from_input(input: ZiweiInput) -> Self {
-        Self::from_context(NatalContext::from_input(input, None))
-    }
-
-    fn from_context(context: NatalContext) -> Self {
-        let ming_shen = compute_ming_shen_branches(context.month(), context.hour());
-        let palace_stems_by_branch = compute_palace_stems(context.birth_stem());
-        let bureau = bureau_from_ming_palace(ming_shen.ming_palace, &palace_stems_by_branch);
-        let placements_by_branch =
-            compute_palace_placements(ming_shen.ming_palace, &palace_stems_by_branch);
-        let branches_by_star =
-            compute_star_branches(context.day(), bureau, context.month(), context.hour());
-        let origin_palace_branch = context.birth_stem().origin_palace_branch();
-        let transformation_facts = build_transformation_facts(
-            origin_palace_branch,
+    // 对外宫序固定为寅至丑。端到端基准与发布构建汇编均显示：显式展开可直接组装
+    // 672 B 宫位数组，而 `array::from_fn` 会保留一次整数组搬移；实际构造仍集中在
+    // `take_palace_at_branch`，避免十二份规则实现。
+    let mut take_palace = |branch| {
+        take_palace_at_branch(
+            branch,
             &placements_by_branch,
-            &branches_by_star,
-        );
+            &mut stars_by_branch,
+            &transformation_facts,
+        )
+    };
+    let palaces = [
+        take_palace(Branch::Yin),
+        take_palace(Branch::Mao),
+        take_palace(Branch::Chen),
+        take_palace(Branch::Si),
+        take_palace(Branch::Wu),
+        take_palace(Branch::Wei),
+        take_palace(Branch::Shen),
+        take_palace(Branch::You),
+        take_palace(Branch::Xu),
+        take_palace(Branch::Hai),
+        take_palace(Branch::Zi),
+        take_palace(Branch::Chou),
+    ];
 
-        let mut stars_by_branch: [PalaceStars; 12] = std::array::from_fn(|_| PalaceStars::new());
-        for key in StarKey::ALL {
-            let branch = branches_by_star[key.index()];
-            let star = Star::new(
-                key,
-                transformation_facts.origin_transformations_by_star[key.index()],
-                transformation_facts.self_transformations_by_star[key.index()],
-            );
-            stars_by_branch[branch.index()]
-                .try_push(star)
-                .expect("a palace contains at most six supported stars");
-        }
+    let shen_palace_name = palace_name_at(shen_palace_branch, &placements_by_branch);
+    let origin_palace_name = palace_name_at(origin_palace_branch, &placements_by_branch);
+    let (decade_direction, decades) = build_decades(
+        context.gender(),
+        context.birth_stem(),
+        context.year(),
+        ming_palace_branch,
+        bureau.number(),
+    );
 
-        // 对外宫序固定为寅至丑。端到端基准与发布构建汇编均显示：显式展开可直接组装
-        // 672 B 宫位数组，而 `array::from_fn` 会保留一次整数组搬移；实际构造仍集中在
-        // `take_palace_at_branch`，避免十二份规则实现。
-        let mut take_palace = |branch| {
-            take_palace_at_branch(
-                branch,
-                &placements_by_branch,
-                &mut stars_by_branch,
-                &transformation_facts,
-            )
-        };
-        let palaces = [
-            take_palace(Branch::Yin),
-            take_palace(Branch::Mao),
-            take_palace(Branch::Chen),
-            take_palace(Branch::Si),
-            take_palace(Branch::Wu),
-            take_palace(Branch::Wei),
-            take_palace(Branch::Shen),
-            take_palace(Branch::You),
-            take_palace(Branch::Xu),
-            take_palace(Branch::Hai),
-            take_palace(Branch::Zi),
-            take_palace(Branch::Chou),
-        ];
-
-        let ming_palace = palace_name_at(ming_shen.ming_palace, &placements_by_branch);
-        let shen_palace = palace_name_at(ming_shen.shen_palace, &placements_by_branch);
-        let origin_palace = palace_name_at(origin_palace_branch, &placements_by_branch);
-        let (decade_direction, decades) = build_decades(
-            context.gender(),
-            context.birth_stem(),
-            context.year(),
-            ming_shen.ming_palace,
-            bureau.number(),
-        );
-
-        Self {
-            context,
-            zodiac: Zodiac::from_branch(context.birth_branch()),
-            palaces,
-            ming_palace,
-            ming_palace_branch: ming_shen.ming_palace,
-            shen_palace,
-            shen_palace_branch: ming_shen.shen_palace,
-            origin_palace,
-            origin_palace_branch,
-            bureau,
-            decade_direction,
-            decades,
-        }
+    Natal {
+        context,
+        zodiac: Zodiac::from_branch(context.birth_branch()),
+        palaces,
+        ming_palace_branch,
+        shen_palace_name,
+        shen_palace_branch,
+        origin_palace_name,
+        origin_palace_branch,
+        bureau,
+        decade_direction,
+        decades,
     }
+}
 
+impl Natal {
     /// 归一化出生上下文。
     pub const fn context(&self) -> &NatalContext {
         &self.context
@@ -216,19 +218,14 @@ impl Natal {
         &self.palaces
     }
 
-    /// 命宫宫名。
-    pub const fn ming_palace(&self) -> PalaceName {
-        self.ming_palace
-    }
-
     /// 命宫地支。
     pub const fn ming_palace_branch(&self) -> Branch {
         self.ming_palace_branch
     }
 
     /// 身宫叠落的宫名。
-    pub const fn shen_palace(&self) -> PalaceName {
-        self.shen_palace
+    pub const fn shen_palace_name(&self) -> PalaceName {
+        self.shen_palace_name
     }
 
     /// 身宫地支。
@@ -237,8 +234,8 @@ impl Natal {
     }
 
     /// 来因宫叠落的宫名。
-    pub const fn origin_palace(&self) -> PalaceName {
-        self.origin_palace
+    pub const fn origin_palace_name(&self) -> PalaceName {
+        self.origin_palace_name
     }
 
     /// 来因宫地支。
@@ -295,8 +292,8 @@ fn build_transformation_facts(
         let source = placements_by_branch[branch_index];
         std::array::from_fn(|transformation_index| {
             let transformation = Transformation::ALL[transformation_index];
-            let star_key = source.stem.transformation_star(transformation);
-            let star_index = star_key.index();
+            let star_name = source.stem.transformation_star(transformation);
+            let star_index = star_name.index();
             let target_branch = branches_by_star[star_index];
 
             if source.branch == origin_palace_branch {
@@ -327,7 +324,7 @@ fn build_transformation_facts(
                 transformation,
                 palace_name_at(target_branch, placements_by_branch),
                 target_branch,
-                star_key,
+                star_name,
             )
         })
     });
@@ -349,7 +346,7 @@ fn build_transformation_facts(
 mod tests {
     use super::*;
     use crate::{
-        DecadeIndex, PalaceTransformation, Star, StarKey, Transformation, ZiweiInputError,
+        DecadeIndex, PalaceTransformation, Star, StarName, Transformation, ZiweiInputError,
     };
 
     fn sample_birth() -> ZiweiBirth {
@@ -361,7 +358,7 @@ mod tests {
             .expect("sample input is valid")
     }
 
-    fn find_star(natal: &Natal, key: StarKey) -> (&Palace, &Star) {
+    fn find_star(natal: &Natal, name: StarName) -> (&Palace, &Star) {
         natal
             .palaces()
             .iter()
@@ -369,10 +366,10 @@ mod tests {
                 palace
                     .stars()
                     .iter()
-                    .find(|star| star.key() == key)
+                    .find(|star| star.name() == name)
                     .map(|star| (palace, star))
             })
-            .expect("every StarKey is placed once")
+            .expect("every StarName is placed once")
     }
 
     fn all_transformations(natal: &Natal) -> impl Iterator<Item = PalaceTransformation> + '_ {
@@ -384,34 +381,39 @@ mod tests {
 
     #[test]
     fn both_inputs_produce_equivalent_natal_facts() {
-        let from_birth = Natal::from_birth(sample_birth());
-        let from_input = Natal::from_input(sample_input());
+        let with_year = create_from_birth(sample_birth());
+        let without_year = create_from_input(sample_input());
 
-        assert_eq!(from_birth.context().year(), Some(1984));
-        assert_eq!(from_input.context().year(), None);
-        assert_eq!(from_birth.zodiac(), from_input.zodiac());
-        assert_eq!(from_birth.palaces(), from_input.palaces());
+        assert_eq!(with_year.context().year(), Some(1984));
+        assert_eq!(without_year.context().year(), None);
+        assert_eq!(with_year.zodiac(), without_year.zodiac());
+        assert_eq!(with_year.palaces(), without_year.palaces());
         assert_eq!(
-            from_birth.ming_palace_branch(),
-            from_input.ming_palace_branch()
+            with_year.ming_palace_branch(),
+            without_year.ming_palace_branch()
         );
-        assert_eq!(from_birth.decade_direction(), from_input.decade_direction());
-        for (with_year, without_year) in from_birth.decades().iter().zip(from_input.decades()) {
-            assert_eq!(with_year.index(), without_year.index());
+        assert_eq!(
+            with_year.decade_direction(),
+            without_year.decade_direction()
+        );
+        for (with_year_decade, without_year_decade) in
+            with_year.decades().iter().zip(without_year.decades())
+        {
+            assert_eq!(with_year_decade.index(), without_year_decade.index());
             assert_eq!(
-                with_year.ming_palace_branch(),
-                without_year.ming_palace_branch()
+                with_year_decade.ming_palace_branch(),
+                without_year_decade.ming_palace_branch()
             );
             assert_eq!(
-                with_year.years().map(|year| year.age()),
-                without_year.years().map(|year| year.age())
+                with_year_decade.years().map(|year| year.age()),
+                without_year_decade.years().map(|year| year.age())
             );
         }
     }
 
     #[test]
     fn palaces_are_yin_zero_and_cover_all_names_and_branches() {
-        let natal = Natal::from_birth(sample_birth());
+        let natal = create_from_birth(sample_birth());
         let expected = [
             Branch::Yin,
             Branch::Mao,
@@ -443,14 +445,13 @@ mod tests {
 
     #[test]
     fn coordinate_pairs_resolve_to_the_same_palace() {
-        let natal = Natal::from_birth(sample_birth());
+        let natal = create_from_birth(sample_birth());
         let coordinates = [
-            (natal.ming_palace(), natal.ming_palace_branch()),
-            (natal.shen_palace(), natal.shen_palace_branch()),
-            (natal.origin_palace(), natal.origin_palace_branch()),
+            (PalaceName::Ming, natal.ming_palace_branch()),
+            (natal.shen_palace_name(), natal.shen_palace_branch()),
+            (natal.origin_palace_name(), natal.origin_palace_branch()),
         ];
 
-        assert_eq!(natal.ming_palace(), PalaceName::Ming);
         assert_eq!(natal.ming_palace_branch(), Branch::Zi);
         assert_eq!(natal.shen_palace_branch(), Branch::Shen);
         for (name, branch) in coordinates {
@@ -495,35 +496,35 @@ mod tests {
         ];
 
         for (input, ming, shen, bureau, zi_wei_branch) in cases {
-            let natal = Natal::from_input(input);
+            let natal = create_from_input(input);
             assert_eq!(natal.ming_palace_branch(), ming);
             assert_eq!(natal.shen_palace_branch(), shen);
             assert_eq!(natal.bureau(), bureau);
-            assert_eq!(find_star(&natal, StarKey::ZiWei).0.branch(), zi_wei_branch);
+            assert_eq!(find_star(&natal, StarName::ZiWei).0.branch(), zi_wei_branch);
         }
 
-        let first = Natal::from_input(cases[0].0);
-        assert_eq!(find_star(&first, StarKey::ZuoFu).0.branch(), Branch::Chen);
-        assert_eq!(find_star(&first, StarKey::YouBi).0.branch(), Branch::Xu);
-        assert_eq!(find_star(&first, StarKey::WenChang).0.branch(), Branch::Zi);
-        assert_eq!(find_star(&first, StarKey::WenQu).0.branch(), Branch::Yin);
+        let first = create_from_input(cases[0].0);
+        assert_eq!(find_star(&first, StarName::ZuoFu).0.branch(), Branch::Chen);
+        assert_eq!(find_star(&first, StarName::YouBi).0.branch(), Branch::Xu);
+        assert_eq!(find_star(&first, StarName::WenChang).0.branch(), Branch::Zi);
+        assert_eq!(find_star(&first, StarName::WenQu).0.branch(), Branch::Yin);
     }
 
     #[test]
-    fn each_star_key_occurs_once_in_stable_palace_order() {
-        let natal = Natal::from_birth(sample_birth());
-        let all_keys: Vec<_> = natal
+    fn each_star_name_occurs_once_in_stable_palace_order() {
+        let natal = create_from_birth(sample_birth());
+        let all_names: Vec<_> = natal
             .palaces()
             .iter()
-            .flat_map(|palace| palace.stars().iter().map(|star| star.key()))
+            .flat_map(|palace| palace.stars().iter().map(|star| star.name()))
             .collect();
 
-        assert_eq!(all_keys.len(), 18);
-        for key in StarKey::ALL {
+        assert_eq!(all_names.len(), 18);
+        for name in StarName::ALL {
             assert_eq!(
-                all_keys
+                all_names
                     .iter()
-                    .filter(|candidate| **candidate == key)
+                    .filter(|candidate| **candidate == name)
                     .count(),
                 1
             );
@@ -532,7 +533,7 @@ mod tests {
             let indices: Vec<_> = palace
                 .stars()
                 .iter()
-                .map(|star| star.key().index())
+                .map(|star| star.name().index())
                 .collect();
             assert!(indices.windows(2).all(|pair| pair[0] < pair[1]));
         }
@@ -540,7 +541,7 @@ mod tests {
 
     #[test]
     fn origin_transformations_are_stored_once_on_target_stars() {
-        let natal = Natal::from_birth(sample_birth());
+        let natal = create_from_birth(sample_birth());
         let transformed: Vec<_> = natal
             .palaces()
             .iter()
@@ -562,7 +563,7 @@ mod tests {
 
     #[test]
     fn every_palace_transformation_resolves_to_its_target_star() {
-        let natal = Natal::from_birth(sample_birth());
+        let natal = create_from_birth(sample_birth());
 
         for palace in natal.palaces() {
             assert_eq!(
@@ -572,7 +573,7 @@ mod tests {
             for edge in palace.transformations() {
                 assert_eq!(edge.source_name(), palace.name());
                 assert_eq!(edge.source_branch(), palace.branch());
-                let (target_palace, _) = find_star(&natal, edge.star_key());
+                let (target_palace, _) = find_star(&natal, edge.star_name());
                 assert_eq!(edge.target_name(), target_palace.name());
                 assert_eq!(edge.target_branch(), target_palace.branch());
             }
@@ -581,16 +582,16 @@ mod tests {
 
     #[test]
     fn star_self_transformations_match_palace_relations() {
-        let natal = Natal::from_birth(sample_birth());
+        let natal = create_from_birth(sample_birth());
 
-        for key in StarKey::ALL {
-            let (target_palace, star) = find_star(&natal, key);
+        for name in StarName::ALL {
+            let (target_palace, star) = find_star(&natal, name);
             let expected_outward = all_transformations(&natal).find_map(|edge| {
-                (edge.star_key() == key && edge.source_branch() == target_palace.branch())
+                (edge.star_name() == name && edge.source_branch() == target_palace.branch())
                     .then_some(edge.transformation())
             });
             let expected_inward = all_transformations(&natal).find_map(|edge| {
-                (edge.star_key() == key
+                (edge.star_name() == name
                     && edge.source_branch().opposite() == target_palace.branch())
                 .then_some(edge.transformation())
             });
@@ -598,44 +599,42 @@ mod tests {
             assert_eq!(
                 star.self_transformations().outward(),
                 expected_outward,
-                "{} outward",
-                key.as_str()
+                "{name:?} outward"
             );
             assert_eq!(
                 star.self_transformations().inward(),
                 expected_inward,
-                "{} inward",
-                key.as_str()
+                "{name:?} inward"
             );
         }
     }
 
     #[test]
     fn decades_store_direction_ages_and_optional_years() {
-        let from_birth = Natal::from_birth(sample_birth());
-        let from_input = Natal::from_input(sample_input());
+        let with_year = create_from_birth(sample_birth());
+        let without_year = create_from_input(sample_input());
 
-        assert_eq!(from_birth.decade_direction(), DecadeDirection::Forward);
-        assert_eq!(from_birth.decades().len(), 12);
-        assert_eq!(from_birth.decades()[0].index(), DecadeIndex::FIRST);
+        assert_eq!(with_year.decade_direction(), DecadeDirection::Forward);
+        assert_eq!(with_year.decades().len(), 12);
+        assert_eq!(with_year.decades()[0].index(), DecadeIndex::FIRST);
         assert_eq!(
-            from_birth.decades()[0].ming_palace_branch(),
-            from_birth.ming_palace_branch()
+            with_year.decades()[0].ming_palace_branch(),
+            with_year.ming_palace_branch()
         );
         assert!(
-            from_birth
+            with_year
                 .decades()
                 .iter()
                 .all(|decade| { decade.years().iter().all(|year| year.year().is_some()) })
         );
         assert!(
-            from_input
+            without_year
                 .decades()
                 .iter()
                 .all(|decade| { decade.years().iter().all(|year| year.year().is_none()) })
         );
 
-        for decade in from_birth.decades() {
+        for decade in with_year.decades() {
             assert_eq!(decade.years().len(), 10);
             assert_eq!(decade.age_end(), decade.age_start() + 9);
             for year in decade.years() {
@@ -662,7 +661,7 @@ mod tests {
         for (stem, branch) in year_pillars {
             let input = ZiweiInput::try_new(Gender::Yang, stem, branch, 6, 15, 8)
                 .expect("year pillar is valid");
-            let natal = Natal::from_input(input);
+            let natal = create_from_input(input);
             let stars: Vec<_> = natal
                 .palaces()
                 .iter()
@@ -679,17 +678,17 @@ mod tests {
                 "stem={stem:?}"
             );
             for transformation in Transformation::ALL {
-                let key = stem.transformation_star(transformation);
-                let (_, star) = find_star(&natal, key);
+                let star_name = stem.transformation_star(transformation);
+                let (_, star) = find_star(&natal, star_name);
                 assert_eq!(
                     star.origin_transformation(),
                     Some(transformation),
-                    "stem={stem:?}, star={key:?}"
+                    "stem={stem:?}, star={star_name:?}"
                 );
             }
             assert_eq!(all_transformations(&natal).count(), 48);
             for edge in all_transformations(&natal) {
-                let (target_palace, _) = find_star(&natal, edge.star_key());
+                let (target_palace, _) = find_star(&natal, edge.star_name());
                 assert_eq!(edge.target_name(), target_palace.name());
                 assert_eq!(edge.target_branch(), target_palace.branch());
             }
@@ -698,18 +697,18 @@ mod tests {
                 .palaces()
                 .iter()
                 .find(|palace| {
-                    palace.name() == natal.origin_palace()
+                    palace.name() == natal.origin_palace_name()
                         && palace.branch() == natal.origin_palace_branch()
                 })
                 .expect("origin palace is present");
             assert_eq!(origin_palace.stem(), stem, "stem={stem:?}");
             for edge in origin_palace.transformations() {
-                let (_, star) = find_star(&natal, edge.star_key());
+                let (_, star) = find_star(&natal, edge.star_name());
                 assert_eq!(
                     star.origin_transformation(),
                     Some(edge.transformation()),
                     "stem={stem:?}, star={:?}",
-                    edge.star_key()
+                    edge.star_name()
                 );
             }
         }
@@ -719,7 +718,7 @@ mod tests {
     fn gender_reverses_decade_progression_when_yin_yang_differs() {
         let input = ZiweiInput::try_new(Gender::Yin, Stem::Jia, Branch::Zi, 2, 1, 4)
             .expect("sample input is valid");
-        let natal = Natal::from_input(input);
+        let natal = create_from_input(input);
 
         assert_eq!(natal.decade_direction(), DecadeDirection::Reverse);
         assert_eq!(natal.decades()[0].ming_palace_branch(), Branch::Zi);
