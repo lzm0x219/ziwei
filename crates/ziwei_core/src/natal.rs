@@ -3,12 +3,11 @@
 use super::{
     domain::{
         Branch, Decade, DecadeDirection, FiveElementBureau, Gender, Palace, PalaceName,
-        PalaceStars, PalaceTransformation, Star, StarName, StarSelfTransformations, Stem,
-        Transformation, Zodiac, build_decades,
+        PalaceStars, Star, StarName, Stem, TransformationFacts, Zodiac, build_decades,
         placement::{
             PalacePlacement, bureau_from_ming_palace, compute_ming_palace_branch,
             compute_palace_placements, compute_palace_stems, compute_shen_palace_branch,
-            compute_star_branches,
+            compute_star_branches, palace_name_at,
         },
         star_category, star_galaxy,
     },
@@ -102,12 +101,6 @@ pub struct Natal {
     decades: [Decade; 12],
 }
 
-struct TransformationFacts {
-    palace_transformations_by_branch: [[PalaceTransformation; 4]; 12],
-    origin_transformations_by_star: [Option<Transformation>; 18],
-    self_transformations_by_star: [StarSelfTransformations; 18],
-}
-
 /// 从含历法层归一化农历年序号的已验证输入创建本命盘。
 pub fn create_from_birth(birth: ZiweiBirth) -> Natal {
     let year = birth.year();
@@ -130,7 +123,7 @@ fn create_from_context(context: NatalContext) -> Natal {
     let branches_by_star =
         compute_star_branches(context.day(), bureau, context.month(), context.hour());
     let origin_palace_branch = context.birth_stem().origin_palace_branch();
-    let transformation_facts = build_transformation_facts(
+    let transformation_facts = TransformationFacts::build(
         origin_palace_branch,
         &placements_by_branch,
         &branches_by_star,
@@ -143,8 +136,8 @@ fn create_from_context(context: NatalContext) -> Natal {
             name,
             star_category(name),
             star_galaxy(name),
-            transformation_facts.origin_transformations_by_star[name.index()],
-            transformation_facts.self_transformations_by_star[name.index()],
+            transformation_facts.origin_transformation(name),
+            transformation_facts.self_transformations(name),
         );
         stars_by_branch[branch.index()]
             .try_push(star)
@@ -259,10 +252,6 @@ impl Natal {
     }
 }
 
-fn palace_name_at(branch: Branch, placements_by_branch: &[PalacePlacement; 12]) -> PalaceName {
-    placements_by_branch[branch.index()].name
-}
-
 fn take_palace_at_branch(
     branch: Branch,
     placements_by_branch: &[PalacePlacement; 12],
@@ -271,75 +260,12 @@ fn take_palace_at_branch(
 ) -> Palace {
     let palace_placement = placements_by_branch[branch.index()];
     Palace::new(
-        palace_placement.name,
-        palace_placement.branch,
-        palace_placement.stem,
+        palace_placement.name(),
+        palace_placement.branch(),
+        palace_placement.stem(),
         std::mem::take(&mut stars_by_branch[branch.index()]),
-        transformation_facts.palace_transformations_by_branch[branch.index()],
+        transformation_facts.palace_transformations(branch),
     )
-}
-
-fn build_transformation_facts(
-    origin_palace_branch: Branch,
-    placements_by_branch: &[PalacePlacement; 12],
-    branches_by_star: &[Branch; 18],
-) -> TransformationFacts {
-    let mut origin_transformations_by_star = [None; 18];
-    let mut inward_transformations_by_star = [None; 18];
-    let mut outward_transformations_by_star = [None; 18];
-
-    let palace_transformations_by_branch = std::array::from_fn(|branch_index| {
-        let source = placements_by_branch[branch_index];
-        std::array::from_fn(|transformation_index| {
-            let transformation = Transformation::ALL[transformation_index];
-            let star_name = source.stem.transformation_star(transformation);
-            let star_index = star_name.index();
-            let target_branch = branches_by_star[star_index];
-
-            if source.branch == origin_palace_branch {
-                debug_assert!(
-                    origin_transformations_by_star[star_index].is_none(),
-                    "each origin transformation targets a distinct star"
-                );
-                origin_transformations_by_star[star_index] = Some(transformation);
-            }
-            if source.branch == target_branch {
-                debug_assert!(
-                    outward_transformations_by_star[star_index].is_none(),
-                    "a star has at most one outward self-transformation"
-                );
-                outward_transformations_by_star[star_index] = Some(transformation);
-            }
-            if source.branch.opposite() == target_branch {
-                debug_assert!(
-                    inward_transformations_by_star[star_index].is_none(),
-                    "a star has at most one inward self-transformation"
-                );
-                inward_transformations_by_star[star_index] = Some(transformation);
-            }
-
-            PalaceTransformation::new(
-                source.name,
-                source.branch,
-                transformation,
-                palace_name_at(target_branch, placements_by_branch),
-                target_branch,
-                star_name,
-            )
-        })
-    });
-    let self_transformations_by_star = std::array::from_fn(|star_index| {
-        StarSelfTransformations::new(
-            inward_transformations_by_star[star_index],
-            outward_transformations_by_star[star_index],
-        )
-    });
-
-    TransformationFacts {
-        palace_transformations_by_branch,
-        origin_transformations_by_star,
-        self_transformations_by_star,
-    }
 }
 
 #[cfg(test)]
