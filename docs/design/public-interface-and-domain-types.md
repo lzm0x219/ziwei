@@ -13,6 +13,13 @@ let natal = create_from_input(ZiweiInput::try_new(/* ... */)?);
 
 ## 读取接口
 
+两种已验证输入的字段保持私有，对外按值返回规范化后的原始事实：
+
+```text
+ZiweiBirth.gender() / year() / month() / day() / hour()
+ZiweiInput.gender() / birth_stem() / birth_branch() / month() / day() / hour()
+```
+
 多字段结果类型字段全部私有，按值返回小型 `Copy` 枚举和数字，按借用返回聚合：
 
 ```text

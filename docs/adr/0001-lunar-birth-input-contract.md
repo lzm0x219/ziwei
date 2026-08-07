@@ -6,7 +6,7 @@
 
 `ZiweiInput` / `create_from_input` 是预处理输入路径，注入边界见 ADR-0002。
 
-校验：`ZiweiBirth::try_new` 是唯一公开构造入口，负责校验 `year + 124` 可由 `i32` 表示，并校验月/日/时范围；字段和 getter 均不向 crate 外公开。`create_from_birth` 只接收已验证的 `ZiweiBirth`，因此直接返回命盘，不保留不可能发生的错误分支。
+校验：`ZiweiBirth::try_new` 是唯一公开构造入口，负责校验 `year + 124` 可由 `i32` 表示，并校验月/日/时范围；字段保持私有，对外提供 `gender`、`year`、`month`、`day`、`hour` 只读 getter。`create_from_birth` 只接收已验证的 `ZiweiBirth`，因此直接返回命盘，不保留不可能发生的错误分支。
 
 ## 否决过的做法
 
