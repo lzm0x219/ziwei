@@ -23,6 +23,8 @@ jobs:
         run: mise exec -- cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - name: Run tests
         run: mise exec -- cargo test --workspace --locked
+      - name: Run exhaustive Natal invariants
+        run: mise exec -- cargo test -p ziwei --test natal_exhaustive --release --locked -- --ignored
       - name: Build documentation
         env:
           RUSTDOCFLAGS: "-D warnings"
