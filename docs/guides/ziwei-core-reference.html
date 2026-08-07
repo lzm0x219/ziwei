@@ -1458,8 +1458,8 @@ QiSha, PoJun, ZuoFu, YouBi, WenChang, WenQu</code></pre>
               <table class="api-table">
                 <thead><tr><th>类型</th><th>公开入口 / getter</th><th>语义</th></tr></thead>
                 <tbody>
-                  <tr><td>ZiweiBirth</td><td>try_new(gender, year, month, day, hour)</td><td>带农历年序号的已验证输入</td></tr>
-                  <tr><td>ZiweiInput</td><td>try_new(gender, stem, branch, month, day, hour)</td><td>带生年干支、不带农历年序号的已验证输入</td></tr>
+                  <tr><td>ZiweiBirth</td><td>try_new / gender / year / month / day / hour</td><td>带农历年序号的已验证输入</td></tr>
+                  <tr><td>ZiweiInput</td><td>try_new / gender / birth_stem / birth_branch / month / day / hour</td><td>带生年干支、不带农历年序号的已验证输入</td></tr>
                   <tr><td>创建函数</td><td>create_from_birth / create_from_input</td><td>从两种已验证输入直接构造命盘</td></tr>
                   <tr><td>Natal</td><td>context / zodiac / palaces / decades</td><td>出生上下文、生肖、十二宫与大限</td></tr>
                   <tr><td>Natal</td><td>ming_palace_branch / shen_palace_name / shen_palace_branch / origin_palace_name / origin_palace_branch</td><td>命宫地支，以及身宫、来因宫的宫名与地支</td></tr>

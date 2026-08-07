@@ -56,27 +56,27 @@ impl ZiweiBirth {
     }
 
     /// 命主性别。
-    pub(crate) const fn gender(self) -> Gender {
+    pub const fn gender(self) -> Gender {
         self.gender
     }
 
     /// 历法层归一化后的农历年序号，不是原始公历日期的年份。
-    pub(crate) const fn year(self) -> i32 {
+    pub const fn year(self) -> i32 {
         self.year
     }
 
     /// 农历月（正月 = 0）。
-    pub(crate) const fn month(self) -> u8 {
+    pub const fn month(self) -> u8 {
         self.month
     }
 
     /// 农历日（初一 = 1）。
-    pub(crate) const fn day(self) -> u8 {
+    pub const fn day(self) -> u8 {
         self.day
     }
 
     /// 时辰（子时 = 0）。
-    pub(crate) const fn hour(self) -> u8 {
+    pub const fn hour(self) -> u8 {
         self.hour
     }
 }
@@ -142,32 +142,32 @@ impl ZiweiInput {
     }
 
     /// 命主性别。
-    pub(crate) const fn gender(self) -> Gender {
+    pub const fn gender(self) -> Gender {
         self.gender
     }
 
     /// 出生年干。
-    pub(crate) const fn birth_stem(self) -> Stem {
+    pub const fn birth_stem(self) -> Stem {
         self.birth_stem
     }
 
     /// 生年地支。
-    pub(crate) const fn birth_branch(self) -> Branch {
+    pub const fn birth_branch(self) -> Branch {
         self.birth_branch
     }
 
     /// 农历月（正月 = 0）。
-    pub(crate) const fn month(self) -> u8 {
+    pub const fn month(self) -> u8 {
         self.month
     }
 
     /// 农历日（初一 = 1）。
-    pub(crate) const fn day(self) -> u8 {
+    pub const fn day(self) -> u8 {
         self.day
     }
 
     /// 时辰（子时 = 0）。
-    pub(crate) const fn hour(self) -> u8 {
+    pub const fn hour(self) -> u8 {
         self.hour
     }
 }
