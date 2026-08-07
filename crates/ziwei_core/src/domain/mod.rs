@@ -8,6 +8,7 @@ pub(crate) mod placement;
 mod star;
 mod stem;
 mod transformation;
+mod transformation_facts;
 mod zodiac;
 
 pub use branch::Branch;
@@ -22,6 +23,7 @@ pub use zodiac::Zodiac;
 pub(crate) use decade::build_decades;
 pub(crate) use palace::PalaceStars;
 pub(crate) use star::{star_category, star_galaxy};
+pub(crate) use transformation_facts::TransformationFacts;
 
 /// 命主的性别（阴阳）。
 ///

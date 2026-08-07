@@ -54,9 +54,23 @@ pub(crate) const fn branch_from_yin0(yin0: u8) -> Branch {
 /// 尚未附加星曜与四化关系的宫位落位。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct PalacePlacement {
-    pub(crate) name: PalaceName,
-    pub(crate) branch: Branch,
-    pub(crate) stem: Stem,
+    name: PalaceName,
+    branch: Branch,
+    stem: Stem,
+}
+
+impl PalacePlacement {
+    pub(crate) const fn name(self) -> PalaceName {
+        self.name
+    }
+
+    pub(crate) const fn branch(self) -> Branch {
+        self.branch
+    }
+
+    pub(crate) const fn stem(self) -> Stem {
+        self.stem
+    }
 }
 
 /// 寅起正月，逆时安命宫。
@@ -117,6 +131,14 @@ pub(crate) fn compute_palace_placements(
     }
 
     placements_by_branch
+}
+
+/// 返回指定地支上的宫名。
+pub(crate) const fn palace_name_at(
+    branch: Branch,
+    placements_by_branch: &[PalacePlacement; 12],
+) -> PalaceName {
+    placements_by_branch[branch.index()].name
 }
 
 /// 一次完成十四主星与首批四颗辅星的落宫计算和十八槽组装。
