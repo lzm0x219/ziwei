@@ -12,5 +12,17 @@ repository.workspace = true
 [dependencies]
 ziwei_core.workspace = true
 
+[dev-dependencies]
+allocation-counter.workspace = true
+criterion.workspace = true
+
+[[bench]]
+name = "query"
+harness = false
+
+[[bench]]
+name = "query_allocations"
+harness = false
+
 [lints]
 workspace = true
