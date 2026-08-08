@@ -462,6 +462,7 @@ name = "ziwei"
 version = "0.1.0"
 dependencies = [
  "ziwei_core",
+ "ziwei_query",
 ]
 
 [[package]]
@@ -484,6 +485,9 @@ dependencies = [
 [[package]]
 name = "ziwei_query"
 version = "0.1.0"
+dependencies = [
+ "ziwei_core",
+]
 
 [[package]]
 name = "zmij"

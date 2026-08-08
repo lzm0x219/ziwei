@@ -1,6 +1,6 @@
 # 本命 / 大限 / 流年可切换查询 API
 
-> 状态：**部分由 [ADR-0011](0011-immutable-natal-model.md) 取代。** 大限与流年宫职叠落规则仍可作为未来查询能力的约束；本文的 `Ziwei` / `ZiweiView` 查询公开面已经删除。
+> 状态：**由 [ADR-0011](0011-immutable-natal-model.md)、[ADR-0012](0012-query-layers-by-chart-scope.md) 与 [ADR-0013](0013-use-reframe-for-relative-palace-scopes.md) 部分取代。** 本文的 `Ziwei` / `ZiweiView` 查询公开面和流年 scope 计划不再有效；只保留宫位坐标 scope 不复制命盘、不重算星曜、宫干与四化事实的约束。
 
 调用面是一份固定的 `Ziwei` 本命盘，加上轻量 `ZiweiView`（本命 / 第几步大限 / 某农历年流年）。视图只改宫职→地支的叠落；不复制整盘，不重算宫干飞化边、星位、生年四化、来因宫。`Palace::role()` 始终是本命宫职；大限/流年宫职只通过带 `view` 的查询得到，宫干飞化查询则复用叠落地支的本命宫干。结果类型字段私有（ADR-0010）。v1 **不**提供 `with_view` / `ZiweiHandle`：视图相关方法一律在 `Ziwei` 上显式传 `ZiweiView`，避免半成品句柄与第二门面。
 

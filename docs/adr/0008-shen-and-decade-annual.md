@@ -1,6 +1,6 @@
 # 身宫与大限/流年查询细节
 
-> 状态：**部分由 [ADR-0011](0011-immutable-natal-model.md) 取代。** 身宫、大限顺序与农历流年公式仍有效；旧 `DecadeStep`、按需 `years_in_decade` 和 `ZiweiView` 公开面已由不可变 `Natal` / `Decade` 存储模型取代。
+> 状态：**部分由 [ADR-0011](0011-immutable-natal-model.md)、[ADR-0012](0012-query-layers-by-chart-scope.md) 与 [ADR-0013](0013-use-reframe-for-relative-palace-scopes.md) 取代。** 身宫、大限顺序与农历流年公式仍有效；旧 `DecadeStep`、按需 `years_in_decade`、`ZiweiView` 公开面和流年宫位 scope 计划均已失效。
 
 ## 身宫
 
@@ -43,6 +43,8 @@ years_in_decade(index: DecadeIndex) -> Result<[DecadeYear; 10], DecadeYearsError
 绝对流年序号能力只属于 `create_from_birth` 路径（ADR-0009）。成功列表中的 `lunar_year` 可直接作为历史草图中的 `ZiweiView::Annual { year }` 参数。
 
 ## 流年宫职
+
+以下方案只保留为历史记录，当前不进入查询 interface：
 
 `ZiweiView::Annual { year }`（`year` 为农历年序号）：
 
