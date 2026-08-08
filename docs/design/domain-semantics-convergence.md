@@ -44,4 +44,4 @@ origin_palace_name / origin_palace_branch
 
 ## 公开面
 
-结果类型字段私有，只允许内核构造。公开 API 负责读取完整事实，不提供 `palace_at`、`branch_of_star`、按年龄找大限等条件查询；这些操作由未来 `ziwei_query` 组合完成。
+结果类型字段私有，只允许内核构造。core 公开 API 负责读取完整事实，不提供 `palace_at`、`branch_of_star`、按年龄找大限等条件查询；这些操作由 `ziwei_query` 在只读借用上组合完成。

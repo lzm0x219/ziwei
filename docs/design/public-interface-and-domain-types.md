@@ -52,8 +52,8 @@ DecadeYear.year() / age()
 - `ZiweiView`、handle、查询错误类型；
 - 旧 `Ziwei`、`PalaceRole`、`DecadeStep`、`ZiweiFly`、`YearTransformation` 名称。
 
-这些需求出现时，由 `ziwei_query` 接收 `&Natal` 并返回借用或轻量查询结果，不能反向污染 `Natal` 的存储结构。
+这些能力由 `ziwei_query` 接收 `&Natal` 并返回借用式轻量查询结果，不能反向污染 `Natal` 的存储结构。
 
 ## 门面
 
-`ziwei` crate 只选择性重导出已经确认的 core 公开类型，避免 glob 导出内部实现细节。其他 workspace crate 当前只保留空边界，不提前建设。
+`ziwei` crate 选择性重导出已经确认的 core 事实与 query 查询类型，避免 glob 导出内部实现细节。`ziwei_calendar` 与 `ziwei_analysis` 当前只保留空边界，不提前建设。

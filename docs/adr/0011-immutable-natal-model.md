@@ -22,7 +22,7 @@
 ## 后果
 
 - 旧 `Ziwei`、`PalaceRole`、`DecadeStep`、`ZiweiFly`、`YearTransformation`、`ZiweiView` 及相关查询方法被删除，无别名。
-- 调用方从 `Natal` 的只读结构读取完整事实；条件查询等待 `ziwei_query` 的真实用例。
+- 调用方从 `Natal` 的只读结构读取完整事实；条件查询由只借用 `Natal` 的 `ziwei_query` 组合。
 - 出生年份输入必须提前验证能表示十二个大限的全部年份，使 `create_from_birth` 保持无失败。
 - 结果模型的公开顺序与唯一性成为测试契约。
 
