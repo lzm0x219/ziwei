@@ -144,9 +144,9 @@ fn create_from_context(context: NatalContext) -> Natal {
             .expect("a palace contains at most six supported stars");
     }
 
-    // 对外宫序固定为寅至丑。端到端基准与发布构建汇编均显示：显式展开可直接组装
-    // 固定宫位数组，而 `array::from_fn` 会保留一次整数组搬移；实际构造仍集中在
-    // `take_palace_at_branch`，避免十二份规则实现。
+    // 对外宫序固定为寅至丑。rustc 1.97.1 下改用 `PALACE_ORDER.map` 会使 `natal`
+    // 两个端到端构盘基准稳定慢约 9%–11%，因此在此显式展开；宫位构造规则仍集中在
+    // `take_palace_at_branch`。
     let mut take_palace = |branch| {
         take_palace_at_branch(
             branch,
