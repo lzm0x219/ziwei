@@ -129,7 +129,7 @@ fn create_from_context(context: NatalContext) -> Natal {
         &branches_by_star,
     );
 
-    let mut stars_by_branch: [PalaceStars; 12] = std::array::from_fn(|_| PalaceStars::new());
+    let mut stars_by_branch = [PalaceStars::default(); 12];
     for name in StarName::ALL {
         let branch = branches_by_star[name.index()];
         let star = Star::new(
@@ -145,7 +145,7 @@ fn create_from_context(context: NatalContext) -> Natal {
     }
 
     // 对外宫序固定为寅至丑。端到端基准与发布构建汇编均显示：显式展开可直接组装
-    // 672 B 宫位数组，而 `array::from_fn` 会保留一次整数组搬移；实际构造仍集中在
+    // 固定宫位数组，而 `array::from_fn` 会保留一次整数组搬移；实际构造仍集中在
     // `take_palace_at_branch`，避免十二份规则实现。
     let mut take_palace = |branch| {
         take_palace_at_branch(

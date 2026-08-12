@@ -9,9 +9,6 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 
-[dependencies]
-arrayvec.workspace = true
-
 [dev-dependencies]
 allocation-counter.workspace = true
 criterion.workspace = true
