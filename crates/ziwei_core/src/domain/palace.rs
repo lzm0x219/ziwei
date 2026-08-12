@@ -1,16 +1,63 @@
 //! 十二宫名、宫位及宫位四化关系。
 
-use arrayvec::ArrayVec;
+use core::fmt;
 
 use super::{
     branch::Branch,
-    star::{Star, StarName},
+    star::{Star, StarCategory, StarGalaxy, StarName, StarSelfTransformations},
     stem::Stem,
     transformation::Transformation,
 };
 
-pub(crate) const MAX_STARS_PER_PALACE: usize = 6;
-pub(crate) type PalaceStars = ArrayVec<Star, MAX_STARS_PER_PALACE>;
+const MAX_STARS_PER_PALACE: usize = 6;
+
+/// 一宫最多六星的无堆分配存储。
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) struct PalaceStars {
+    stars: [Star; MAX_STARS_PER_PALACE],
+    len: u8,
+}
+
+impl Default for PalaceStars {
+    fn default() -> Self {
+        Self {
+            stars: [Self::unused_star_slot(); MAX_STARS_PER_PALACE],
+            len: 0,
+        }
+    }
+}
+
+impl fmt::Debug for PalaceStars {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.as_slice().fmt(f)
+    }
+}
+
+impl PalaceStars {
+    const fn unused_star_slot() -> Star {
+        Star::new(
+            StarName::ZiWei,
+            StarCategory::Major,
+            Some(StarGalaxy::Central),
+            None,
+            StarSelfTransformations::new(None, None),
+        )
+    }
+
+    pub(crate) fn try_push(&mut self, star: Star) -> Result<(), Star> {
+        let Some(slot) = self.stars.get_mut(usize::from(self.len)) else {
+            return Err(star);
+        };
+
+        *slot = star;
+        self.len += 1;
+        Ok(())
+    }
+
+    pub(crate) fn as_slice(&self) -> &[Star] {
+        &self.stars[..usize::from(self.len)]
+    }
+}
 
 /// 十二宫名，自命宫起按经典逆布次序排列。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -198,7 +245,36 @@ impl Palace {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::{StarCategory, StarGalaxy, star::StarSelfTransformations};
+    fn star(name: StarName) -> Star {
+        Star::new(
+            name,
+            StarCategory::Major,
+            Some(StarGalaxy::Central),
+            None,
+            StarSelfTransformations::new(None, None),
+        )
+    }
+
+    #[test]
+    fn palace_stars_preserve_order_and_reject_a_seventh_star() {
+        let mut stars = PalaceStars::default();
+        for name in StarName::ALL.into_iter().take(MAX_STARS_PER_PALACE) {
+            stars
+                .try_push(star(name))
+                .expect("the first six stars fit in a palace");
+        }
+
+        let seventh = star(StarName::ALL[MAX_STARS_PER_PALACE]);
+        assert_eq!(stars.try_push(seventh), Err(seventh));
+        assert_eq!(
+            stars
+                .as_slice()
+                .iter()
+                .map(|star| star.name())
+                .collect::<Vec<_>>(),
+            StarName::ALL[..MAX_STARS_PER_PALACE]
+        );
+    }
 
     #[test]
     fn palace_exposes_read_only_nested_facts() {
@@ -217,8 +293,8 @@ mod tests {
             Branch::Zi,
             StarName::ZiWei,
         );
-        let mut stars = PalaceStars::new();
-        stars.push(star);
+        let mut stars = PalaceStars::default();
+        stars.try_push(star).expect("one star fits in a palace");
         let palace = Palace::new(
             PalaceName::Ming,
             Branch::Zi,

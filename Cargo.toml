@@ -11,7 +11,6 @@ repository = "https://github.com/matharts/ziwei"
 
 [workspace.dependencies]
 allocation-counter = "0.8.1"
-arrayvec = "0.7.8"
 criterion = { version = "0.8.2", default-features = false, features = ["cargo_bench_support"] }
 ziwei = { path = "crates/ziwei" }
 ziwei_analysis = { path = "crates/ziwei_analysis" }
