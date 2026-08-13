@@ -1,0 +1,18 @@
+# Git hooks 由 mise 安装 lefthook 后自动注册（mise.toml 的 postinstall）。
+# 本地覆盖可写 lefthook-local.yml，该文件已加入 .gitignore。
+
+pre-commit:
+  parallel: true
+  skip:
+    - merge
+    - rebase
+  commands:
+    fmt:
+      glob: "*.zig"
+      run: mise exec -- zig fmt {staged_files}
+      stage_fixed: true
+
+pre-push:
+  commands:
+    test:
+      run: mise exec -- zig build test

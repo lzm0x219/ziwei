@@ -1,0 +1,17 @@
+.{
+    .name = .ziwei,
+    .version = "0.0.0",
+    // 与 name 一起构成全局唯一的包标识。
+    // 这个字段由 Zig 工具链在包首次创建时生成，之后*永远不要改*。
+    .fingerprint = 0x4e348f31913dbd38, // 修改此项会影响安全与信任。
+    // 本包声明支持的最早 Zig 版本。
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "LICENSE",
+        "README.md",
+    },
+}
