@@ -4,3 +4,11 @@ lefthook = "2.1.10"
 
 [hooks]
 postinstall = "lefthook install"
+
+[tasks.check]
+description = "运行格式、构建和测试检查"
+run = [
+  "zig fmt --check build.zig build.zig.zon src",
+  "zig build",
+  "zig build test",
+]
