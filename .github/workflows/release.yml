@@ -1,0 +1,259 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout tagged source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install project tools
+        uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518 # v4.2.5
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate release metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          fail() {
+            echo "::error::$*"
+            exit 1
+          }
+
+          release_tag="$GITHUB_REF_NAME"
+          release_version="$(awk -F '"' '/^[[:space:]]*\.version = / { print $2; exit }' build.zig.zon)"
+          minimum_zig_version="$(awk -F '"' '/^[[:space:]]*\.minimum_zig_version = / { print $2; exit }' build.zig.zon)"
+          mise_zig_version="$(awk -F '"' '/^[[:space:]]*zig = / { print $2; exit }' mise.toml)"
+
+          [[ -n "$release_version" ]] || fail "build.zig.zon 缺少 .version"
+          [[ "$release_tag" == "v$release_version" ]] || fail "标签 $release_tag 与版本 $release_version 不一致"
+          [[ "$minimum_zig_version" == "$mise_zig_version" ]] || fail "minimum_zig_version 与 mise.toml 不一致"
+
+          major_version="${release_version%%.*}"
+          [[ "$major_version" =~ ^[1-9][0-9]*$ ]] || fail "Zig 版本线必须从 v1 开始"
+
+          release_core="${release_version%%+*}"
+          if [[ "$release_core" == *-* ]]; then
+            is_prerelease=true
+          else
+            is_prerelease=false
+          fi
+
+          header_prefix="## [$release_version] - "
+          changelog_header="$(awk -v prefix="$header_prefix" 'index($0, prefix) == 1 { print; exit }' CHANGELOG.md)"
+          [[ -n "$changelog_header" ]] || fail "CHANGELOG.md 缺少 $release_version 章节"
+
+          release_date="${changelog_header#"$header_prefix"}"
+          [[ "$release_date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || fail "CHANGELOG.md 发布日期格式错误"
+          [[ "$(date --date="$release_date" +%F)" == "$release_date" ]] || fail "CHANGELOG.md 发布日期无效"
+
+          awk -v target="$changelog_header" '
+            $0 == target { capture = 1 }
+            capture && $0 != target && /^## / { exit }
+            capture { print }
+            END { if (!capture) exit 1 }
+          ' CHANGELOG.md > "$RUNNER_TEMP/release-changelog.md"
+
+          grep -q '^- ' "$RUNNER_TEMP/release-changelog.md" || fail "CHANGELOG.md 发布章节没有变更条目"
+
+          {
+            echo "RELEASE_TAG=$release_tag"
+            echo "RELEASE_VERSION=$release_version"
+            echo "MINIMUM_ZIG_VERSION=$minimum_zig_version"
+            echo "IS_PRERELEASE=$is_prerelease"
+          } >> "$GITHUB_ENV"
+
+      - name: Verify signed tag and target commit
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          fail() {
+            echo "::error::$*"
+            exit 1
+          }
+
+          api_version=2026-03-10
+          encoded_tag="$(jq -rn --arg value "$RELEASE_TAG" '$value | @uri')"
+          tag_ref="$(gh api -H "X-GitHub-Api-Version: $api_version" "repos/$GITHUB_REPOSITORY/git/ref/tags/$encoded_tag")"
+
+          [[ "$(jq -r '.object.type' <<< "$tag_ref")" == tag ]] || fail "$RELEASE_TAG 不是 annotated tag"
+          tag_object_sha="$(jq -r '.object.sha' <<< "$tag_ref")"
+
+          verified=false
+          verification_reason=unknown
+          for _ in 1 2 3 4 5 6; do
+            tag_object="$(gh api -H "X-GitHub-Api-Version: $api_version" "repos/$GITHUB_REPOSITORY/git/tags/$tag_object_sha")"
+            verified="$(jq -r '.verification.verified' <<< "$tag_object")"
+            verification_reason="$(jq -r '.verification.reason' <<< "$tag_object")"
+            [[ "$verified" == true ]] && break
+            sleep 5
+          done
+
+          [[ "$verified" == true ]] || fail "标签签名未通过 GitHub 验证：$verification_reason"
+          [[ "$(jq -r '.object.type' <<< "$tag_object")" == commit ]] || fail "标签目标不是 commit"
+
+          release_commit="$(jq -r '.object.sha' <<< "$tag_object")"
+          [[ "$(git rev-parse HEAD)" == "$release_commit" ]] || fail "检出提交与标签目标不一致"
+
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$release_commit" origin/main || fail "标签目标不在 main 上"
+
+          ci_run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --commit "$release_commit" --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
+          [[ -n "$ci_run_id" ]] || fail "目标提交没有成功的 Zig CI"
+
+          immutable_enabled="$(gh api -H "X-GitHub-Api-Version: $api_version" "repos/$GITHUB_REPOSITORY/immutable-releases" --jq '.enabled')"
+          [[ "$immutable_enabled" == true ]] || fail "仓库尚未启用 Immutable Releases"
+
+          echo "RELEASE_COMMIT=$release_commit" >> "$GITHUB_ENV"
+
+      - name: Run release quality gates
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          actual_zig_version="$(mise exec -- zig version)"
+          test "$actual_zig_version" = "$MINIMUM_ZIG_VERSION"
+          mise exec -- zig fmt --check build.zig build.zig.zon src
+          mise exec -- zig build
+          mise exec -- zig build test
+
+      - name: Compute and verify package hash
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          source_url="https://github.com/$GITHUB_REPOSITORY/archive/refs/tags/$RELEASE_TAG.tar.gz"
+          zig_executable="$(mise which zig)"
+          mkdir "$RUNNER_TEMP/fetch-a" "$RUNNER_TEMP/fetch-b"
+          cp build.zig build.zig.zon "$RUNNER_TEMP/fetch-a/"
+          cp build.zig build.zig.zon "$RUNNER_TEMP/fetch-b/"
+
+          package_hash_a="$(cd "$RUNNER_TEMP/fetch-a" && "$zig_executable" fetch --global-cache-dir "$RUNNER_TEMP/zig-cache-a" "$source_url")"
+          package_hash_b="$(cd "$RUNNER_TEMP/fetch-b" && "$zig_executable" fetch --global-cache-dir "$RUNNER_TEMP/zig-cache-b" "$source_url")"
+
+          test -n "$package_hash_a"
+          test "$package_hash_a" = "$package_hash_b"
+
+          {
+            echo "SOURCE_URL=$source_url"
+            echo "PACKAGE_HASH=$package_hash_a"
+          } >> "$GITHUB_ENV"
+
+      - name: Build release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          release_notes="$RUNNER_TEMP/release-notes.md"
+          {
+            cat "$RUNNER_TEMP/release-changelog.md"
+            printf '\n## 作为 Zig 依赖使用\n\n'
+            printf "该版本使用 Zig \`%s\` 验证。\n\n" "$MINIMUM_ZIG_VERSION"
+            printf '```zig\n'
+            printf '.dependencies = .{\n'
+            printf '    .ziwei = .{\n'
+            printf '        .url = "%s",\n' "$SOURCE_URL"
+            printf '        .hash = "%s",\n' "$PACKAGE_HASH"
+            printf '    },\n'
+            printf '},\n'
+            printf '```\n'
+          } > "$release_notes"
+
+          echo "RELEASE_NOTES=$release_notes" >> "$GITHUB_ENV"
+
+      - name: Publish GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          fail() {
+            echo "::error::$*"
+            exit 1
+          }
+
+          existing_release="$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json body,isDraft,isPrerelease,tagName 2>/dev/null || true)"
+
+          if [[ -n "$existing_release" ]] && [[ "$(jq -r '.isDraft' <<< "$existing_release")" == false ]]; then
+            [[ "$(jq -r '.isPrerelease' <<< "$existing_release")" == "$IS_PRERELEASE" ]] || fail "已发布 Release 的预发布状态不一致"
+            jq -r '.body' <<< "$existing_release" > "$RUNNER_TEMP/existing-release-notes.md"
+            cmp -s "$RELEASE_NOTES" "$RUNNER_TEMP/existing-release-notes.md" || fail "已发布 Release Notes 与预期内容不一致"
+            exit 0
+          fi
+
+          if [[ -n "$existing_release" ]]; then
+            edit_args=(--repo "$GITHUB_REPOSITORY" --verify-tag --title "$RELEASE_TAG" --notes-file "$RELEASE_NOTES")
+            if [[ "$IS_PRERELEASE" == true ]]; then
+              edit_args+=(--prerelease --latest=false)
+            else
+              edit_args+=(--prerelease=false --latest)
+            fi
+            gh release edit "$RELEASE_TAG" "${edit_args[@]}"
+          else
+            create_args=(--repo "$GITHUB_REPOSITORY" --verify-tag --draft --title "$RELEASE_TAG" --notes-file "$RELEASE_NOTES")
+            if [[ "$IS_PRERELEASE" == true ]]; then
+              create_args+=(--prerelease --latest=false)
+            else
+              create_args+=(--latest)
+            fi
+            gh release create "$RELEASE_TAG" "${create_args[@]}"
+          fi
+
+          if [[ "$IS_PRERELEASE" == true ]]; then
+            gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease --latest=false
+          else
+            gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease=false --latest
+          fi
+
+      - name: Verify published Release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          fail() {
+            echo "::error::$*"
+            exit 1
+          }
+
+          release_json=''
+          for _ in 1 2 3 4 5 6; do
+            release_json="$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isImmutable,isPrerelease,tagName,url)"
+            [[ "$(jq -r '.isImmutable' <<< "$release_json")" == true ]] && break
+            sleep 5
+          done
+
+          [[ "$(jq -r '.tagName' <<< "$release_json")" == "$RELEASE_TAG" ]] || fail "Release 标签不一致"
+          [[ "$(jq -r '.isDraft' <<< "$release_json")" == false ]] || fail "Release 仍是 draft"
+          [[ "$(jq -r '.isPrerelease' <<< "$release_json")" == "$IS_PRERELEASE" ]] || fail "Release 预发布状态不一致"
+          [[ "$(jq -r '.isImmutable' <<< "$release_json")" == true ]] || fail "Release 未进入 Immutable 状态"
+
+          gh release verify "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY"
+
+          if [[ "$IS_PRERELEASE" == false ]]; then
+            latest_tag="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq '.tag_name')"
+            [[ "$latest_tag" == "$RELEASE_TAG" ]] || fail "稳定版未标记为 Latest"
+          fi
+
+          release_url="$(jq -r '.url' <<< "$release_json")"
+          printf "### Release 已发布\n\n- Tag: \`%s\`\n- Commit: \`%s\`\n- URL: %s\n" "$RELEASE_TAG" "$RELEASE_COMMIT" "$release_url" >> "$GITHUB_STEP_SUMMARY"
