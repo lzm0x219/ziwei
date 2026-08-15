@@ -10,6 +10,8 @@
 
 ### Changed
 
+- `ZiweiBirth` 与 `ZiweiInput` 直接公开农历 `month`、`day`、`hour` 字段与对应构造参数。
+
 ### Deprecated
 
 ### Removed
