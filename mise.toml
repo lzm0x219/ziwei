@@ -8,7 +8,24 @@ postinstall = "lefthook install"
 [tasks.check]
 description = "运行格式、构建和测试检查"
 run = [
-  "zig fmt --check build.zig build.zig.zon src tests",
+  "zig fmt --check build.zig build.zig.zon src tests benchmarks",
   "zig build",
   "zig build test",
+  "zig build benchmark-docs-check",
 ]
+
+[tasks.benchmark]
+description = "运行本命盘构建基准并生成含图表的报告"
+run = "zig build benchmark --"
+
+[tasks."benchmark:publish"]
+description = "将完整基准报告发布到版本化文档"
+run = "zig build benchmark-publish --"
+
+[tasks."benchmark:docs-check"]
+description = "校验已发布基准产物、索引和趋势图"
+run = "zig build benchmark-docs-check"
+
+[tasks."benchmark:docs-generate"]
+description = "根据已发布记录重新生成基准索引和趋势图"
+run = "zig build benchmark-docs-generate"

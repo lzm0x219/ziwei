@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="366" viewBox="0 0 1200 366">
+<style>text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;fill:#172033}.title{font-size:20px;font-weight:700}.label{font-size:13px}.value{font-size:12px}</style>
+<rect width="100%" height="100%" fill="#ffffff"/><text x="24" y="30" class="title">Relative variability (RSD %)</text>
+<text x="24.00" y="73" class="label">natal/create_from_input/single</text><rect x="440.00" y="58" width="610.00" height="20" rx="3" fill="#10b981"/><text x="1056.00" y="73" class="value">1.21%</text>
+<text x="24.00" y="131" class="label">natal/create_from_birth/single</text><rect x="440.00" y="116" width="508.00" height="20" rx="3" fill="#10b981"/><text x="954.00" y="131" class="value">1.01%</text>
+<text x="24.00" y="189" class="label">natal/create_from_input/sexagenary_cycle</text><rect x="440.00" y="174" width="454.83" height="20" rx="3" fill="#10b981"/><text x="900.83" y="189" class="value">0.90%</text>
+<text x="24.00" y="247" class="label">natal/create_from_birth/sexagenary_cycle</text><rect x="440.00" y="232" width="650.00" height="20" rx="3" fill="#10b981"/><text x="1096.00" y="247" class="value">1.29%</text>
+<text x="24.00" y="305" class="label">natal/create_from_input/exhaustive_valid_space</text><rect x="440.00" y="290" width="275.61" height="20" rx="3" fill="#10b981"/><text x="721.61" y="305" class="value">0.55%</text>
+</svg>

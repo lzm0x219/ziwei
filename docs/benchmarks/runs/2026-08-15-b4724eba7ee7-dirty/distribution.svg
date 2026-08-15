@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="396" viewBox="0 0 1200 396">
+<style>text{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;fill:#172033}.title{font-size:20px;font-weight:700}.label{font-size:13px}.value{font-size:12px}</style>
+<rect width="100%" height="100%" fill="#ffffff"/><text x="24" y="30" class="title">Sample distribution (ns/op)</text>
+<rect x="650" y="17" width="18" height="10" fill="#bfdbfe" stroke="#2463eb"/><text x="674" y="27" class="value">Q1-Q3</text><circle cx="780" cy="22" r="4" fill="#f59e0b"/><text x="790" y="27" class="value">P95</text><circle cx="855" cy="22" r="3" fill="#dc2626"/><text x="864" y="27" class="value">outlier</text>
+<text x="24.00" y="65" class="label">natal/create_from_input/single</text>
+<line x1="979.26" y1="60" x2="1020.21" y2="60" stroke="#64748b" stroke-width="2"/>
+<rect x="987.54" y="48" width="6.94" height="24" fill="#bfdbfe" stroke="#2463eb"/>
+<line x1="991.66" y1="48" x2="991.66" y2="72" stroke="#172033" stroke-width="3"/><circle cx="1003.22" cy="60" r="5" fill="#f59e0b"/>
+<circle cx="1009.16" cy="60" r="3" fill="#dc2626" fill-opacity="0.7"/>
+<circle cx="1008.34" cy="60" r="3" fill="#dc2626" fill-opacity="0.7"/>
+<circle cx="1007.90" cy="60" r="3" fill="#dc2626" fill-opacity="0.7"/>
+<circle cx="1007.13" cy="60" r="3" fill="#dc2626" fill-opacity="0.7"/>
+<circle cx="1020.21" cy="60" r="3" fill="#dc2626" fill-opacity="0.7"/>
+<text x="1110.00" y="65" class="value">n=100</text>
+<text x="24.00" y="127" class="label">natal/create_from_birth/single</text>
+<line x1="953.70" y1="122" x2="982.77" y2="122" stroke="#64748b" stroke-width="2"/>
+<rect x="962.86" y="110" width="7.10" height="24" fill="#bfdbfe" stroke="#2463eb"/>
+<line x1="966.52" y1="110" x2="966.52" y2="134" stroke="#172033" stroke-width="3"/><circle cx="974.11" cy="122" r="5" fill="#f59e0b"/>
+<circle cx="981.96" cy="122" r="3" fill="#dc2626" fill-opacity="0.7"/>
+<circle cx="982.77" cy="122" r="3" fill="#dc2626" fill-opacity="0.7"/>
+<text x="1110.00" y="127" class="value">n=100</text>
+<text x="24.00" y="189" class="label">natal/create_from_input/sexagenary_cycle</text>
+<line x1="1016.06" y1="184" x2="1044.18" y2="184" stroke="#64748b" stroke-width="2"/>
+<rect x="1024.96" y="172" width="6.78" height="24" fill="#bfdbfe" stroke="#2463eb"/>
+<line x1="1028.29" y1="172" x2="1028.29" y2="196" stroke="#172033" stroke-width="3"/><circle cx="1037.70" cy="184" r="5" fill="#f59e0b"/>
+<circle cx="1044.18" cy="184" r="3" fill="#dc2626" fill-opacity="0.7"/>
+<text x="1110.00" y="189" class="value">n=100</text>
+<text x="24.00" y="251" class="label">natal/create_from_birth/sexagenary_cycle</text>
+<line x1="1023.13" y1="246" x2="1056.53" y2="246" stroke="#64748b" stroke-width="2"/>
+<rect x="1031.18" y="234" width="10.93" height="24" fill="#bfdbfe" stroke="#2463eb"/>
+<line x1="1036.30" y1="234" x2="1036.30" y2="258" stroke="#172033" stroke-width="3"/><circle cx="1053.49" cy="246" r="5" fill="#f59e0b"/>
+<text x="1110.00" y="251" class="value">n=100</text>
+<text x="24.00" y="313" class="label">natal/create_from_input/exhaustive_valid_space</text>
+<line x1="1079.42" y1="308" x2="1090.00" y2="308" stroke="#64748b" stroke-width="2"/>
+<rect x="1083.13" y="296" width="4.28" height="24" fill="#bfdbfe" stroke="#2463eb"/>
+<line x1="1085.59" y1="296" x2="1085.59" y2="320" stroke="#172033" stroke-width="3"/><circle cx="1089.89" cy="308" r="5" fill="#f59e0b"/>
+<text x="1110.00" y="313" class="value">n=10</text>
+</svg>

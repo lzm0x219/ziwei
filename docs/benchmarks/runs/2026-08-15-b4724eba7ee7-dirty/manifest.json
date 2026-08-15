@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "results_schema_version": 3,
+  "artifacts": [
+    {"name": "report.md", "sha256": "b3f01c4964e7bc002c3713fba822d9f6073b11f425ea143b6759e046a00818ab"},
+    {"name": "latency.svg", "sha256": "ff8450c0dc44cc54c5c0ff1fbca5c0da28c920265a170efbaff2a3ed9d88ff1c"},
+    {"name": "distribution.svg", "sha256": "43fa50450c284b4c06cabd71bd7bd9447e934907de91c8542df550e7e640f49b"},
+    {"name": "variability.svg", "sha256": "7c8296cfe547275ca6f0aacf130f0166df4b3084c63cd999191cb77a4885d101"},
+    {"name": "results.json", "sha256": "4eb19145f241979f0de4d78c3112bef5dfbb621c3b802b9437583389daeeb3b3"},
+    {"name": "summary.csv", "sha256": "910926bae0177c83dbdca223a15958b5e47e9d566875a809801a3ca77a578d6c"},
+    {"name": "samples.csv", "sha256": "1a61f2afbace190c7838f32f4de1d2a2bee9f809e1abd18d8bc0327c1c919421"}
+  ]
+}
