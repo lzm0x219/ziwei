@@ -26,11 +26,10 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check formatting
-        run: mise exec -- zig fmt --check build.zig build.zig.zon src
+      - name: Check project and published benchmark documentation
+        run: mise run check
 
-      - name: Build
-        run: mise exec -- zig build
-
-      - name: Test
-        run: mise exec -- zig build test
+      - name: Smoke-test benchmark report generation
+        env:
+          ZIWEI_BENCHMARK_RUNNER_ID: github-hosted-smoke
+        run: mise run benchmark -- --quick

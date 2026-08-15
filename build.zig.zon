@@ -10,6 +10,7 @@
     .paths = .{
         "build.zig",
         "build.zig.zon",
+        "benchmarks",
         "src",
         "tests",
         "LICENSE",
