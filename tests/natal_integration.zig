@@ -13,7 +13,6 @@ const FiveElementBureau = ziwei.FiveElementBureau;
 const PalaceName = ziwei.PalaceName;
 const StarName = ziwei.StarName;
 const Transformation = ziwei.Transformation;
-const NatalContext = ziwei.NatalContext;
 const Natal = ziwei.Natal;
 const createFromBirth = ziwei.createFromBirth;
 const createFromInput = ziwei.createFromInput;
@@ -160,40 +159,60 @@ fn expectNatalGraphInvariants(natal: *const Natal, birth_stem: Stem) !void {
     }
 }
 
-fn buildForTest(context: NatalContext) Natal {
-    const actual = if (context.year) |year| with_year: {
+const TestBirth = struct {
+    gender: Gender = .yang,
+    year: ?i32 = null,
+    birth_stem: Stem,
+    birth_branch: Branch,
+    month: u8,
+    day: u8,
+    hour: u8,
+};
+
+fn buildForTest(facts: TestBirth) Natal {
+    const natal = if (facts.year) |year| with_year: {
         const birth = ZiweiBirth.init(
-            context.gender,
+            facts.gender,
             year,
-            context.month,
-            context.day,
-            context.hour,
+            facts.month,
+            facts.day,
+            facts.hour,
         ) catch
             @panic("test birth must be valid");
         break :with_year createFromBirth(birth) catch
             @panic("test natal must be valid");
     } else without_year: {
         const value = ZiweiInput.init(
-            context.gender,
-            context.birth_stem,
-            context.birth_branch,
-            context.month,
-            context.day,
-            context.hour,
+            facts.gender,
+            facts.birth_stem,
+            facts.birth_branch,
+            facts.month,
+            facts.day,
+            facts.hour,
         ) catch @panic("test input must be valid");
         break :without_year createFromInput(value) catch
             @panic("test natal must be valid");
     };
 
-    if (!std.meta.eql(context, actual.context)) {
-        @panic("test context must match normalized public input");
-    }
-    return actual;
+    tryExpectMatchingFacts(facts, natal);
+    return natal;
 }
 
-fn sampleContext(year: ?i32) NatalContext {
+fn tryExpectMatchingFacts(facts: TestBirth, natal: Natal) void {
+    if (natal.context.gender != facts.gender or
+        natal.context.year != facts.year or
+        natal.context.birth_stem != facts.birth_stem or
+        natal.context.birth_branch != facts.birth_branch or
+        natal.context.month != facts.month or
+        natal.context.day != facts.day or
+        natal.context.hour != facts.hour)
+    {
+        @panic("test context must match normalized public input");
+    }
+}
+
+fn sampleBirth(year: ?i32) TestBirth {
     return .{
-        .gender = .yang,
         .year = year,
         .birth_stem = .jia,
         .birth_branch = .zi,
@@ -204,7 +223,7 @@ fn sampleContext(year: ?i32) NatalContext {
 }
 
 test "十二宫以寅为零并覆盖全部宫名和地支" {
-    const natal = buildForTest(sampleContext(1984));
+    const natal = buildForTest(sampleBirth(1984));
     const expected = [_]Branch{
         .yin,
         .mao,
@@ -236,7 +255,7 @@ test "十二宫以寅为零并覆盖全部宫名和地支" {
 // GitHub Issues #267、#268、#269、#272，而非从当前公式反推。
 test "已确认安宫安星样例保持一致" {
     const Case = struct {
-        context: NatalContext,
+        facts: TestBirth,
         ming: Branch,
         shen: Branch,
         bureau: FiveElementBureau,
@@ -244,7 +263,7 @@ test "已确认安宫安星样例保持一致" {
     };
     const cases = [_]Case{
         .{
-            .context = .{
+            .facts = .{
                 .gender = .yang,
                 .year = null,
                 .birth_stem = .ji,
@@ -259,7 +278,7 @@ test "已确认安宫安星样例保持一致" {
             .zi_wei = .xu,
         },
         .{
-            .context = .{
+            .facts = .{
                 .gender = .yang,
                 .year = null,
                 .birth_stem = .jia,
@@ -274,7 +293,7 @@ test "已确认安宫安星样例保持一致" {
             .zi_wei = .hai,
         },
         .{
-            .context = .{
+            .facts = .{
                 .gender = .yang,
                 .year = null,
                 .birth_stem = .geng,
@@ -291,7 +310,7 @@ test "已确认安宫安星样例保持一致" {
     };
 
     for (cases) |case| {
-        const natal = buildForTest(case.context);
+        const natal = buildForTest(case.facts);
         try std.testing.expectEqual(case.ming, natal.ming_palace_branch);
         try std.testing.expectEqual(case.shen, natal.shen_palace_branch);
         try std.testing.expectEqual(case.bureau, natal.bureau);
@@ -334,7 +353,7 @@ test "已确认辅星和紫府落宫样例保持一致" {
 }
 
 test "十八星和四十八条宫位四化满足图不变量" {
-    const natal = buildForTest(sampleContext(1984));
+    const natal = buildForTest(sampleBirth(1984));
     var star_count: usize = 0;
     var origin_counts = [_]usize{0} ** Transformation.all.len;
 
@@ -362,9 +381,53 @@ test "十八星和四十八条宫位四化满足图不变量" {
     try std.testing.expectEqual([_]usize{ 1, 1, 1, 1 }, origin_counts);
 }
 
+test "寅起正月逆时安命、顺时安身" {
+    const Case = struct { month: u8, hour: u8, ming: Branch, shen: Branch };
+    const cases = [_]Case{
+        .{ .month = 0, .hour = 0, .ming = .yin, .shen = .yin },
+        .{ .month = 0, .hour = 1, .ming = .chou, .shen = .mao },
+        .{ .month = 2, .hour = 4, .ming = .zi, .shen = .shen },
+        .{ .month = 11, .hour = 11, .ming = .yin, .shen = .zi },
+    };
+
+    for (cases) |case| {
+        const natal = buildForTest(.{
+            .birth_stem = .jia,
+            .birth_branch = .zi,
+            .month = case.month,
+            .day = 1,
+            .hour = case.hour,
+        });
+        try std.testing.expectEqual(case.ming, natal.ming_palace_branch);
+        try std.testing.expectEqual(case.shen, natal.shen_palace_branch);
+    }
+}
+
+test "大限顺逆由年干阴阳与性别共同确定" {
+    const Case = struct { gender: Gender, stem: Stem, branch: Branch, direction: DecadeDirection };
+    const cases = [_]Case{
+        .{ .gender = .yang, .stem = .jia, .branch = .zi, .direction = .forward },
+        .{ .gender = .yin, .stem = .jia, .branch = .zi, .direction = .reverse },
+        .{ .gender = .yang, .stem = .yi, .branch = .chou, .direction = .reverse },
+        .{ .gender = .yin, .stem = .yi, .branch = .chou, .direction = .forward },
+    };
+
+    for (cases) |case| {
+        const natal = buildForTest(.{
+            .gender = case.gender,
+            .birth_stem = case.stem,
+            .birth_branch = case.branch,
+            .month = 0,
+            .day = 1,
+            .hour = 0,
+        });
+        try std.testing.expectEqual(case.direction, natal.decade_direction);
+    }
+}
+
 test "大限保存方向、连续虚岁和可选年份" {
-    const with_year = buildForTest(sampleContext(1984));
-    const without_year = buildForTest(sampleContext(null));
+    const with_year = buildForTest(sampleBirth(1984));
+    const without_year = buildForTest(sampleBirth(null));
 
     try std.testing.expectEqual(DecadeDirection.forward, with_year.decade_direction);
     try std.testing.expectEqual(DecadeIndex.first, with_year.decades[0].index);

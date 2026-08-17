@@ -3,4 +3,5 @@
 test {
     _ = @import("natal_integration.zig");
     _ = @import("public_api.zig");
+    _ = @import("query_integration.zig");
 }
