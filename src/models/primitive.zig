@@ -16,11 +16,11 @@ pub const Gender = Nature;
 
 /// 五行。
 pub const Element = enum(u3) {
-    water = 2,
-    wood = 3,
-    metal = 4,
-    earth = 5,
-    fire = 6,
+    water = 0,
+    wood = 1,
+    metal = 2,
+    earth = 3,
+    fire = 4,
 };
 
 /// 天干，顺序固定为甲至癸。

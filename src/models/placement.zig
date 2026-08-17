@@ -24,6 +24,28 @@ const zi_wei_yin0_by_bureau_day = buildZiWeiYin0ByBureauDay();
 const major_branches_by_zi_wei_yin0 = buildMajorBranchesByZiWeiYin0();
 const zuo_you_by_month = buildZuoYouByMonth();
 const chang_qu_by_hour = buildChangQuByHour();
+const cycle_len = Branch.all.len;
+
+/// 宫位存储与安星公式共用的寅起坐标；子起 `Branch` 只在对外字段出现。
+const YinIndex = enum(u4) {
+    _,
+
+    fn wrap(value: i32) YinIndex {
+        return @enumFromInt(floorMod(value, cycle_len));
+    }
+
+    fn fromBranch(branch: Branch) YinIndex {
+        return wrap(@as(i32, @intCast(branch.index())) - @as(i32, @intCast(Branch.yin.index())));
+    }
+
+    fn toInt(self: YinIndex) usize {
+        return @intFromEnum(self);
+    }
+
+    fn toBranch(self: YinIndex) Branch {
+        return primitive.branchFromIndex((self.toInt() + Branch.yin.index()) % cycle_len);
+    }
+};
 
 /// 生年干与农历月、日、时辰确定的完整空间落位。
 ///
@@ -43,46 +65,27 @@ pub const Layout = struct {
 /// 农历月、日、时辰必须已经通过公开输入校验；本函数不分配内存，返回值
 /// 独立拥有全部结果，可安全重入。
 pub fn compute(birth_stem: Stem, month: u8, day: u8, hour: u8) Layout {
-    const ming_palace_branch = computeMingPalaceBranch(month, hour);
-    const shen_palace_branch = computeShenPalaceBranch(month, hour);
-    const palace_stems_by_branch = computePalaceStems(birth_stem);
-    const bureau = bureauFromMingPalace(ming_palace_branch, &palace_stems_by_branch);
-    const placements_by_branch = computePalacePlacements(
-        ming_palace_branch,
-        &palace_stems_by_branch,
-    );
+    const ming_palace = computeMingPalace(month, hour);
+    const shen_palace = computeShenPalace(month, hour);
+    const palace_stems = computePalaceStems(birth_stem);
+    const bureau = bureauFromMingPalace(ming_palace, &palace_stems);
+    const placements = computePalacePlacements(ming_palace, &palace_stems);
     const branches_by_star = computeStarBranches(bureau, month, day, hour);
-    const origin_palace_branch = primitive.originPalaceBranch(birth_stem);
+    const origin_palace = YinIndex.fromBranch(primitive.originPalaceBranch(birth_stem));
 
     return .{
-        .palaces = buildPalaces(
-            origin_palace_branch,
-            &placements_by_branch,
-            &branches_by_star,
-        ),
-        .ming_palace_branch = ming_palace_branch,
-        .shen_palace_name = palaceNameAt(shen_palace_branch, &placements_by_branch),
-        .shen_palace_branch = shen_palace_branch,
-        .origin_palace_name = palaceNameAt(origin_palace_branch, &placements_by_branch),
-        .origin_palace_branch = origin_palace_branch,
+        .palaces = buildPalaces(origin_palace, &placements, &branches_by_star),
+        .ming_palace_branch = ming_palace.toBranch(),
+        .shen_palace_name = palaceNameAt(shen_palace, &placements),
+        .shen_palace_branch = shen_palace.toBranch(),
+        .origin_palace_name = palaceNameAt(origin_palace, &placements),
+        .origin_palace_branch = origin_palace.toBranch(),
         .bureau = bureau,
     };
 }
 
 fn floorMod(value: i32, modulus: usize) usize {
     return @intCast(@mod(value, @as(i32, @intCast(modulus))));
-}
-
-fn branchIndexToYin0(branch_index: usize) u8 {
-    return @intCast((branch_index + Branch.all.len - Branch.yin.index()) % Branch.all.len);
-}
-
-fn yin0ToBranchIndex(yin0: usize) u8 {
-    return @intCast((yin0 + Branch.yin.index()) % Branch.all.len);
-}
-
-fn branchFromYin0(yin0: usize) Branch {
-    return primitive.branchFromIndex(yin0ToBranchIndex(yin0));
 }
 
 /// 尚未附加星曜与四化关系的宫位落位。
@@ -93,63 +96,59 @@ const PalacePlacement = struct {
 };
 
 /// 寅起正月，逆时安命宫。
-fn computeMingPalaceBranch(month: u8, hour: u8) Branch {
-    return branchFromYin0(floorMod(@as(i32, month) - @as(i32, hour), Branch.all.len));
+fn computeMingPalace(month: u8, hour: u8) YinIndex {
+    return YinIndex.wrap(@as(i32, month) - @as(i32, hour));
 }
 
 /// 寅起正月，顺时安身宫。
-fn computeShenPalaceBranch(month: u8, hour: u8) Branch {
-    return branchFromYin0(floorMod(@as(i32, month) + @as(i32, hour), Branch.all.len));
+fn computeShenPalace(month: u8, hour: u8) YinIndex {
+    return YinIndex.wrap(@as(i32, month) + @as(i32, hour));
 }
 
-/// 五虎遁：按子为零的地支下标生成十二宫干。
-fn computePalaceStems(birth_stem: Stem) [Branch.all.len]Stem {
+/// 五虎遁：按寅起坐标生成十二宫干。
+fn computePalaceStems(birth_stem: Stem) [cycle_len]Stem {
     const yin_head_stem_index = primitive.stemIndex(primitive.yinHeadStem(birth_stem));
-    var stems: [Branch.all.len]Stem = undefined;
-    for (&stems, 0..) |*stem, branch_index| {
-        stem.* = primitive.stemFromIndex(yin_head_stem_index + branchIndexToYin0(branch_index));
+    var stems: [cycle_len]Stem = undefined;
+    for (&stems, 0..) |*stem, yin0| {
+        stem.* = primitive.stemFromIndex(yin_head_stem_index + yin0);
     }
     return stems;
 }
 
 /// 命宫干支确定五行局。
 fn bureauFromMingPalace(
-    ming_palace_branch: Branch,
-    palace_stems_by_branch: *const [Branch.all.len]Stem,
+    ming_palace: YinIndex,
+    palace_stems: *const [cycle_len]Stem,
 ) FiveElementBureau {
     return five_element_bureau.fromMingPalace(
-        palace_stems_by_branch[ming_palace_branch.index()],
-        ming_palace_branch,
+        palace_stems[ming_palace.toInt()],
+        ming_palace.toBranch(),
     );
 }
 
-/// 按地支下标（子为零）生成十二宫名、支、干坐标。
+/// 按寅起坐标生成十二宫名、支、干。
 fn computePalacePlacements(
-    ming_palace_branch: Branch,
-    palace_stems_by_branch: *const [Branch.all.len]Stem,
-) [Branch.all.len]PalacePlacement {
-    var placements: [Branch.all.len]PalacePlacement = undefined;
+    ming_palace: YinIndex,
+    palace_stems: *const [cycle_len]Stem,
+) [cycle_len]PalacePlacement {
+    var placements: [cycle_len]PalacePlacement = undefined;
 
     for (PalaceName.all) |name| {
-        const branch_index = floorMod(
-            @as(i32, @intCast(ming_palace_branch.index())) - @as(i32, @intCast(name.index())),
-            Branch.all.len,
-        );
-        const branch = primitive.branchFromIndex(branch_index);
-        placements[branch_index] = .{
+        const yin = YinIndex.wrap(@as(i32, @intCast(ming_palace.toInt())) - @as(i32, @intCast(name.index())));
+        placements[yin.toInt()] = .{
             .name = name,
-            .branch = branch,
-            .stem = palace_stems_by_branch[branch_index],
+            .branch = yin.toBranch(),
+            .stem = palace_stems[yin.toInt()],
         };
     }
     return placements;
 }
 
 fn palaceNameAt(
-    branch: Branch,
-    placements_by_branch: *const [Branch.all.len]PalacePlacement,
+    yin: YinIndex,
+    placements: *const [cycle_len]PalacePlacement,
 ) PalaceName {
-    return placements_by_branch[branch.index()].name;
+    return placements[yin.toInt()].name;
 }
 
 /// 一次完成十四主星与首批四颗辅星的落宫计算和十八槽组装。
@@ -171,49 +170,43 @@ fn computeStarBranches(
 }
 
 fn buildPalaces(
-    origin_palace_branch: Branch,
-    placements_by_branch: *const [Branch.all.len]PalacePlacement,
+    origin_palace: YinIndex,
+    placements: *const [cycle_len]PalacePlacement,
     branches_by_star: *const [StarName.count]Branch,
-) [Branch.all.len]Palace {
-    const transformations = buildTransformations(
-        origin_palace_branch,
-        placements_by_branch,
-        branches_by_star,
-    );
-    const stars_by_branch = buildStarsByBranch(branches_by_star, &transformations);
-    return assemblePalaces(
-        placements_by_branch,
-        &stars_by_branch,
-        &transformations.by_branch,
-    );
+) [cycle_len]Palace {
+    const transformations = buildTransformations(origin_palace, placements, branches_by_star);
+    const stars = buildStars(branches_by_star, &transformations);
+    return assemblePalaces(placements, &stars, &transformations.by_palace);
 }
 
 const TransformationAssembly = struct {
     origin_by_star: [StarName.count]?Transformation,
     inward_by_star: [StarName.count]?Transformation,
     outward_by_star: [StarName.count]?Transformation,
-    by_branch: [Branch.all.len][Transformation.all.len]palace.PalaceTransformation,
+    by_palace: [cycle_len][Transformation.all.len]palace.PalaceTransformation,
 };
 
 fn buildTransformations(
-    origin_palace_branch: Branch,
-    placements_by_branch: *const [Branch.all.len]PalacePlacement,
+    origin_palace: YinIndex,
+    placements: *const [cycle_len]PalacePlacement,
     branches_by_star: *const [StarName.count]Branch,
 ) TransformationAssembly {
     var result = TransformationAssembly{
         .origin_by_star = [_]?Transformation{null} ** StarName.count,
         .inward_by_star = [_]?Transformation{null} ** StarName.count,
         .outward_by_star = [_]?Transformation{null} ** StarName.count,
-        .by_branch = undefined,
+        .by_palace = undefined,
     };
 
-    for (placements_by_branch, 0..) |source, branch_index| {
+    for (placements, 0..) |source, yin0| {
+        const source_palace: YinIndex = @enumFromInt(yin0);
         for (Transformation.all, 0..) |current_transformation, transformation_index| {
             const star_name = star.fromStemTransformation(source.stem, current_transformation);
             const star_index = star.index(star_name);
             const target_branch = branches_by_star[star_index];
+            const target_palace = YinIndex.fromBranch(target_branch);
 
-            if (source.branch == origin_palace_branch) {
+            if (source_palace == origin_palace) {
                 std.debug.assert(result.origin_by_star[star_index] == null);
                 result.origin_by_star[star_index] = current_transformation;
             }
@@ -226,11 +219,11 @@ fn buildTransformations(
                 result.inward_by_star[star_index] = current_transformation;
             }
 
-            result.by_branch[branch_index][transformation_index] = .{
+            result.by_palace[yin0][transformation_index] = .{
                 .source_name = source.name,
                 .source_branch = source.branch,
                 .transformation = current_transformation,
-                .target_name = palaceNameAt(target_branch, placements_by_branch),
+                .target_name = palaceNameAt(target_palace, placements),
                 .target_branch = target_branch,
                 .star_name = star_name,
             };
@@ -239,14 +232,14 @@ fn buildTransformations(
     return result;
 }
 
-fn buildStarsByBranch(
+fn buildStars(
     branches_by_star: *const [StarName.count]Branch,
     transformations: *const TransformationAssembly,
-) [Branch.all.len]PalaceStars {
-    var stars_by_branch = [_]PalaceStars{PalaceStars.init()} ** Branch.all.len;
+) [cycle_len]PalaceStars {
+    var stars = [_]PalaceStars{PalaceStars.init()} ** cycle_len;
     for (StarName.all) |name| {
         const star_index = star.index(name);
-        const branch = branches_by_star[star_index];
+        const palace_index = YinIndex.fromBranch(branches_by_star[star_index]).toInt();
         const value = star.init(
             name,
             transformations.origin_by_star[star_index],
@@ -255,48 +248,48 @@ fn buildStarsByBranch(
                 .outward = transformations.outward_by_star[star_index],
             },
         );
-        palace.appendStar(&stars_by_branch[branch.index()], value) catch
+        palace.appendStar(&stars[palace_index], value) catch
             @panic("supported star placement exceeds PalaceStars capacity");
     }
-    return stars_by_branch;
+    return stars;
 }
 
 fn assemblePalaces(
-    placements_by_branch: *const [Branch.all.len]PalacePlacement,
-    stars_by_branch: *const [Branch.all.len]PalaceStars,
-    transformations_by_branch: *const [Branch.all.len][Transformation.all.len]palace.PalaceTransformation,
-) [Branch.all.len]Palace {
-    var palaces: [Branch.all.len]Palace = undefined;
-    for (&palaces, 0..) |*value, yin0| {
-        const branch = branchFromYin0(yin0);
-        const palace_placement = placements_by_branch[branch.index()];
+    placements: *const [cycle_len]PalacePlacement,
+    stars: *const [cycle_len]PalaceStars,
+    transformations: *const [cycle_len][Transformation.all.len]palace.PalaceTransformation,
+) [cycle_len]Palace {
+    var palaces: [cycle_len]Palace = undefined;
+    for (&palaces, placements, stars, transformations) |*value, palace_placement, palace_stars, palace_transformations| {
         value.* = .{
             .name = palace_placement.name,
             .branch = palace_placement.branch,
             .stem = palace_placement.stem,
-            .stars = stars_by_branch[branch.index()],
-            .transformations = transformations_by_branch[branch.index()],
+            .stars = palace_stars,
+            .transformations = palace_transformations,
         };
     }
     return palaces;
 }
 
 fn bureauIndex(bureau: FiveElementBureau) usize {
-    return bureau.number() - 2;
+    inline for (std.enums.values(FiveElementBureau), 0..) |candidate, index_value| {
+        if (candidate == bureau) return index_value;
+    }
+    unreachable;
 }
 
-fn buildZiWeiYin0ByBureauDay() [5][30]u8 {
-    var table: [5][30]u8 = undefined;
-    for (&table, 0..) |*row, bureau_index| {
-        const bureau_number: u8 = @intCast(bureau_index + 2);
+fn buildZiWeiYin0ByBureauDay() [5][30]u4 {
+    var table: [5][30]u4 = undefined;
+    for (&table, std.enums.values(FiveElementBureau)) |*row, bureau| {
         for (row, 0..) |*value, day_index| {
-            value.* = computeZiWeiYin0(@intCast(day_index + 1), bureau_number);
+            value.* = computeZiWeiYin0(@intCast(day_index + 1), bureau.number());
         }
     }
     return table;
 }
 
-fn computeZiWeiYin0(day: u8, bureau_number: u8) u8 {
+fn computeZiWeiYin0(day: u8, bureau_number: u8) u4 {
     const day_value: i32 = day;
     const bureau_value: i32 = bureau_number;
     const ceiling_quotient = @divTrunc(day_value + bureau_value - 1, bureau_value);
@@ -309,13 +302,13 @@ fn computeZiWeiYin0(day: u8, bureau_number: u8) u8 {
         shortfall;
     return @intCast(@mod(
         ceiling_quotient - 1 + signed_shortfall,
-        @as(i32, @intCast(Branch.all.len)),
+        @as(i32, @intCast(cycle_len)),
     ));
 }
 
-fn buildMajorBranchesByZiWeiYin0() [Branch.all.len][StarName.count]Branch {
+fn buildMajorBranchesByZiWeiYin0() [cycle_len][StarName.count]Branch {
     @setEvalBranchQuota(5000);
-    var table: [Branch.all.len][StarName.count]Branch = undefined;
+    var table: [cycle_len][StarName.count]Branch = undefined;
     for (&table, 0..) |*row, zi_wei_yin0| {
         row.* = computeMajorBranchesFromZiWeiYin0(@intCast(zi_wei_yin0));
     }
@@ -327,12 +320,9 @@ const StarOffset = struct {
     offset: i32,
 };
 
-fn computeMajorBranchesFromZiWeiYin0(zi_wei_yin0: u8) [StarName.count]Branch {
+fn computeMajorBranchesFromZiWeiYin0(zi_wei_yin0: u4) [StarName.count]Branch {
     const zi_wei_value: i32 = zi_wei_yin0;
-    const tian_fu_value: i32 = @intCast(@mod(
-        -zi_wei_value,
-        @as(i32, @intCast(Branch.all.len)),
-    ));
+    const tian_fu_value: i32 = @intCast(@mod(-zi_wei_value, @as(i32, @intCast(cycle_len))));
     var branches = [_]Branch{.zi} ** StarName.count;
     const zi_wei_series = [_]StarOffset{
         .{ .name = .zi_wei, .offset = 0 },
@@ -354,61 +344,38 @@ fn computeMajorBranchesFromZiWeiYin0(zi_wei_yin0: u8) [StarName.count]Branch {
     };
 
     for (zi_wei_series) |entry| {
-        setStarBranch(&branches, entry.name, floorMod(zi_wei_value - entry.offset, Branch.all.len));
+        setStarBranch(&branches, entry.name, YinIndex.wrap(zi_wei_value - entry.offset));
     }
     for (tian_fu_series) |entry| {
-        setStarBranch(&branches, entry.name, floorMod(tian_fu_value + entry.offset, Branch.all.len));
+        setStarBranch(&branches, entry.name, YinIndex.wrap(tian_fu_value + entry.offset));
     }
     return branches;
 }
 
-fn buildZuoYouByMonth() [Branch.all.len][2]Branch {
-    var table: [Branch.all.len][2]Branch = undefined;
+fn buildZuoYouByMonth() [cycle_len][2]Branch {
+    var table: [cycle_len][2]Branch = undefined;
     for (&table, 0..) |*row, month| {
         row.* = .{
-            branchFromYin0(floorMod(2 + @as(i32, @intCast(month)), Branch.all.len)),
-            branchFromYin0(floorMod(8 - @as(i32, @intCast(month)), Branch.all.len)),
+            YinIndex.wrap(2 + @as(i32, @intCast(month))).toBranch(),
+            YinIndex.wrap(8 - @as(i32, @intCast(month))).toBranch(),
         };
     }
     return table;
 }
 
-fn buildChangQuByHour() [Branch.all.len][2]Branch {
-    var table: [Branch.all.len][2]Branch = undefined;
+fn buildChangQuByHour() [cycle_len][2]Branch {
+    var table: [cycle_len][2]Branch = undefined;
     for (&table, 0..) |*row, hour| {
         row.* = .{
-            branchFromYin0(floorMod(8 - @as(i32, @intCast(hour)), Branch.all.len)),
-            branchFromYin0(floorMod(2 + @as(i32, @intCast(hour)), Branch.all.len)),
+            YinIndex.wrap(8 - @as(i32, @intCast(hour))).toBranch(),
+            YinIndex.wrap(2 + @as(i32, @intCast(hour))).toBranch(),
         };
     }
     return table;
 }
 
-fn setStarBranch(branches: *[StarName.count]Branch, name: StarName, yin0: usize) void {
-    branches[star.index(name)] = branchFromYin0(yin0);
-}
-
-test "两套宫位坐标在十二位置上往返" {
-    for (0..Branch.all.len) |branch_index| {
-        const yin0 = branchIndexToYin0(branch_index);
-        try std.testing.expectEqual(@as(u8, @intCast(branch_index)), yin0ToBranchIndex(yin0));
-        try std.testing.expectEqual(branch_index, branchFromYin0(yin0).index());
-    }
-}
-
-test "安命与安身公式覆盖全部月时组合" {
-    for (0..Branch.all.len) |month| {
-        for (0..Branch.all.len) |hour| {
-            try std.testing.expectEqual(
-                branchFromYin0(floorMod(@as(i32, @intCast(month)) - @as(i32, @intCast(hour)), Branch.all.len)),
-                computeMingPalaceBranch(@intCast(month), @intCast(hour)),
-            );
-            try std.testing.expectEqual(
-                branchFromYin0(floorMod(@as(i32, @intCast(month)) + @as(i32, @intCast(hour)), Branch.all.len)),
-                computeShenPalaceBranch(@intCast(month), @intCast(hour)),
-            );
-        }
-    }
+fn setStarBranch(branches: *[StarName.count]Branch, name: StarName, yin: YinIndex) void {
+    branches[star.index(name)] = yin.toBranch();
 }
 
 test "安星预计算表与生成公式在全部支持输入上一致" {
@@ -432,10 +399,10 @@ test "安星预计算表与生成公式在全部支持输入上一致" {
                     );
                     const zi_wei_yin0 = computeZiWeiYin0(@intCast(day), bureau.number());
                     var expected = computeMajorBranchesFromZiWeiYin0(zi_wei_yin0);
-                    expected[star.index(.zuo_fu)] = branchFromYin0(floorMod(2 + @as(i32, @intCast(month)), Branch.all.len));
-                    expected[star.index(.you_bi)] = branchFromYin0(floorMod(8 - @as(i32, @intCast(month)), Branch.all.len));
-                    expected[star.index(.wen_chang)] = branchFromYin0(floorMod(8 - @as(i32, @intCast(hour)), Branch.all.len));
-                    expected[star.index(.wen_qu)] = branchFromYin0(floorMod(2 + @as(i32, @intCast(hour)), Branch.all.len));
+                    expected[star.index(.zuo_fu)] = YinIndex.wrap(2 + @as(i32, @intCast(month))).toBranch();
+                    expected[star.index(.you_bi)] = YinIndex.wrap(8 - @as(i32, @intCast(month))).toBranch();
+                    expected[star.index(.wen_chang)] = YinIndex.wrap(8 - @as(i32, @intCast(hour))).toBranch();
+                    expected[star.index(.wen_qu)] = YinIndex.wrap(2 + @as(i32, @intCast(hour))).toBranch();
                     try std.testing.expectEqual(expected, actual);
 
                     var stars_per_branch = [_]u8{0} ** Branch.all.len;

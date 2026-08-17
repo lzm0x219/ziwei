@@ -293,3 +293,125 @@ test "十干四化星表符合已确认迁移基准" {
         }
     }
 }
+
+const natal_mod = @import("natal.zig");
+const palace_mod = @import("palace.zig");
+const PalaceName = palace_mod.PalaceName;
+const PalaceTransformation = palace_mod.PalaceTransformation;
+
+/// 当前立极坐标中的一颗星曜。
+pub const ScopedStar = struct {
+    palace_scope: palace_mod.ScopedPalace,
+    fact_ptr: *const Star,
+
+    /// 按命盘事实、命位、宫位与星曜事实比较两个查询结果。
+    pub fn eql(self: ScopedStar, other: ScopedStar) bool {
+        return self.palace_scope.eql(other.palace_scope) and std.meta.eql(self.fact_ptr.*, other.fact_ptr.*);
+    }
+
+    /// 返回借用的底层星曜事实。
+    pub fn fact(self: ScopedStar) *const Star {
+        return self.fact_ptr;
+    }
+
+    /// 返回星曜在当前立极坐标中的所在宫位。
+    pub fn palace(self: ScopedStar) palace_mod.ScopedPalace {
+        return self.palace_scope;
+    }
+
+    /// 稳定过滤全盘四十八条关系，返回飞到本星的关系。
+    pub fn incomingPalaceTransformations(self: ScopedStar) ScopedTransformationList {
+        var result = ScopedTransformationList.init();
+        for (self.palace_scope.chartPalaceTransformations()) |edge| {
+            if (edge.fact_ptr.star_name == self.fact_ptr.name) result.append(edge);
+        }
+        return result;
+    }
+
+    /// 判断本星是否具有指定向心自化。
+    pub fn hasInwardSelfTransformation(self: ScopedStar, value: Transformation) bool {
+        return self.fact_ptr.self_transformations.inward == value;
+    }
+
+    /// 判断本星是否具有指定离心自化。
+    pub fn hasOutwardSelfTransformation(self: ScopedStar, value: Transformation) bool {
+        return self.fact_ptr.self_transformations.outward == value;
+    }
+};
+
+/// 当前立极坐标中的一条宫位四化关系。
+pub const ScopedPalaceTransformation = struct {
+    scope: natal_mod.ReframeScope,
+    fact_ptr: *const PalaceTransformation,
+
+    /// 按命盘事实、命位与关系事实比较两个查询结果。
+    pub fn eql(self: ScopedPalaceTransformation, other: ScopedPalaceTransformation) bool {
+        return self.scope.eql(other.scope) and std.meta.eql(self.fact_ptr.*, other.fact_ptr.*);
+    }
+
+    /// 返回借用的底层宫位四化事实。
+    pub fn fact(self: ScopedPalaceTransformation) *const PalaceTransformation {
+        return self.fact_ptr;
+    }
+
+    /// 返回当前立极坐标中的源宫。
+    pub fn source(self: ScopedPalaceTransformation) palace_mod.ScopedPalace {
+        return natal_mod.scopedPalaceAt(self.scope, self.fact_ptr.source_branch);
+    }
+
+    /// 返回当前立极坐标中的目标宫。
+    pub fn target(self: ScopedPalaceTransformation) palace_mod.ScopedPalace {
+        return natal_mod.scopedPalaceAt(self.scope, self.fact_ptr.target_branch);
+    }
+
+    /// 返回关系指向的星曜。
+    pub fn star(self: ScopedPalaceTransformation) ScopedStar {
+        return self.scope.star(self.fact_ptr.star_name);
+    }
+};
+
+/// 当前宫位的对宫所承接的生年四化关系。
+pub const ScopedBirthTransformationOpposition = union(enum) {
+    /// 生年禄、权或科位于对宫，称照。
+    zhao: ScopedStar,
+    /// 生年忌位于对宫，称冲。
+    chong: ScopedStar,
+
+    /// 按变体及承接星曜比较两个关系。
+    pub fn eql(
+        self: ScopedBirthTransformationOpposition,
+        other: ScopedBirthTransformationOpposition,
+    ) bool {
+        return switch (self) {
+            .zhao => |value| switch (other) {
+                .zhao => |other_value| value.eql(other_value),
+                .chong => false,
+            },
+            .chong => |value| switch (other) {
+                .zhao => false,
+                .chong => |other_value| value.eql(other_value),
+            },
+        };
+    }
+
+    /// 返回承接该生年四化的星曜。
+    pub fn star(self: ScopedBirthTransformationOpposition) ScopedStar {
+        return switch (self) {
+            inline else => |value| value,
+        };
+    }
+};
+
+/// 一项生年四化及其承接星曜。
+pub const BirthTransformation = struct {
+    transformation: Transformation,
+    star: ScopedStar,
+};
+
+/// 最多容纳十八颗星曜的无堆分配筛选结果。
+pub const ScopedStarList = natal_mod.FixedList(ScopedStar, StarName.count);
+/// 最多容纳全盘四十八条关系的无堆分配筛选结果。
+pub const ScopedTransformationList = natal_mod.FixedList(
+    ScopedPalaceTransformation,
+    PalaceName.all.len * Transformation.all.len,
+);
