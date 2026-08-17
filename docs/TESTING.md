@@ -58,7 +58,6 @@ test {
     _ = @import("models/primitive.zig");
     _ = @import("models/star.zig");
     _ = @import("models/transformation.zig");
-    _ = @import("query.zig");
 }
 ```
 
@@ -158,15 +157,13 @@ mise run check
 ```text
 src/
 ├── root.zig                    public API 和单元测试聚合入口
-├── ziwei.zig                   排盘实现；存在局部单元行为时可附单元测试
-├── query.zig                   查询实现和查询模块单元测试
 └── models/
     └── *.zig                   领域实现和对应单元测试
 tests/
 ├── root.zig                    集成测试聚合入口
 ├── natal_integration.zig       完整命盘与多模块协作测试
 ├── public_api.zig              public API 黑盒测试
-└── query_integration.zig       查询协作测试；完成暂缓迁移后新增
+└── query_integration.zig       立极、宫位关系、星曜与四化查询协作测试
 build.zig                       注册并运行两类测试
 mise.toml                       固定 Zig 版本并提供统一检查命令
 ```
@@ -176,17 +173,17 @@ mise.toml                       固定 Zig 版本并提供统一检查命令
 当前放置方式整体符合本规范：
 
 - `src/models/*.zig` 中的测试验证对应模型或放置规则的局部行为，应继续与实现同文件维护。
-- 原位于 `src/ziwei.zig` 的完整命例和跨模块测试已迁移至 `tests/natal_integration.zig`；`src/ziwei.zig` 当前只保留生产实现。
+- 原位于 `src/ziwei.zig` 的完整命例和跨模块测试已迁移至 `tests/natal_integration.zig`；包入口由 `src/root.zig` 直接转发 `Natal.fromBirth` / `Natal.fromInput`。
 - 原位于 `src/root.zig` 的 public API 黑盒测试已迁移至 `tests/public_api.zig`；`src/root.zig` 当前只保留公开导出和单元测试聚合入口。
-- `src/models/decade.zig` 的测试专用边界常量已局部化到对应 `test` 块，不再混入生产声明区。
+- 大限方向、虚岁、有年/无年和 `YearOutOfRange` 边界由公开创建入口的集成测试覆盖；`src/models/decade.zig` 只保留序号类型不变量。
 - `build.zig` 已同时运行单元测试和集成测试，`zig build test` 是全部测试的统一入口。
 
-当前唯一已知例外是 `src/query.zig`。以下两个测试属于查询模块自身的单元测试，应继续留在源码中：
+只读查询从 `Natal.scope()` / `Natal.decadeScope()` 进入。立极入口在 `natal.zig`，宫位查询在 `palace.zig`，星曜与四化查询在 `star.zig`，大限定位在 `decade.zig`。以下测试仍与实现同文件，属于查询模块单元测试：
 
 - `限内年份序号仅接受一至十`
 - `固定宫位分组完整覆盖领域身份`
 
-其余五个测试通过真实命盘验证查询句柄、十二宫映射、宫位关系、星曜与四化查询以及大限定位，属于多模块协作测试；`sampleNatal` 和 `palaceNames` 也是这些测试的夹具。按本规范，它们最终应一起迁移到 `tests/query_integration.zig`。该迁移目前按项目决定暂缓，不改变长期放置规则。
+其余通过真实命盘验证查询句柄、十二宫映射、宫位关系、星曜与四化以及大限定位的测试，属于多模块协作测试，已迁移到 `tests/query_integration.zig`。该文件只通过公开入口验证行为，并在文件内保留关系期望表作为夹具，不依赖领域文件的内部表。
 
 ## 变更检查清单
 

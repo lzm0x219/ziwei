@@ -36,34 +36,28 @@ pub const ZiweiInput = input.ZiweiInput;
 pub const ZiweiInputError = input.ZiweiInputError;
 
 const natal = @import("models/natal.zig");
-pub const NatalContext = natal.NatalContext;
 pub const Natal = natal.Natal;
+pub const ZiweiCreateError = natal.ZiweiCreateError;
+pub const createFromBirth = Natal.fromBirth;
+pub const createFromInput = Natal.fromInput;
 
-const ziwei = @import("ziwei.zig");
-pub const ZiweiCreateError = ziwei.ZiweiCreateError;
-pub const createFromBirth = ziwei.createFromBirth;
-pub const createFromInput = ziwei.createFromInput;
-
-const query_api = @import("query.zig");
-pub const DecadeYearOrdinal = query_api.DecadeYearOrdinal;
-pub const DecadeYearOrdinalError = query_api.DecadeYearOrdinalError;
-pub const DecadeAgeError = query_api.DecadeAgeError;
-pub const DecadeLunarYearError = query_api.DecadeLunarYearError;
-pub const PalaceLine = query_api.PalaceLine;
-pub const Query = query_api.Query;
-pub const ReframeScope = query_api.ReframeScope;
-pub const DecadeScope = query_api.DecadeScope;
-pub const DecadeYearSelection = query_api.DecadeYearSelection;
-pub const ScopedPalace = query_api.ScopedPalace;
-pub const ScopedStar = query_api.ScopedStar;
-pub const ScopedPalaceTransformation = query_api.ScopedPalaceTransformation;
-pub const ScopedPalaceLine = query_api.ScopedPalaceLine;
-pub const ScopedBirthTransformationOpposition = query_api.ScopedBirthTransformationOpposition;
-pub const BirthTransformation = query_api.BirthTransformation;
-pub const ScopedPalaceList = query_api.ScopedPalaceList;
-pub const ScopedStarList = query_api.ScopedStarList;
-pub const ScopedTransformationList = query_api.ScopedTransformationList;
-pub const query = query_api.query;
+pub const DecadeYearOrdinal = decade.DecadeYearOrdinal;
+pub const DecadeYearOrdinalError = decade.DecadeYearOrdinalError;
+pub const DecadeAgeError = decade.DecadeAgeError;
+pub const DecadeLunarYearError = decade.DecadeLunarYearError;
+pub const PalaceLine = palace.PalaceLine;
+pub const ReframeScope = natal.ReframeScope;
+pub const DecadeScope = decade.DecadeScope;
+pub const DecadeYearSelection = decade.DecadeYearSelection;
+pub const ScopedPalace = palace.ScopedPalace;
+pub const ScopedStar = star.ScopedStar;
+pub const ScopedPalaceTransformation = star.ScopedPalaceTransformation;
+pub const ScopedPalaceLine = palace.ScopedPalaceLine;
+pub const ScopedBirthTransformationOpposition = star.ScopedBirthTransformationOpposition;
+pub const BirthTransformation = star.BirthTransformation;
+pub const ScopedPalaceList = palace.ScopedPalaceList;
+pub const ScopedStarList = star.ScopedStarList;
+pub const ScopedTransformationList = star.ScopedTransformationList;
 
 test {
     _ = @import("models/decade.zig");
@@ -75,5 +69,4 @@ test {
     _ = @import("models/primitive.zig");
     _ = @import("models/star.zig");
     _ = @import("models/transformation.zig");
-    _ = @import("query.zig");
 }

@@ -14,9 +14,9 @@ const DecadeDirection = ziwei.DecadeDirection;
 const DecadeIndex = ziwei.DecadeIndex;
 const ZiweiBirth = ziwei.ZiweiBirth;
 const ZiweiInput = ziwei.ZiweiInput;
+const ReframeScope = ziwei.ReframeScope;
 const createFromBirth = ziwei.createFromBirth;
 const createFromInput = ziwei.createFromInput;
-const query = ziwei.query;
 
 test "公开入口导出领域类型" {
     const stem: Stem = .jia;
@@ -46,6 +46,27 @@ test "公开领域类型不泄漏内部排盘规则" {
     try std.testing.expect(!@hasDecl(Transformation, "index"));
     try std.testing.expect(!@hasDecl(FiveElementBureau, "fromMingPalace"));
     try std.testing.expect(!@hasDecl(DecadeDirection, "fromBirthFacts"));
+    try std.testing.expect(!@hasDecl(ziwei, "NatalContext"));
+    try std.testing.expect(!@hasDecl(ziwei, "Layout"));
+    try std.testing.expect(!@hasDecl(ziwei, "compute"));
+    try std.testing.expect(!@hasDecl(ziwei, "buildDecades"));
+    try std.testing.expect(!@hasDecl(ziwei, "directionFromBirthFacts"));
+    try std.testing.expect(!@hasDecl(ziwei, "query"));
+    try std.testing.expect(!@hasDecl(ziwei, "Query"));
+}
+
+test "立极坐标不泄漏跨文件内部支撑" {
+    try std.testing.expect(!@hasDecl(ReframeScope, "init"));
+    try std.testing.expect(!@hasDecl(ReframeScope, "palaceAt"));
+    try std.testing.expect(!@hasDecl(ReframeScope, "relativeName"));
+    try std.testing.expect(!@hasDecl(ReframeScope, "reframeAt"));
+    try std.testing.expect(!@hasDecl(ReframeScope, "palaceByNatalName"));
+    try std.testing.expect(!@hasDecl(ReframeScope, "palacesWithStem"));
+    try std.testing.expect(!@hasDecl(ReframeScope, "sharedPalace"));
+    try std.testing.expect(!@hasDecl(ziwei, "initReframeScope"));
+    try std.testing.expect(!@hasDecl(ziwei, "scopedPalaceAt"));
+    try std.testing.expect(!@hasDecl(ziwei, "scopedRelativeName"));
+    try std.testing.expect(!@hasDecl(ziwei, "reframeAt"));
 }
 
 test "公开入口由两种已验证输入创建本命盘" {
@@ -94,6 +115,17 @@ test "公开入口分别拒绝非法输入与越界大限年份" {
 
     try std.testing.expectError(error.DayOutOfRange, createFromInput(invalid_input));
     try std.testing.expectError(error.YearOutOfRange, createFromBirth(unsupported_birth));
+
+    // 正月初一子时、甲年命宫寅为火六局；末限末年 = year + 124。
+    const last_jia_year = 2147483514;
+    const overflow_jia_year = 2147483524;
+    const boundary = try createFromBirth(try ZiweiBirth.init(.yang, last_jia_year, 0, 1, 0));
+    try std.testing.expectEqual(FiveElementBureau.fire_six, boundary.bureau);
+    try std.testing.expectEqual(@as(?i32, last_jia_year + 124), boundary.decades[11].years[9].year);
+    try std.testing.expectError(
+        error.YearOutOfRange,
+        createFromBirth(try ZiweiBirth.init(.yang, overflow_jia_year, 0, 1, 0)),
+    );
 }
 
 test "公开查询层按稳定坐标查询而不修改命盘事实" {
@@ -104,7 +136,7 @@ test "公开查询层按稳定坐标查询而不修改命盘事实" {
         1,
         4,
     ));
-    const natal_scope = query(&chart).natal();
+    const natal_scope = chart.scope();
     const ming = natal_scope.palace(.ming);
 
     try std.testing.expectEqual(chart.ming_palace_branch, ming.fact().branch);
@@ -112,7 +144,7 @@ test "公开查询层按稳定坐标查询而不修改命盘事实" {
     try std.testing.expectEqual(PalaceName.qian_yi, ming.opposite().relativeName());
     try std.testing.expectEqual(StarName.zi_wei, natal_scope.star(.zi_wei).fact().name);
     try std.testing.expectEqual(@as(usize, 48), natal_scope.palaceTransformations().len);
-    try std.testing.expectEqual(@as(u8, 2), (try query(&chart).decadeYearAtAge(2)).fact().age);
+    try std.testing.expectEqual(@as(u8, 2), (try chart.decadeYearAtAge(2)).fact().age);
 }
 
 test "公开声明均可分析" {
