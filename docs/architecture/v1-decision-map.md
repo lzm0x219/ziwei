@@ -190,7 +190,7 @@
 | D-171 | `Stem` 与 `Branch` 均提供 `index() -> u8`，返回各自固定的零基领域序号；二者还实现固定简体 `Display`，只用于组合核心中文错误诊断，不提供语言选择或 `name()` 标签方法。 | 已确认 |
 | D-172 | `FiveElementBureau` 作为不可拆解的领域枚举公开；不提供 `element()` 或 `number()` 等组成部分读取方法，也不承担显示职责。 | 已确认 |
 | D-173 | 稳定身份类型使用 `PalaceKey`、`StarKey`、`DecadePalaceKey`、`YearlyPalaceKey` 后缀。`Decade` 与 `Yearly` 均以 `key` 字段和 `key()` 方法公开其期间宫职键。`DecadeKey`、`YearlyKey` 不使用，以免与期间序号混淆。 | 已被 D-182、D-184 替换 |
-| D-174 | 已替换：`ziwei_core` 不公开 `Lang` 或任何标签读取方法，`ziwei_locale` 单向依赖核心提供标签。 | 已替换 |
+| D-174 | 已替换：`ziwei` 不公开 `Lang` 或任何标签读取方法，`ziwei_locale` 单向依赖核心提供标签。 | 已替换 |
 | D-175 | `DecadePalaceKey` 与 `YearlyPalaceKey` 各自公开 `palace_key() -> PalaceKey`，表达与本命宫位键的一一对应；它们本身不提供名称字段或标签 API。 | 已被 D-182、D-184 替换 |
 | D-176 | `ZiweiError::Display` 使用固定中文诊断；无效六十甲子通过 `Stem` 与 `Branch` 的固定简体 `Display` 组合，其余边界错误包含原始数值。它不是可配置的本地化接口，调用方必须通过错误变体和字段而非文案匹配错误。 | 已确认 |
 | D-177 | `ziwei_locale` 不保留为 workspace 包，核心不定义 `Lang`、运行时标签读取器或全局语言状态。`Palace`、`Star`、`Decade`、`Yearly` 在创建时从其稳定键派生并私有保存必填的 `name_hans: &'static str` 与 `name_hant: &'static str`；两字段分别表示简体、繁体名称，并由同名只读方法返回，但不参与排盘规则。 | 名称归属已被 D-182、D-183 替换；本地化约束保持确认 |
@@ -202,6 +202,7 @@
 | D-183 | `Palace` 私有持有 `scope: PalaceScope::Natal(PalaceKey)`，提供 `scope() -> PalaceScope`；`key()` 从该作用域投影宫位键。`Palace` 不再保存 `name_hans`、`name_hant`，也不再提供同名方法。 | 已确认 |
 | D-184 | 删除 `DecadePalaceKey`、`YearlyPalaceKey`、`Decade` 与 `Yearly`。指定大限和流年时分别按需返回 `[PalaceScope; 12]`；四个限运领域值的文件归属已被 D-185 替换。 | 已确认 |
 | D-185 | `domain/period.rs` 承载完整限运领域；当前保存 `DecadeIndex`、`YearlyIndex`、`DecadeAge` 与 `DecadeYear`，未来的流月、流日、流时领域值也归入该模块。不因共同模块而引入无行为的公开 `Period` 枚举、结构体或 trait，crate 根公开类型保持不变。 | 已确认 |
+| D-186 | 唯一领域引擎的 Cargo 包名、Rust import 名与目录名统一为 `ziwei`；不保留 `ziwei_core` 兼容包或创建纯重导出门面。未来 adapter 直接单向依赖 `ziwei`。 | 已确认 |
 | D-154 | `PalaceTransformation` 的源宫、目标宫定位字段及相关查询暂缓设计；当前不确认 `source_palace`、源／目标地支或目标宫名字段。 | 暂缓 |
 ## 暂缓决策
 

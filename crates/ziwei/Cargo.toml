@@ -1,11 +1,11 @@
 [package]
-name = "ziwei_core"
+name = "ziwei"
 version = "0.1.0"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
-description = "A Rust core library for Ziwei Doushu chart construction"
+description = "A Rust library for Ziwei Doushu chart construction"
 
 [lints]
 workspace = true

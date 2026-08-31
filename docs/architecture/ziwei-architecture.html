@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ziwei_core 当前架构</title>
+  <title>ziwei 当前架构</title>
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@400&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -77,13 +77,13 @@
 <body>
   <main class="frame">
     <p class="eyebrow">Architecture · Current Working Tree · 2026-08-31</p>
-    <h1><span lang="en">ziwei_core</span> 当前架构</h1>
+    <h1><span lang="en">ziwei</span> 当前架构</h1>
     <p class="subtitle">一个无外部依赖的 Rust 领域内核：已实现不可变领域对象与验证合同；已确认的创建入口和完整排盘路径尚未接通。</p>
 
     <div class="diagram-scroll">
-      <svg viewBox="0 0 1200 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ziwei-core-architecture-title ziwei-core-architecture-desc">
-        <title id="ziwei-core-architecture-title">ziwei_core 当前架构</title>
-        <desc id="ziwei-core-architecture-desc">架构图展示调用方进入 ziwei_core 后，从已验证输入经过尚未接通的创建与排盘路径，形成不可变 Natal，并关联宫位、星曜、大限与流年对象。</desc>
+      <svg viewBox="0 0 1200 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ziwei-architecture-title ziwei-architecture-desc">
+        <title id="ziwei-architecture-title">ziwei 当前架构</title>
+        <desc id="ziwei-architecture-desc">架构图展示调用方进入 ziwei 后，从已验证输入经过尚未接通的创建与排盘路径，形成不可变 Natal，并关联宫位、星曜、大限与流年对象。</desc>
         <defs>
           <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
             <polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/>
@@ -98,10 +98,10 @@
 
         <rect width="1200" height="620" fill="#f5f5f5"/>
 
-        <!-- ziwei_core boundary -->
+        <!-- ziwei boundary -->
         <rect x="204" y="116" width="968" height="400" rx="8" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.12)" stroke-width="0.8"/>
         <rect x="224" y="120" width="88" height="16" rx="4" fill="#f5f5f5"/>
-        <text x="268" y="132" fill="rgba(45,49,66,0.48)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">ZIWEI_CORE</text>
+        <text x="268" y="132" fill="rgba(45,49,66,0.48)" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">ZIWEI</text>
 
         <!-- Connectors: confirmed path is dashed because it is not wired yet. -->
         <line x1="180" y1="272" x2="224" y2="272" stroke="#4f5d75" stroke-width="1" stroke-dasharray="4,4" marker-end="url(#arrow)"/>
@@ -206,7 +206,7 @@
       </svg>
     </div>
 
-    <p class="colophon">SOURCE: Cargo workspace + ziwei_core source + CONTEXT.md + docs/architecture · STATUS: current working tree, not a released API snapshot</p>
+    <p class="colophon">SOURCE: Cargo workspace + ziwei source + CONTEXT.md + docs/architecture · STATUS: current working tree, not a released API snapshot</p>
   </main>
 </body>
 </html>
