@@ -1,0 +1,13 @@
+pre-commit:
+  commands:
+    format:
+      run: mise exec -- cargo fmt --all -- --check
+    whitespace:
+      run: git diff --cached --check
+
+pre-push:
+  commands:
+    test:
+      run: mise exec -- cargo test --workspace
+    clippy:
+      run: mise exec -- cargo clippy --workspace --all-targets -- -D warnings
