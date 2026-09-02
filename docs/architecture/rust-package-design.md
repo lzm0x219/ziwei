@@ -141,7 +141,7 @@ src/
 ├── rules.rs                     # 私有排盘规则、公式与测试
 └── domain/                      # 私有领域模块
     ├── primitive.rs             # 阴阳、五行、五行局、性别、天干、地支、生肖
-    ├── profile.rs               # 出生资料值、两类公开输入与 BirthContext
+    ├── profile.rs               # 出生资料值、两类公开输入与 Profile
     ├── natal.rs                 # Natal 本命盘结果
     ├── palace.rs                # 宫位与 PalaceName
     ├── star.rs                  # 星曜与 StarName
@@ -176,15 +176,15 @@ let natal = Ziwei::from_birth(birth);
 
 ### `domain/profile.rs`
 
-此模块保存 `BirthMonth`、`BirthDay`、`ZiweiBirth`、`ZiweiInput` 与 `BirthContext`。它不进行历法换算，只校验核心已经承诺的输入不变量。
+此模块保存 `BirthMonth`、`BirthDay`、`ZiweiBirth`、`ZiweiInput` 与 `Profile`。它不进行历法换算，只校验核心已经承诺的输入不变量。
 
-`profile` 是 crate 私有的出生资料模块名，不引入公开 `Profile` 类型，也不改变上述类型在 crate 根的扁平导入路径。
+`profile` 是 crate 私有的出生资料模块名；`Profile` 与上述出生资料值和输入类型继续由 crate 根扁平导出。
 
 `ZiweiBirth` 保留数字农历年、月、日、时和性别，用排盘规则导出年干支与紫微支。`ZiweiInput` 保留性别、组成有效六十甲子年柱的生年干支、月、紫微支和时；它没有 `birth_year` 与 `birth_day`。
 
 ### `domain/natal.rs`
 
-此模块定义不可变 `Natal` 本命盘结果，保存出生上下文、生肖、五行局、十二宫以及已经确认的命宫、身宫、来因宫和紫微星定位事实。`Natal` 不保留原始输入或输入来源。
+此模块定义不可变 `Natal` 本命盘结果，保存出生档案、生肖、五行局、十二宫以及已经确认的命宫、身宫、来因宫和紫微星定位事实。`Natal` 不保留原始输入或输入来源。
 
 ### `domain/palace.rs`、`domain/star.rs` 与 `domain/transformation.rs`
 
@@ -218,7 +218,7 @@ let natal = Ziwei::from_birth(birth);
 - crate 根重导出 `Ziwei` 与 `Natal`；公开排盘入口为 `Ziwei::from_birth(ZiweiBirth)` 与 `Ziwei::from_input(ZiweiInput)`，它们均返回 `Result<Natal, ZiweiError>`。
 - `ZiweiInput::new` 校验生年干、支必须组成有效六十甲子年柱；地支索引有效不代表任意干支组合有效。成功构造后，排盘入口不再重复校验该不变量。
 - 成功构建必须得到统一的 `Natal`；调用方不需要选择规则集或流派。
-- `Natal` 通过 `BirthContext` 保存可选的 `birth_year` 与 `birth_day`，不保留原始输入或输入来源。
+- `Natal` 通过 `Profile` 保存可选的 `birth_year` 与 `birth_day`，不保留原始输入或输入来源。
 - 所有身份使用稳定 enum 或经过校验的值类型，不能让字符串承担干支、星曜、宫名或四化身份。
 - 范围错误、无可用数字农历年、无效期间序号等情况以可匹配错误表达，不能 panic 或依赖错误文案判断；核心 `Display` 为固定中文诊断。
 - 返回的事实及查询结果是只读的；调用方不能通过公开引用破坏 `Natal` 不变量。

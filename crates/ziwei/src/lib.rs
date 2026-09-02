@@ -9,8 +9,8 @@ mod error;
 mod rules;
 
 pub use domain::{
-    BirthContext, BirthDay, BirthMonth, Branch, Decade, DecadeAge, DecadeIndex, DecadeYear,
-    FiveElement, FiveElementBureau, Gender, Natal, Palace, PalaceName, SelfTransformations, Star,
+    BirthDay, BirthMonth, Branch, Decade, DecadeAge, DecadeIndex, DecadeYear, FiveElement,
+    FiveElementBureau, Gender, Natal, Palace, PalaceName, Profile, SelfTransformations, Star,
     StarCategory, StarGalaxy, StarName, Stem, Transformation, Yearly, YearlyIndex, YinYang,
     ZiweiBirth, ZiweiInput, Zodiac,
 };

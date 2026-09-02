@@ -161,11 +161,11 @@ impl ZiweiInput {
     }
 }
 
-/// 由本命盘持有的归一化出生上下文。
+/// 由本命盘持有的归一化出生档案。
 ///
 /// 不记录原始输入、输入来源或紫微星所在宫位。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct BirthContext {
+pub struct Profile {
     birth_year: Option<i32>,
     gender: Gender,
     birth_stem: Stem,
@@ -175,8 +175,8 @@ pub struct BirthContext {
     birth_day: Option<BirthDay>,
 }
 
-impl BirthContext {
-    /// 由已归一化的出生事实创建上下文。
+impl Profile {
+    /// 由已归一化的出生事实创建档案。
     ///
     /// 数字出生年份与出生日必须同时存在或同时缺失。
     #[must_use]
@@ -303,7 +303,7 @@ pub(crate) fn is_valid_sexagenary_year(stem: Stem, branch: Branch) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        BirthContext, BirthDay, BirthMonth, ZiweiBirth, ZiweiInput, sexagenary_from_birth_year,
+        BirthDay, BirthMonth, Profile, ZiweiBirth, ZiweiInput, sexagenary_from_birth_year,
     };
     use crate::{Branch, Gender, Stem, ZiweiError};
 
@@ -387,9 +387,9 @@ mod tests {
     }
 
     #[test]
-    fn birth_context_holds_confirmed_normalized_birth_facts() {
+    fn profile_holds_confirmed_normalized_birth_facts() {
         let day = BirthDay::try_from(15).expect("范围内日期必须有效");
-        let from_birth = BirthContext::new(
+        let from_birth = Profile::new(
             Some(1992),
             Gender::Female,
             Stem::Ren,
@@ -398,7 +398,7 @@ mod tests {
             Branch::Shen,
             Some(day),
         );
-        let from_input = BirthContext::new(
+        let from_input = Profile::new(
             None,
             Gender::Male,
             Stem::Jia,

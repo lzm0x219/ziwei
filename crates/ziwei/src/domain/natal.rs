@@ -1,11 +1,11 @@
-use crate::{BirthContext, Branch, FiveElementBureau, Palace, PalaceName, Zodiac};
+use crate::{Branch, FiveElementBureau, Palace, PalaceName, Profile, Zodiac};
 
 /// 不可变的本命盘事实。
 ///
 /// 它只保存由排盘路径确定的本命信息；大限与流年不在其中预计算。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Natal {
-    birth_context: BirthContext,
+    profile: Profile,
     zodiac: Zodiac,
     five_element_bureau: FiveElementBureau,
     palaces: [Palace; 12],
@@ -19,10 +19,10 @@ pub struct Natal {
 }
 
 impl Natal {
-    /// 返回归一化出生上下文。
+    /// 返回归一化出生档案。
     #[must_use]
-    pub const fn birth_context(&self) -> &BirthContext {
-        &self.birth_context
+    pub const fn profile(&self) -> &Profile {
+        &self.profile
     }
 
     /// 返回由生年地支确定的生肖。
@@ -92,7 +92,7 @@ impl Natal {
         reason = "crate 内构造器按已确认字段逐项接收本命事实，避免新增中间公开模型"
     )]
     pub(crate) fn new(
-        birth_context: BirthContext,
+        profile: Profile,
         zodiac: Zodiac,
         five_element_bureau: FiveElementBureau,
         palaces: [Palace; 12],
@@ -105,7 +105,7 @@ impl Natal {
         ziwei_branch: Branch,
     ) -> Self {
         Self {
-            birth_context,
+            profile,
             zodiac,
             five_element_bureau,
             palaces,
@@ -124,8 +124,8 @@ impl Natal {
 mod tests {
     use super::Natal;
     use crate::{
-        BirthContext, BirthDay, BirthMonth, Branch, DecadeAge, FiveElementBureau, Gender, Palace,
-        PalaceName, Stem, Zodiac,
+        BirthDay, BirthMonth, Branch, DecadeAge, FiveElementBureau, Gender, Palace, PalaceName,
+        Profile, Stem, Zodiac,
     };
 
     fn palace(name: PalaceName, branch: Branch, position: u8) -> Palace {
@@ -140,7 +140,7 @@ mod tests {
 
     #[test]
     fn natal_holds_the_confirmed_natal_facts() {
-        let birth_context = BirthContext::new(
+        let profile = Profile::new(
             Some(1992),
             Gender::Female,
             Stem::Ren,
@@ -150,7 +150,7 @@ mod tests {
             Some(BirthDay::try_from(15).expect("范围内日期必须有效")),
         );
         let natal = Natal::new(
-            birth_context,
+            profile,
             Zodiac::Monkey,
             FiveElementBureau::WaterTwo,
             [
@@ -176,7 +176,7 @@ mod tests {
             Branch::Yin,
         );
 
-        assert_eq!(natal.birth_context(), &birth_context);
+        assert_eq!(natal.profile(), &profile);
         assert_eq!(natal.zodiac(), Zodiac::Monkey);
         assert_eq!(natal.five_element_bureau(), FiveElementBureau::WaterTwo);
         assert_eq!(natal.palaces().len(), 12);

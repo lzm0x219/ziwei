@@ -16,8 +16,8 @@
 - **天干**：`Stem` 的十个拼音稳定变体；`Stem::ALL` 以甲至癸的固定顺序公开全集，并与 `index() -> u8` 返回的 `0..=9` 对齐；固定简体 `Display` 只参与面向人的中文诊断。作为生年天干时，它按五虎遁唯一确定寅宫起干及十二宫干。
 - **地支**：`Branch` 的十二个拼音稳定变体；`Branch::ALL` 以子至亥的固定顺序公开全集，并与 `index() -> u8` 返回的 `0..=11` 对齐；固定简体 `Display` 只参与面向人的中文诊断。十二宫的稳定展示顺序另为寅至丑。
 - **生肖**：与十二地支一一对应的基础领域身份：鼠、牛、虎、兔、龙、蛇、马、羊、猴、鸡、狗、猪；由 `Zodiac` 枚举 `Rat`、`Ox`、`Tiger`、`Rabbit`、`Dragon`、`Snake`、`Horse`、`Goat`、`Monkey`、`Rooster`、`Dog`、`Pig` 保存。
-- **`Natal`**：由两类输入收敛后的统一排盘路径确定的不可变本命盘事实；不保留调用方原始输入、输入来源或仅为构建服务的临时值。它通过 `BirthContext` 持有归一化出生上下文，并在顶层保存由生年地支确定的 `zodiac: Zodiac`。
-- **`BirthContext`**：由 `Natal` 持有的归一化出生上下文；承载后续期间计算与调用方读取所需的出生事实，但不记录原始输入或输入来源。其中 `birth_year: Option<i32>` 是数字年份锚点：`ZiweiBirth` 有值，`ZiweiInput` 无值；它不引入历法换算、范围或日期有效性校验；`gender: Gender` 保留完整的归一化性别事实，固定为 `Female` 或 `Male`；`birth_stem: Stem` 与 `birth_branch: Branch` 直接承载生年干支；`birth_month: BirthMonth` 保存归一化出生月份，不区分闰月；`birth_hour: Branch` 保存十二时辰对应的地支；`birth_day: Option<BirthDay>` 保存归一化农历日，`ZiweiBirth` 有值，`ZiweiInput` 无值。它不重复保存紫微所在地支和生肖：前者由 `Natal` 顶层的紫微星宫位定位保存，后者由 `birth_branch` 唯一映射取得。
+- **`Natal`**：由两类输入收敛后的统一排盘路径确定的不可变本命盘事实；不保留调用方原始输入、输入来源或仅为构建服务的临时值。它通过 `Profile` 持有归一化出生档案，并在顶层保存由生年地支确定的 `zodiac: Zodiac`。
+- **`Profile`**：由 `Natal` 持有的归一化出生档案；承载后续期间计算与调用方读取所需的出生事实，但不记录原始输入或输入来源。其中 `birth_year: Option<i32>` 是数字年份锚点：`ZiweiBirth` 有值，`ZiweiInput` 无值；它不引入历法换算、范围或日期有效性校验；`gender: Gender` 保留完整的归一化性别事实，固定为 `Female` 或 `Male`；`birth_stem: Stem` 与 `birth_branch: Branch` 直接承载生年干支；`birth_month: BirthMonth` 保存归一化出生月份，不区分闰月；`birth_hour: Branch` 保存十二时辰对应的地支；`birth_day: Option<BirthDay>` 保存归一化农历日，`ZiweiBirth` 有值，`ZiweiInput` 无值。它不重复保存紫微所在地支和生肖：前者由 `Natal` 顶层的紫微星宫位定位保存，后者由 `birth_branch` 唯一映射取得。
 - **命宫地支**：寅宫起正月，顺数至出生月，再逆数出生时辰所得的地支；`Natal::ming_palace_branch: Branch` 以它定位唯一的命宫，命宫名由对应实际宫位读取，不重复保存。
 - **身宫**：寅宫起正月，顺数至出生月，再顺数出生时辰所得的实际宫位；`Natal::shen_palace_name: PalaceName` 与 `Natal::shen_palace_branch: Branch` 共同定位唯一的身宫。
 - **五虎遁**：生年天干先归入五组之一：甲己丙寅、乙庚戊寅、丙辛庚寅、丁壬壬寅、戊癸甲寅；再从寅宫顺布十二宫干。因此它只有五种十二宫排布（`5 × 12`），每种排布都会在十二宫内重复两个天干。
@@ -59,4 +59,4 @@
 - `ming_palace_branch` 必须解析到唯一的实际宫位；`shen_palace_name` 与 `shen_palace_branch` 必须解析到同一实际宫位；`origin_palace_name` 与 `origin_palace_branch` 必须由生年天干固定映射，并解析到同一实际宫位；该宫位的宫干等于生年干。
 - `ZiweiBirth` 以局数与农历日的统一公式确定紫微支；`ZiweiInput` 只校验紫微支索引在 `0..=11`。
 - `ZiweiInput` 的生年干和生年支必须组成有效六十甲子年柱。
-- 由 `ZiweiBirth` 构建的 `BirthContext::birth_year` 必须存在；由 `ZiweiInput` 构建的则必须不存在。
+- 由 `ZiweiBirth` 构建的 `Profile::birth_year` 必须存在；由 `ZiweiInput` 构建的则必须不存在。
