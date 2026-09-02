@@ -46,14 +46,7 @@ impl Natal {
     /// 按地支返回唯一的实际宫位。
     #[must_use]
     pub fn palace(&self, branch: Branch) -> &Palace {
-        let branch_index = branch.index();
-        let palace_index = if branch_index < 2 {
-            branch_index + 10
-        } else {
-            branch_index - 2
-        };
-
-        &self.palaces[usize::from(palace_index)]
+        &self.palaces[usize::from(branch.index_from_yin())]
     }
 
     /// 按本命宫位名称返回唯一的实际宫位。

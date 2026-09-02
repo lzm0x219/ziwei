@@ -43,23 +43,13 @@ pub(crate) const fn compute_ming_shen_branches(
         reason = "由后续本命排盘构建切片调用，当前仅固定宫职排布规则"
     )
 )]
-pub(crate) const fn compute_natal_palace_names(ming_palace_branch: Branch) -> [PalaceName; 12] {
-    let mut palace_names = [PalaceName::Ming; 12];
-    let mut palace_position = 0_u8;
+pub(crate) fn compute_natal_palace_names(ming_palace_branch: Branch) -> [PalaceName; 12] {
+    let ming_palace_index = usize::from(ming_palace_branch.index_from_yin());
+    let palace_count = PalaceName::ALL.len();
 
-    while palace_position < 12 {
-        let branch_index = palace_position.wrapping_add(Branch::Yin.index()) % 12;
-        let palace_name_index = ming_palace_branch
-            .index()
-            .wrapping_add(12)
-            .wrapping_sub(branch_index)
-            % 12;
-
-        palace_names[palace_position as usize] = PalaceName::ALL[palace_name_index as usize];
-        palace_position = palace_position.wrapping_add(1);
-    }
-
-    palace_names
+    core::array::from_fn(|palace_index| {
+        PalaceName::ALL[(ming_palace_index + palace_count - palace_index) % palace_count]
+    })
 }
 
 /// 按寅至丑的固定顺序返回生年天干对应的十二宫干。

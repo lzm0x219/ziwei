@@ -369,6 +369,25 @@ impl Branch {
         }
     }
 
+    /// 返回以寅为 `0`、沿地支正序至丑为 `11` 的索引。
+    #[must_use]
+    pub(crate) const fn index_from_yin(self) -> u8 {
+        match self {
+            Self::Yin => 0,
+            Self::Mao => 1,
+            Self::Chen => 2,
+            Self::Si => 3,
+            Self::Wu => 4,
+            Self::Wei => 5,
+            Self::Shen => 6,
+            Self::You => 7,
+            Self::Xu => 8,
+            Self::Hai => 9,
+            Self::Zi => 10,
+            Self::Chou => 11,
+        }
+    }
+
     /// 返回地支对应的阴阳。
     #[must_use]
     pub const fn yin_yang(self) -> YinYang {
@@ -577,6 +596,28 @@ mod tests {
             assert_eq!(branch.to_string(), display);
             assert_eq!(branch.yin_yang(), yin_yang);
             assert_eq!(branch.zodiac(), zodiac);
+        }
+    }
+
+    #[test]
+    fn branch_index_from_yin_follows_confirmed_palace_order() {
+        let expected = [
+            (Branch::Yin, 0),
+            (Branch::Mao, 1),
+            (Branch::Chen, 2),
+            (Branch::Si, 3),
+            (Branch::Wu, 4),
+            (Branch::Wei, 5),
+            (Branch::Shen, 6),
+            (Branch::You, 7),
+            (Branch::Xu, 8),
+            (Branch::Hai, 9),
+            (Branch::Zi, 10),
+            (Branch::Chou, 11),
+        ];
+
+        for (branch, index) in expected {
+            assert_eq!(branch.index_from_yin(), index);
         }
     }
 
