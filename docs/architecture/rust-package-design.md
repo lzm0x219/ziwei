@@ -10,7 +10,7 @@
 
 1. 当前 workspace 只有一个包：`ziwei`。
 2. 本命构建、按需大限/流年、只读查询同属 `ziwei`；它们不是独立 Cargo 包。
-3. `PalaceScope` 统一表达本命、大限与流年宫职，并提供简、繁宫职名称；`Star` 保留固有名称，不创建显示语言或标签包。
+3. `PalaceName` 是本命、大限与流年共用的唯一十二宫职领域类型；`Palace`、`Decade`、`Yearly` 各自管理自己的宫职及对应简、繁名称，不保留 `PalaceRole` 或 `PalaceScope`。
 4. Node.js/TypeScript 与 WebAssembly 在接口稳定后各自成为一个 adapter 包，单向依赖 `ziwei`。
 5. 历法换算和解释/断语不属于 V1，不创建对应包。
 6. 不创建仅重导出的 Rust 门面包；它会制造浅模块而不提供额外能力。
@@ -32,7 +32,7 @@ Node-API 与 `wasm-bindgen` 的编译目标、错误模型、对象生命周期�
 
 ### 依赖只能向内
 
-所有排盘规则、领域事实、`PalaceScope` 宫职名称与 `Star` 星曜名称都只依赖 Rust 标准库及 `ziwei` 内部实现。核心不定义运行时本地化、全局语言状态、adapter、JavaScript、WebAssembly、时区、历法或解释模块。
+所有排盘规则、领域事实、`PalaceName` 宫职名称与 `Star` 星曜名称都只依赖 Rust 标准库及 `ziwei` 内部实现。核心不定义运行时本地化、全局语言状态、adapter、JavaScript、WebAssembly、时区、历法或解释模块。
 
 ```text
 上层 Rust 应用 ───────────────────────────► ziwei
@@ -101,7 +101,7 @@ ziwei-wasm ───────────────────────
 - 保存十二宫、十八星、生肖、五行局、命/身/来因宫、生年四化、宫位四化与自化等本命事实。
 - 按需计算大限与流年；不在构建 `Natal` 时预存完整期间序列，也不在核心中缓存。
 - 提供已确认的只读宫位、星曜与四化查询；连续飞化暂缓，不纳入当前核心。
-- 由 `PalaceScope` 统一提供本命、大限与流年宫职的 `name_hans()`、`name_hant()`，并由 `Star` 提供固有名称；`Palace`、键与基础领域值不提供名称 API。`Stem` 与 `Branch` 的固定简体 `Display` 仅用于组合 `ZiweiError::Display` 中文诊断。
+- 由 `PalaceName` 表达本命、大限与流年共享的十二种宫职，由 `StarName` 表达稳定星曜身份；`Palace`、`Decade`、`Yearly` 各自管理自己的宫职及对应简、繁名称，`Star` 提供固有名称与简称。`Stem` 与 `Branch` 的固定简体 `Display` 仅用于组合 `ZiweiError::Display` 中文诊断。
 - 返回可匹配的领域错误，且不依赖绑定层错误类型。
 
 它不负责：
@@ -138,16 +138,15 @@ src/
 ├── lib.rs                       # 私有模块声明与扁平公共重导出
 ├── domain.rs                    # 领域子模块声明与领域类型聚合
 ├── error.rs                     # ZiweiError 公共失败类型
-├── rules.rs                     # 私有排盘规则，当前保持单文件
+├── rules.rs                     # 私有排盘规则、公式与测试
 └── domain/                      # 私有领域模块
-    ├── primitive.rs             # 阴阳、五行、性别、天干、地支、生肖
-    ├── birth.rs                 # 出生值、两类公开输入与 BirthContext
-    ├── five_element_bureau.rs   # 五行局
+    ├── primitive.rs             # 阴阳、五行、五行局、性别、天干、地支、生肖
+    ├── profile.rs               # 出生资料值、两类公开输入与 BirthContext
     ├── natal.rs                 # Natal 本命盘结果
-    ├── palace.rs                # 宫位与 PalaceKey
-    ├── star.rs                  # 星曜与 StarKey
+    ├── palace.rs                # 宫位与 PalaceName
+    ├── star.rs                  # 星曜与 StarName
     ├── transformation.rs        # 四化与自化值
-    └── period.rs                # 限运领域值
+    └── luck.rs                  # 限运领域对象和值
 ```
 
 ### `lib.rs`
@@ -171,13 +170,15 @@ let natal = Ziwei::from_birth(birth);
 
 ### `domain/primitive.rs`
 
-此模块提供阴阳、五行、性别、天干、地支和生肖等封闭、可比较的基础领域值，而不是以字符串或裸整数在内部传递。地支索引的子=`0`至亥=`11`约定、天干与地支的阴阳和五行属性、以及地支到生肖的一一映射都在这里得到唯一表示。
+此模块提供阴阳、五行、五行局、性别、天干、地支和生肖等封闭、可比较的基础领域值，而不是以字符串或裸整数在内部传递。地支索引的子=`0`至亥=`11`约定、天干与地支的阴阳和五行属性、以及地支到生肖的一一映射都在这里得到唯一表示。`Stem` 以 crate 私有的关联常量 `FIVE_TIGER_DUN_PALACE_STEMS` 保存五虎遁的五组十二宫干固定表，但不承担排盘选择行为。
 
-五行局不是基础五行：它保留在独立的 `domain/five_element_bureau.rs` 中。
+`FiveElement` 与 `FiveElementBureau` 仍是两个独立领域类型；共同位于 `primitive.rs` 只表示它们同属基础领域值，不允许相互替代，也不向五行局增加可拆解的五行或局数读取方法。`FiveElementBureau::from_ming_palace(stem, branch)` 是 crate 私有的明确关联构造函数，隐藏命宫干支到五行局的固定分组表；不使用语义含混的 `From<(Stem, Branch)>`。
 
-### `domain/birth.rs`
+### `domain/profile.rs`
 
 此模块保存 `BirthMonth`、`BirthDay`、`ZiweiBirth`、`ZiweiInput` 与 `BirthContext`。它不进行历法换算，只校验核心已经承诺的输入不变量。
+
+`profile` 是 crate 私有的出生资料模块名，不引入公开 `Profile` 类型，也不改变上述类型在 crate 根的扁平导入路径。
 
 `ZiweiBirth` 保留数字农历年、月、日、时和性别，用排盘规则导出年干支与紫微支。`ZiweiInput` 保留性别、组成有效六十甲子年柱的生年干支、月、紫微支和时；它没有 `birth_year` 与 `birth_day`。
 
@@ -187,11 +188,11 @@ let natal = Ziwei::from_birth(birth);
 
 ### `domain/palace.rs`、`domain/star.rs` 与 `domain/transformation.rs`
 
-这三个模块分别保存宫位、星曜和四化领域对象。`PalaceScope` 位于 `domain/palace.rs`，以 `Natal(PalaceKey)`、`Decade(PalaceKey)`、`Yearly(PalaceKey)` 统一表达三类完整宫职，并提供对应的简、繁名称。实际 `Palace` 私有持有本命 `PalaceScope`，不再保存名称字段；`Star` 继续保存名称、简称、生年四化与向心/离心自化事实。
+这三个模块分别保存宫位、星曜和四化领域对象。`PalaceName` 位于 `domain/palace.rs`，以十二个稳定变体表达本命、大限与流年共享的宫职身份。实际 `Palace` 固定保存 `name: PalaceName`、`branch: Branch`、`stem: Stem`、`stars: Box<[Star]>` 与 `decade_age: DecadeAge`，不经过 `PalaceRole`、`PalaceScope` 或其他包装类型。它始终表示本命实际宫位，并自行管理本命宫职的简、繁名称。宫内星曜在排盘构建阶段可先使用 `Vec<Star>` 聚合，进入不可变 `Palace` 时转换为固定长度的装箱切片。`Star` 继续保存名称、简称、生年四化与向心/离心自化事实。
 
-### `domain/period.rs`
+### `domain/luck.rs`
 
-`domain/period.rs` 承载完整限运领域；当前保存 `DecadeIndex`、`YearlyIndex`、`DecadeAge` 与 `DecadeYear`，未来实现流月、流日、流时时，其领域值也归入此模块。`period` 是领域模块名称，不因此引入无行为的公开 `Period` 枚举、结构体或 trait。当前大限和流年宫职均由 `PalaceScope` 表达，不再定义 `Decade`、`Yearly`、`DecadePalaceKey` 或 `YearlyPalaceKey`。期间不得在构建 `Natal` 时全量预计算；后续由公开方法按需生成，核心暂不缓存。
+`domain/luck.rs` 承载完整限运领域；当前保存 `DecadeIndex`、`YearlyIndex`、`DecadeAge` 与 `DecadeYear`，并定义 `Decade` 与 `Yearly`。一个 `Decade` 表示某个实际宫位在指定大限中的宫职结果，一个 `Yearly` 表示某个实际宫位在指定流年中的宫职结果；二者都只保存 `name: PalaceName`，期间序号、年龄、数字年份与实际宫位地支均不进入对象。`Decade` 与 `Yearly` 分别直接提供自身宫职身份及“大命～大父”“流命～流父”的简、繁名称。指定大限按寅至丑的实际宫位固定顺序生成 `[Decade; 12]`，指定流年按同一顺序生成 `[Yearly; 12]`，均不预计算、不缓存。未来实现流月、流日、流时时，其领域值也归入此模块。`luck` 只是私有领域模块名称，不因此引入无行为的公开 `Luck` 枚举、结构体或 trait。
 
 ### `error.rs`
 
@@ -199,9 +200,11 @@ let natal = Ziwei::from_birth(birth);
 
 ### `rules.rs`
 
-此私有模块保存规则表、公式和布局算法，当前只实现五虎遁十二宫干排布。它不从 crate 根重导出，也不引入流派或规则版本。
+此私有模块保存排盘公式与布局算法。它不从 crate 根重导出，也不引入流派或规则版本。
 
-在只有一个完整规则族时保持单文件。以后出现多个完整、可独立理解的规则族时，扩展为 `rules.rs` 与 `rules/*.rs`；`rules.rs` 继续承担私有 interface 与编排，子文件只是 implementation，不改变公开 interface。
+命宫与身宫地支由 `compute_ming_shen_branches(birth_month, birth_hour)` 一次计算并按 `(命宫地支, 身宫地支)` 返回；月份基准与时辰索引只计算一次，两种顺逆方向仍保持独立、明确。内部纯计算函数统一使用 `compute_*` 前缀。
+
+五虎遁由 `compute_palace_stems(birth_stem)` 根据生年天干选择 `Stem::FIVE_TIGER_DUN_PALACE_STEMS` 中的一组。固定表属于 `Stem`，选择动作属于排盘规则；不创建五虎遁子模块。领域测试覆盖五组完整表值，规则测试覆盖十个生年天干到五组排布的映射。
 
 ### `ziwei.rs`（后续）
 
@@ -219,7 +222,7 @@ let natal = Ziwei::from_birth(birth);
 - 所有身份使用稳定 enum 或经过校验的值类型，不能让字符串承担干支、星曜、宫名或四化身份。
 - 范围错误、无可用数字农历年、无效期间序号等情况以可匹配错误表达，不能 panic 或依赖错误文案判断；核心 `Display` 为固定中文诊断。
 - 返回的事实及查询结果是只读的；调用方不能通过公开引用破坏 `Natal` 不变量。
-- 双字名称不是输入身份。宫职名称由 `PalaceScope` 的作用域与 `PalaceKey` 共同确定，星曜名称由 `StarKey` 确定；名称不能反向参与排盘。
+- `PalaceName` 是本命、大限与流年共享的唯一十二宫职领域身份；`Palace`、`Decade`、`Yearly` 各自管理该身份在自身期间层级的名称。`StarName` 是稳定星曜身份。`name_hans`、`name_hant` 等本地化字符串仅用于展示，不能反向参与排盘。
 - 尚未确认的字段、快照布局、序列化格式、trace 格式和绑定方法名不提前公开。
 
 ## 测试与验证布局
@@ -230,7 +233,7 @@ let natal = Ziwei::from_birth(birth);
 
 私有单元测试可验证公式边界、固定规则表、数组顺序和算术安全性。测试名使用 `CONTEXT.md` 的领域术语，表驱动数据记录来源和预期事实。
 
-`PalaceScope` 的单元测试必须以表驱动形式覆盖三类作用域与十二宫位键组成的全部 36 对 `name_hans`／`name_hant`；`Star` 继续覆盖全部已支持名称与简称。名称测试只固定展示合同，不重复验证排盘规则。
+`Palace`、`Decade` 与 `Yearly` 的单元测试必须分别以表驱动形式覆盖十二个本命宫职、大限宫职、流年宫职的 `name_hans`／`name_hant`。`Star` 继续覆盖全部已支持名称与简称。名称测试只固定展示合同，不重复验证排盘规则。
 
 ```text
 crates/ziwei/
@@ -239,7 +242,7 @@ crates/ziwei/
 ├── tests/
 │   ├── input_contract.rs
 │   ├── ziwei_contract.rs
-│   ├── period_contract.rs
+│   ├── luck_contract.rs
 │   └── query_contract.rs
 └── benches/                         # 有稳定工作负载后才创建
 ```

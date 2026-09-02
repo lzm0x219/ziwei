@@ -1,4 +1,4 @@
-use crate::{BirthContext, Branch, FiveElementBureau, Palace, PalaceKey, Zodiac};
+use crate::{BirthContext, Branch, FiveElementBureau, Palace, PalaceName, Zodiac};
 
 /// 不可变的本命盘事实。
 ///
@@ -10,11 +10,11 @@ pub struct Natal {
     five_element_bureau: FiveElementBureau,
     palaces: [Palace; 12],
     ming_palace_branch: Branch,
-    shen_palace_key: PalaceKey,
+    shen_palace_name: PalaceName,
     shen_palace_branch: Branch,
-    origin_palace_key: PalaceKey,
+    origin_palace_name: PalaceName,
     origin_palace_branch: Branch,
-    ziwei_palace_key: PalaceKey,
+    ziwei_palace_name: PalaceName,
     ziwei_branch: Branch,
 }
 
@@ -56,13 +56,13 @@ impl Natal {
         &self.palaces[usize::from(palace_index)]
     }
 
-    /// 按本命宫职键返回唯一的实际宫位。
+    /// 按本命宫位名称返回唯一的实际宫位。
     #[must_use]
-    pub fn palace_by_key(&self, key: PalaceKey) -> &Palace {
+    pub fn palace_by_name(&self, name: PalaceName) -> &Palace {
         self.palaces
             .iter()
-            .find(|palace| palace.key() == key)
-            .expect("本命盘必须恰有一个对应宫职键的实际宫位")
+            .find(|palace| palace.name() == name)
+            .expect("本命盘必须恰有一个对应名称的实际宫位")
     }
 
     /// 返回命宫对应的实际宫位。
@@ -104,11 +104,11 @@ impl Natal {
         five_element_bureau: FiveElementBureau,
         palaces: [Palace; 12],
         ming_palace_branch: Branch,
-        shen_palace_key: PalaceKey,
+        shen_palace_name: PalaceName,
         shen_palace_branch: Branch,
-        origin_palace_key: PalaceKey,
+        origin_palace_name: PalaceName,
         origin_palace_branch: Branch,
-        ziwei_palace_key: PalaceKey,
+        ziwei_palace_name: PalaceName,
         ziwei_branch: Branch,
     ) -> Self {
         Self {
@@ -117,11 +117,11 @@ impl Natal {
             five_element_bureau,
             palaces,
             ming_palace_branch,
-            shen_palace_key,
+            shen_palace_name,
             shen_palace_branch,
-            origin_palace_key,
+            origin_palace_name,
             origin_palace_branch,
-            ziwei_palace_key,
+            ziwei_palace_name,
             ziwei_branch,
         }
     }
@@ -132,12 +132,12 @@ mod tests {
     use super::Natal;
     use crate::{
         BirthContext, BirthDay, BirthMonth, Branch, DecadeAge, FiveElementBureau, Gender, Palace,
-        PalaceKey, Stem, Zodiac,
+        PalaceName, Stem, Zodiac,
     };
 
-    fn palace(key: PalaceKey, branch: Branch, position: u8) -> Palace {
+    fn palace(name: PalaceName, branch: Branch, position: u8) -> Palace {
         Palace::new(
-            key,
+            name,
             branch,
             Stem::Jia,
             Vec::new().into_boxed_slice(),
@@ -161,25 +161,25 @@ mod tests {
             Zodiac::Monkey,
             FiveElementBureau::WaterTwo,
             [
-                palace(PalaceKey::Ming, Branch::Yin, 0),
-                palace(PalaceKey::XiongDi, Branch::Mao, 1),
-                palace(PalaceKey::FuQi, Branch::Chen, 2),
-                palace(PalaceKey::ZiNv, Branch::Si, 3),
-                palace(PalaceKey::CaiBo, Branch::Wu, 4),
-                palace(PalaceKey::JiE, Branch::Wei, 5),
-                palace(PalaceKey::QianYi, Branch::Shen, 6),
-                palace(PalaceKey::JiaoYou, Branch::You, 7),
-                palace(PalaceKey::GuanLu, Branch::Xu, 8),
-                palace(PalaceKey::TianZhai, Branch::Hai, 9),
-                palace(PalaceKey::FuDe, Branch::Zi, 10),
-                palace(PalaceKey::FuMu, Branch::Chou, 11),
+                palace(PalaceName::Ming, Branch::Yin, 0),
+                palace(PalaceName::XiongDi, Branch::Mao, 1),
+                palace(PalaceName::FuQi, Branch::Chen, 2),
+                palace(PalaceName::ZiNv, Branch::Si, 3),
+                palace(PalaceName::CaiBo, Branch::Wu, 4),
+                palace(PalaceName::JiE, Branch::Wei, 5),
+                palace(PalaceName::QianYi, Branch::Shen, 6),
+                palace(PalaceName::JiaoYou, Branch::You, 7),
+                palace(PalaceName::GuanLu, Branch::Xu, 8),
+                palace(PalaceName::TianZhai, Branch::Hai, 9),
+                palace(PalaceName::FuDe, Branch::Zi, 10),
+                palace(PalaceName::FuMu, Branch::Chou, 11),
             ],
             Branch::Yin,
-            PalaceKey::FuQi,
+            PalaceName::FuQi,
             Branch::Chen,
-            PalaceKey::GuanLu,
+            PalaceName::GuanLu,
             Branch::Xu,
-            PalaceKey::Ming,
+            PalaceName::Ming,
             Branch::Yin,
         );
 
@@ -187,41 +187,41 @@ mod tests {
         assert_eq!(natal.zodiac(), Zodiac::Monkey);
         assert_eq!(natal.five_element_bureau(), FiveElementBureau::WaterTwo);
         assert_eq!(natal.palaces().len(), 12);
-        assert_eq!(natal.palaces()[0].key(), PalaceKey::Ming);
+        assert_eq!(natal.palaces()[0].name(), PalaceName::Ming);
         assert_eq!(natal.palaces()[0].branch(), Branch::Yin);
-        assert_eq!(natal.palaces()[11].key(), PalaceKey::FuMu);
+        assert_eq!(natal.palaces()[11].name(), PalaceName::FuMu);
         assert_eq!(natal.palaces()[11].branch(), Branch::Chou);
         assert_eq!(natal.ming_palace_branch, Branch::Yin);
-        assert_eq!(natal.shen_palace_key, PalaceKey::FuQi);
+        assert_eq!(natal.shen_palace_name, PalaceName::FuQi);
         assert_eq!(natal.shen_palace_branch, Branch::Chen);
-        assert_eq!(natal.origin_palace_key, PalaceKey::GuanLu);
+        assert_eq!(natal.origin_palace_name, PalaceName::GuanLu);
         assert_eq!(natal.origin_palace_branch, Branch::Xu);
-        assert_eq!(natal.ziwei_palace_key, PalaceKey::Ming);
+        assert_eq!(natal.ziwei_palace_name, PalaceName::Ming);
         assert_eq!(natal.ziwei_branch, Branch::Yin);
 
         let expected = [
-            (Branch::Yin, PalaceKey::Ming),
-            (Branch::Mao, PalaceKey::XiongDi),
-            (Branch::Chen, PalaceKey::FuQi),
-            (Branch::Si, PalaceKey::ZiNv),
-            (Branch::Wu, PalaceKey::CaiBo),
-            (Branch::Wei, PalaceKey::JiE),
-            (Branch::Shen, PalaceKey::QianYi),
-            (Branch::You, PalaceKey::JiaoYou),
-            (Branch::Xu, PalaceKey::GuanLu),
-            (Branch::Hai, PalaceKey::TianZhai),
-            (Branch::Zi, PalaceKey::FuDe),
-            (Branch::Chou, PalaceKey::FuMu),
+            (Branch::Yin, PalaceName::Ming),
+            (Branch::Mao, PalaceName::XiongDi),
+            (Branch::Chen, PalaceName::FuQi),
+            (Branch::Si, PalaceName::ZiNv),
+            (Branch::Wu, PalaceName::CaiBo),
+            (Branch::Wei, PalaceName::JiE),
+            (Branch::Shen, PalaceName::QianYi),
+            (Branch::You, PalaceName::JiaoYou),
+            (Branch::Xu, PalaceName::GuanLu),
+            (Branch::Hai, PalaceName::TianZhai),
+            (Branch::Zi, PalaceName::FuDe),
+            (Branch::Chou, PalaceName::FuMu),
         ];
 
-        for (branch, key) in expected {
-            assert_eq!(natal.palace(branch).key(), key);
-            assert_eq!(natal.palace_by_key(key).branch(), branch);
+        for (branch, name) in expected {
+            assert_eq!(natal.palace(branch).name(), name);
+            assert_eq!(natal.palace_by_name(name).branch(), branch);
         }
 
-        assert_eq!(natal.ming_palace().key(), PalaceKey::Ming);
-        assert_eq!(natal.shen_palace().key(), PalaceKey::FuQi);
-        assert_eq!(natal.origin_palace().key(), PalaceKey::GuanLu);
-        assert_eq!(natal.ziwei_palace().key(), PalaceKey::Ming);
+        assert_eq!(natal.ming_palace().name(), PalaceName::Ming);
+        assert_eq!(natal.shen_palace().name(), PalaceName::FuQi);
+        assert_eq!(natal.origin_palace().name(), PalaceName::GuanLu);
+        assert_eq!(natal.ziwei_palace().name(), PalaceName::Ming);
     }
 }

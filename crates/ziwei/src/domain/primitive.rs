@@ -44,6 +44,104 @@ pub enum FiveElement {
     Fire,
 }
 
+/// 五行局的稳定领域身份。
+///
+/// 五行局不可拆解为可公开读取的五行和局数。
+#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum FiveElementBureau {
+    /// 水二局。
+    WaterTwo = 2,
+    /// 木三局。
+    WoodThree = 3,
+    /// 金四局。
+    MetalFour = 4,
+    /// 土五局。
+    EarthFive = 5,
+    /// 火六局。
+    FireSix = 6,
+}
+
+/// 命宫干支对应的五行局表。
+///
+/// 行顺序为甲乙、丙丁、戊己、庚辛、壬癸；列顺序为子丑、寅卯、辰巳、午未、申酉、戌亥。
+const FIVE_ELEMENT_BUREAUS_BY_MING_PALACE: [[FiveElementBureau; 6]; 5] = [
+    [
+        FiveElementBureau::MetalFour,
+        FiveElementBureau::WaterTwo,
+        FiveElementBureau::FireSix,
+        FiveElementBureau::MetalFour,
+        FiveElementBureau::WaterTwo,
+        FiveElementBureau::FireSix,
+    ],
+    [
+        FiveElementBureau::WaterTwo,
+        FiveElementBureau::FireSix,
+        FiveElementBureau::EarthFive,
+        FiveElementBureau::WaterTwo,
+        FiveElementBureau::FireSix,
+        FiveElementBureau::EarthFive,
+    ],
+    [
+        FiveElementBureau::FireSix,
+        FiveElementBureau::EarthFive,
+        FiveElementBureau::WoodThree,
+        FiveElementBureau::FireSix,
+        FiveElementBureau::EarthFive,
+        FiveElementBureau::WoodThree,
+    ],
+    [
+        FiveElementBureau::EarthFive,
+        FiveElementBureau::WoodThree,
+        FiveElementBureau::MetalFour,
+        FiveElementBureau::EarthFive,
+        FiveElementBureau::WoodThree,
+        FiveElementBureau::MetalFour,
+    ],
+    [
+        FiveElementBureau::WoodThree,
+        FiveElementBureau::MetalFour,
+        FiveElementBureau::WaterTwo,
+        FiveElementBureau::WoodThree,
+        FiveElementBureau::MetalFour,
+        FiveElementBureau::WaterTwo,
+    ],
+];
+
+impl FiveElementBureau {
+    /// 根据命宫的天干和地支返回五行局。
+    #[must_use]
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "由后续本命排盘构建路径按命宫干支调用")
+    )]
+    pub(crate) const fn from_ming_palace(stem: Stem, branch: Branch) -> Self {
+        FIVE_ELEMENT_BUREAUS_BY_MING_PALACE[five_element_bureau_stem_group(stem)]
+            [five_element_bureau_branch_group(branch)]
+    }
+}
+
+const fn five_element_bureau_stem_group(stem: Stem) -> usize {
+    match stem {
+        Stem::Jia | Stem::Yi => 0,
+        Stem::Bing | Stem::Ding => 1,
+        Stem::Wu | Stem::Ji => 2,
+        Stem::Geng | Stem::Xin => 3,
+        Stem::Ren | Stem::Gui => 4,
+    }
+}
+
+const fn five_element_bureau_branch_group(branch: Branch) -> usize {
+    match branch {
+        Branch::Zi | Branch::Chou => 0,
+        Branch::Yin | Branch::Mao => 1,
+        Branch::Chen | Branch::Si => 2,
+        Branch::Wu | Branch::Wei => 3,
+        Branch::Shen | Branch::You => 4,
+        Branch::Xu | Branch::Hai => 5,
+    }
+}
+
 /// 天干的稳定领域身份。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Stem {
@@ -70,6 +168,96 @@ pub enum Stem {
 }
 
 impl Stem {
+    /// 十天干全集，顺序固定为甲至癸，并与 [`Self::index`] 对齐。
+    pub const ALL: [Self; 10] = [
+        Self::Jia,
+        Self::Yi,
+        Self::Bing,
+        Self::Ding,
+        Self::Wu,
+        Self::Ji,
+        Self::Geng,
+        Self::Xin,
+        Self::Ren,
+        Self::Gui,
+    ];
+
+    /// 五虎遁十二宫干表。
+    ///
+    /// 外层顺序依次为甲己、乙庚、丙辛、丁壬、戊癸；内层顺序固定为寅至丑。
+    pub(crate) const FIVE_TIGER_DUN_PALACE_STEMS: [[Self; 12]; 5] = [
+        [
+            Self::Bing,
+            Self::Ding,
+            Self::Wu,
+            Self::Ji,
+            Self::Geng,
+            Self::Xin,
+            Self::Ren,
+            Self::Gui,
+            Self::Jia,
+            Self::Yi,
+            Self::Bing,
+            Self::Ding,
+        ],
+        [
+            Self::Wu,
+            Self::Ji,
+            Self::Geng,
+            Self::Xin,
+            Self::Ren,
+            Self::Gui,
+            Self::Jia,
+            Self::Yi,
+            Self::Bing,
+            Self::Ding,
+            Self::Wu,
+            Self::Ji,
+        ],
+        [
+            Self::Geng,
+            Self::Xin,
+            Self::Ren,
+            Self::Gui,
+            Self::Jia,
+            Self::Yi,
+            Self::Bing,
+            Self::Ding,
+            Self::Wu,
+            Self::Ji,
+            Self::Geng,
+            Self::Xin,
+        ],
+        [
+            Self::Ren,
+            Self::Gui,
+            Self::Jia,
+            Self::Yi,
+            Self::Bing,
+            Self::Ding,
+            Self::Wu,
+            Self::Ji,
+            Self::Geng,
+            Self::Xin,
+            Self::Ren,
+            Self::Gui,
+        ],
+        [
+            Self::Jia,
+            Self::Yi,
+            Self::Bing,
+            Self::Ding,
+            Self::Wu,
+            Self::Ji,
+            Self::Geng,
+            Self::Xin,
+            Self::Ren,
+            Self::Gui,
+            Self::Jia,
+            Self::Yi,
+        ],
+    ];
+
     /// 返回甲为 `0` 至癸为 `9` 的固定领域序号。
     #[must_use]
     pub const fn index(self) -> u8 {
@@ -146,6 +334,22 @@ pub enum Branch {
 }
 
 impl Branch {
+    /// 十二地支全集，顺序固定为子至亥，并与 [`Self::index`] 对齐。
+    pub const ALL: [Self; 12] = [
+        Self::Zi,
+        Self::Chou,
+        Self::Yin,
+        Self::Mao,
+        Self::Chen,
+        Self::Si,
+        Self::Wu,
+        Self::Wei,
+        Self::Shen,
+        Self::You,
+        Self::Xu,
+        Self::Hai,
+    ];
+
     /// 返回子为 `0` 至亥为 `11` 的固定领域序号。
     #[must_use]
     pub const fn index(self) -> u8 {
@@ -246,7 +450,96 @@ pub enum Zodiac {
 
 #[cfg(test)]
 mod tests {
-    use super::{Branch, Gender, Stem, YinYang, Zodiac};
+    use super::{Branch, FiveElementBureau, Gender, Stem, YinYang, Zodiac};
+
+    #[test]
+    fn five_element_bureau_has_confirmed_values() {
+        let expected = [
+            (FiveElementBureau::WaterTwo, 2),
+            (FiveElementBureau::WoodThree, 3),
+            (FiveElementBureau::MetalFour, 4),
+            (FiveElementBureau::EarthFive, 5),
+            (FiveElementBureau::FireSix, 6),
+        ];
+
+        for (bureau, value) in expected {
+            assert_eq!(bureau as u8, value);
+        }
+    }
+
+    #[test]
+    fn five_element_bureau_follows_confirmed_ming_palace_groups() {
+        let stem_groups = [
+            [Stem::Jia, Stem::Yi],
+            [Stem::Bing, Stem::Ding],
+            [Stem::Wu, Stem::Ji],
+            [Stem::Geng, Stem::Xin],
+            [Stem::Ren, Stem::Gui],
+        ];
+        let branch_groups = [
+            [Branch::Zi, Branch::Chou],
+            [Branch::Yin, Branch::Mao],
+            [Branch::Chen, Branch::Si],
+            [Branch::Wu, Branch::Wei],
+            [Branch::Shen, Branch::You],
+            [Branch::Xu, Branch::Hai],
+        ];
+        let expected = [
+            [
+                FiveElementBureau::MetalFour,
+                FiveElementBureau::WaterTwo,
+                FiveElementBureau::FireSix,
+                FiveElementBureau::MetalFour,
+                FiveElementBureau::WaterTwo,
+                FiveElementBureau::FireSix,
+            ],
+            [
+                FiveElementBureau::WaterTwo,
+                FiveElementBureau::FireSix,
+                FiveElementBureau::EarthFive,
+                FiveElementBureau::WaterTwo,
+                FiveElementBureau::FireSix,
+                FiveElementBureau::EarthFive,
+            ],
+            [
+                FiveElementBureau::FireSix,
+                FiveElementBureau::EarthFive,
+                FiveElementBureau::WoodThree,
+                FiveElementBureau::FireSix,
+                FiveElementBureau::EarthFive,
+                FiveElementBureau::WoodThree,
+            ],
+            [
+                FiveElementBureau::EarthFive,
+                FiveElementBureau::WoodThree,
+                FiveElementBureau::MetalFour,
+                FiveElementBureau::EarthFive,
+                FiveElementBureau::WoodThree,
+                FiveElementBureau::MetalFour,
+            ],
+            [
+                FiveElementBureau::WoodThree,
+                FiveElementBureau::MetalFour,
+                FiveElementBureau::WaterTwo,
+                FiveElementBureau::WoodThree,
+                FiveElementBureau::MetalFour,
+                FiveElementBureau::WaterTwo,
+            ],
+        ];
+
+        for (stem_group_index, stems) in stem_groups.into_iter().enumerate() {
+            for (branch_group_index, branches) in branch_groups.into_iter().enumerate() {
+                for stem in stems {
+                    for branch in branches {
+                        assert_eq!(
+                            FiveElementBureau::from_ming_palace(stem, branch),
+                            expected[stem_group_index][branch_group_index]
+                        );
+                    }
+                }
+            }
+        }
+    }
 
     #[test]
     fn gender_maps_to_its_confirmed_yin_yang() {
@@ -277,6 +570,8 @@ mod tests {
             (Branch::Hai, 11, "亥", YinYang::Yin, Zodiac::Pig),
         ];
 
+        assert_eq!(Branch::ALL, expected.map(|(branch, _, _, _, _)| branch));
+
         for (branch, index, display, yin_yang, zodiac) in expected {
             assert_eq!(branch.index(), index);
             assert_eq!(branch.to_string(), display);
@@ -300,10 +595,108 @@ mod tests {
             (Stem::Gui, 9, "癸", YinYang::Yin),
         ];
 
+        assert_eq!(Stem::ALL, expected.map(|(stem, _, _, _)| stem));
+
         for (stem, index, display, yin_yang) in expected {
             assert_eq!(stem.index(), index);
             assert_eq!(stem.to_string(), display);
             assert_eq!(stem.yin_yang(), yin_yang);
         }
+    }
+
+    #[test]
+    fn five_tiger_dun_palace_stems_has_the_confirmed_five_groups() {
+        let expected = [
+            (
+                [Stem::Jia, Stem::Ji],
+                [
+                    Stem::Bing,
+                    Stem::Ding,
+                    Stem::Wu,
+                    Stem::Ji,
+                    Stem::Geng,
+                    Stem::Xin,
+                    Stem::Ren,
+                    Stem::Gui,
+                    Stem::Jia,
+                    Stem::Yi,
+                    Stem::Bing,
+                    Stem::Ding,
+                ],
+            ),
+            (
+                [Stem::Yi, Stem::Geng],
+                [
+                    Stem::Wu,
+                    Stem::Ji,
+                    Stem::Geng,
+                    Stem::Xin,
+                    Stem::Ren,
+                    Stem::Gui,
+                    Stem::Jia,
+                    Stem::Yi,
+                    Stem::Bing,
+                    Stem::Ding,
+                    Stem::Wu,
+                    Stem::Ji,
+                ],
+            ),
+            (
+                [Stem::Bing, Stem::Xin],
+                [
+                    Stem::Geng,
+                    Stem::Xin,
+                    Stem::Ren,
+                    Stem::Gui,
+                    Stem::Jia,
+                    Stem::Yi,
+                    Stem::Bing,
+                    Stem::Ding,
+                    Stem::Wu,
+                    Stem::Ji,
+                    Stem::Geng,
+                    Stem::Xin,
+                ],
+            ),
+            (
+                [Stem::Ding, Stem::Ren],
+                [
+                    Stem::Ren,
+                    Stem::Gui,
+                    Stem::Jia,
+                    Stem::Yi,
+                    Stem::Bing,
+                    Stem::Ding,
+                    Stem::Wu,
+                    Stem::Ji,
+                    Stem::Geng,
+                    Stem::Xin,
+                    Stem::Ren,
+                    Stem::Gui,
+                ],
+            ),
+            (
+                [Stem::Wu, Stem::Gui],
+                [
+                    Stem::Jia,
+                    Stem::Yi,
+                    Stem::Bing,
+                    Stem::Ding,
+                    Stem::Wu,
+                    Stem::Ji,
+                    Stem::Geng,
+                    Stem::Xin,
+                    Stem::Ren,
+                    Stem::Gui,
+                    Stem::Jia,
+                    Stem::Yi,
+                ],
+            ),
+        ];
+
+        assert_eq!(
+            Stem::FIVE_TIGER_DUN_PALACE_STEMS,
+            expected.map(|(_, palace_stems)| palace_stems)
+        );
     }
 }

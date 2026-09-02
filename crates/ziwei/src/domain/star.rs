@@ -1,8 +1,8 @@
 use crate::{SelfTransformations, Transformation};
 
-/// 星曜键的稳定领域身份。
+/// 星曜名称的稳定领域身份。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum StarKey {
+pub enum StarName {
     /// 紫微。
     ZiWei,
     /// 天机。
@@ -41,7 +41,7 @@ pub enum StarKey {
     WenQu,
 }
 
-impl StarKey {
+impl StarName {
     /// 十八星全集；顺序也是落宫数组和宫内星曜的稳定遍历顺序。
     pub const ALL: [Self; 18] = [
         Self::ZiWei,
@@ -118,7 +118,7 @@ pub enum StarGalaxy {
 /// 一颗星曜的不可变本命事实。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Star {
-    key: StarKey,
+    name: StarName,
     /// 星曜的简体中文名称。
     name_hans: &'static str,
     /// 星曜的繁体中文名称。
@@ -140,17 +140,17 @@ impl Star {
         expect(dead_code, reason = "排盘规则将在后续构建命盘切片中创建星曜")
     )]
     pub(crate) const fn new(
-        key: StarKey,
+        name: StarName,
         category: StarCategory,
         galaxy: StarGalaxy,
         birth_transformation: Option<Transformation>,
         self_transformations: SelfTransformations,
     ) -> Self {
-        let (name_hans, name_hant) = star_names(key);
-        let (abbr_hans, abbr_hant) = star_abbreviations(key);
+        let (name_hans, name_hant) = star_names(name);
+        let (abbr_hans, abbr_hant) = star_abbreviations(name);
 
         Self {
-            key,
+            name,
             name_hans,
             name_hant,
             abbr_hans,
@@ -164,8 +164,8 @@ impl Star {
 
     /// 返回星曜的稳定身份。
     #[must_use]
-    pub const fn key(&self) -> StarKey {
-        self.key
+    pub const fn name(&self) -> StarName {
+        self.name
     }
 
     /// 返回星曜的简体中文名称。
@@ -217,68 +217,68 @@ impl Star {
     }
 }
 
-const fn star_names(key: StarKey) -> (&'static str, &'static str) {
-    match key {
-        StarKey::ZiWei => ("紫微", "紫微"),
-        StarKey::TianJi => ("天机", "天機"),
-        StarKey::TaiYang => ("太阳", "太陽"),
-        StarKey::WuQu => ("武曲", "武曲"),
-        StarKey::TianTong => ("天同", "天同"),
-        StarKey::LianZhen => ("廉贞", "廉貞"),
-        StarKey::TianFu => ("天府", "天府"),
-        StarKey::TaiYin => ("太阴", "太陰"),
-        StarKey::TanLang => ("贪狼", "貪狼"),
-        StarKey::JuMen => ("巨门", "巨門"),
-        StarKey::TianXiang => ("天相", "天相"),
-        StarKey::TianLiang => ("天梁", "天梁"),
-        StarKey::QiSha => ("七杀", "七殺"),
-        StarKey::PoJun => ("破军", "破軍"),
-        StarKey::ZuoFu => ("左辅", "左輔"),
-        StarKey::YouBi => ("右弼", "右弼"),
-        StarKey::WenChang => ("文昌", "文昌"),
-        StarKey::WenQu => ("文曲", "文曲"),
+const fn star_names(name: StarName) -> (&'static str, &'static str) {
+    match name {
+        StarName::ZiWei => ("紫微", "紫微"),
+        StarName::TianJi => ("天机", "天機"),
+        StarName::TaiYang => ("太阳", "太陽"),
+        StarName::WuQu => ("武曲", "武曲"),
+        StarName::TianTong => ("天同", "天同"),
+        StarName::LianZhen => ("廉贞", "廉貞"),
+        StarName::TianFu => ("天府", "天府"),
+        StarName::TaiYin => ("太阴", "太陰"),
+        StarName::TanLang => ("贪狼", "貪狼"),
+        StarName::JuMen => ("巨门", "巨門"),
+        StarName::TianXiang => ("天相", "天相"),
+        StarName::TianLiang => ("天梁", "天梁"),
+        StarName::QiSha => ("七杀", "七殺"),
+        StarName::PoJun => ("破军", "破軍"),
+        StarName::ZuoFu => ("左辅", "左輔"),
+        StarName::YouBi => ("右弼", "右弼"),
+        StarName::WenChang => ("文昌", "文昌"),
+        StarName::WenQu => ("文曲", "文曲"),
     }
 }
 
-const fn star_abbreviations(key: StarKey) -> (&'static str, &'static str) {
-    match key {
-        StarKey::ZiWei => ("紫", "紫"),
-        StarKey::TianJi => ("机", "機"),
-        StarKey::TaiYang => ("阳", "陽"),
-        StarKey::WuQu => ("武", "武"),
-        StarKey::TianTong => ("同", "同"),
-        StarKey::LianZhen => ("廉", "廉"),
-        StarKey::TianFu => ("府", "府"),
-        StarKey::TaiYin => ("阴", "陰"),
-        StarKey::TanLang => ("贪", "貪"),
-        StarKey::JuMen => ("巨", "巨"),
-        StarKey::TianXiang => ("相", "相"),
-        StarKey::TianLiang => ("梁", "梁"),
-        StarKey::QiSha => ("杀", "殺"),
-        StarKey::PoJun => ("破", "破"),
-        StarKey::ZuoFu => ("辅", "輔"),
-        StarKey::YouBi => ("弼", "弼"),
-        StarKey::WenChang => ("昌", "昌"),
-        StarKey::WenQu => ("曲", "曲"),
+const fn star_abbreviations(name: StarName) -> (&'static str, &'static str) {
+    match name {
+        StarName::ZiWei => ("紫", "紫"),
+        StarName::TianJi => ("机", "機"),
+        StarName::TaiYang => ("阳", "陽"),
+        StarName::WuQu => ("武", "武"),
+        StarName::TianTong => ("同", "同"),
+        StarName::LianZhen => ("廉", "廉"),
+        StarName::TianFu => ("府", "府"),
+        StarName::TaiYin => ("阴", "陰"),
+        StarName::TanLang => ("贪", "貪"),
+        StarName::JuMen => ("巨", "巨"),
+        StarName::TianXiang => ("相", "相"),
+        StarName::TianLiang => ("梁", "梁"),
+        StarName::QiSha => ("杀", "殺"),
+        StarName::PoJun => ("破", "破"),
+        StarName::ZuoFu => ("辅", "輔"),
+        StarName::YouBi => ("弼", "弼"),
+        StarName::WenChang => ("昌", "昌"),
+        StarName::WenQu => ("曲", "曲"),
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Star, StarCategory, StarGalaxy, StarKey};
+    use super::{Star, StarCategory, StarGalaxy, StarName};
     use crate::{SelfTransformations, Transformation};
 
     #[test]
     fn star_holds_the_confirmed_natal_facts() {
         let star = Star::new(
-            StarKey::ZiWei,
+            StarName::ZiWei,
             StarCategory::Major,
             StarGalaxy::Central,
             Some(Transformation::A),
             SelfTransformations::new(Some(Transformation::D), None),
         );
 
-        assert_eq!(star.key(), StarKey::ZiWei);
+        assert_eq!(star.name(), StarName::ZiWei);
         assert_eq!(star.name_hans(), "紫微");
         assert_eq!(star.name_hant(), "紫微");
         assert_eq!(star.abbr_hans(), "紫");
@@ -294,61 +294,61 @@ mod tests {
     }
 
     #[test]
-    fn star_key_has_confirmed_order() {
+    fn star_name_has_confirmed_order() {
         let expected = [
-            StarKey::ZiWei,
-            StarKey::TianJi,
-            StarKey::TaiYang,
-            StarKey::WuQu,
-            StarKey::TianTong,
-            StarKey::LianZhen,
-            StarKey::TianFu,
-            StarKey::TaiYin,
-            StarKey::TanLang,
-            StarKey::JuMen,
-            StarKey::TianXiang,
-            StarKey::TianLiang,
-            StarKey::QiSha,
-            StarKey::PoJun,
-            StarKey::ZuoFu,
-            StarKey::YouBi,
-            StarKey::WenChang,
-            StarKey::WenQu,
+            StarName::ZiWei,
+            StarName::TianJi,
+            StarName::TaiYang,
+            StarName::WuQu,
+            StarName::TianTong,
+            StarName::LianZhen,
+            StarName::TianFu,
+            StarName::TaiYin,
+            StarName::TanLang,
+            StarName::JuMen,
+            StarName::TianXiang,
+            StarName::TianLiang,
+            StarName::QiSha,
+            StarName::PoJun,
+            StarName::ZuoFu,
+            StarName::YouBi,
+            StarName::WenChang,
+            StarName::WenQu,
         ];
 
-        assert_eq!(StarKey::ALL, expected);
+        assert_eq!(StarName::ALL, expected);
 
-        for (index, key) in expected.into_iter().enumerate() {
-            assert_eq!(key.index(), index);
+        for (index, name) in expected.into_iter().enumerate() {
+            assert_eq!(name.index(), index);
         }
     }
 
     #[test]
     fn star_carries_confirmed_hans_and_hant_names() {
         let expected = [
-            (StarKey::ZiWei, "紫微", "紫微"),
-            (StarKey::TianJi, "天机", "天機"),
-            (StarKey::TaiYang, "太阳", "太陽"),
-            (StarKey::WuQu, "武曲", "武曲"),
-            (StarKey::TianTong, "天同", "天同"),
-            (StarKey::LianZhen, "廉贞", "廉貞"),
-            (StarKey::TianFu, "天府", "天府"),
-            (StarKey::TaiYin, "太阴", "太陰"),
-            (StarKey::TanLang, "贪狼", "貪狼"),
-            (StarKey::JuMen, "巨门", "巨門"),
-            (StarKey::TianXiang, "天相", "天相"),
-            (StarKey::TianLiang, "天梁", "天梁"),
-            (StarKey::QiSha, "七杀", "七殺"),
-            (StarKey::PoJun, "破军", "破軍"),
-            (StarKey::ZuoFu, "左辅", "左輔"),
-            (StarKey::YouBi, "右弼", "右弼"),
-            (StarKey::WenChang, "文昌", "文昌"),
-            (StarKey::WenQu, "文曲", "文曲"),
+            (StarName::ZiWei, "紫微", "紫微"),
+            (StarName::TianJi, "天机", "天機"),
+            (StarName::TaiYang, "太阳", "太陽"),
+            (StarName::WuQu, "武曲", "武曲"),
+            (StarName::TianTong, "天同", "天同"),
+            (StarName::LianZhen, "廉贞", "廉貞"),
+            (StarName::TianFu, "天府", "天府"),
+            (StarName::TaiYin, "太阴", "太陰"),
+            (StarName::TanLang, "贪狼", "貪狼"),
+            (StarName::JuMen, "巨门", "巨門"),
+            (StarName::TianXiang, "天相", "天相"),
+            (StarName::TianLiang, "天梁", "天梁"),
+            (StarName::QiSha, "七杀", "七殺"),
+            (StarName::PoJun, "破军", "破軍"),
+            (StarName::ZuoFu, "左辅", "左輔"),
+            (StarName::YouBi, "右弼", "右弼"),
+            (StarName::WenChang, "文昌", "文昌"),
+            (StarName::WenQu, "文曲", "文曲"),
         ];
 
-        for (key, name_hans, name_hant) in expected {
+        for (name, name_hans, name_hant) in expected {
             let star = Star::new(
-                key,
+                name,
                 StarCategory::Major,
                 StarGalaxy::Central,
                 None,
@@ -363,29 +363,29 @@ mod tests {
     #[test]
     fn star_carries_confirmed_hans_and_hant_abbreviations() {
         let expected = [
-            (StarKey::ZiWei, "紫", "紫"),
-            (StarKey::TianJi, "机", "機"),
-            (StarKey::TaiYang, "阳", "陽"),
-            (StarKey::WuQu, "武", "武"),
-            (StarKey::TianTong, "同", "同"),
-            (StarKey::LianZhen, "廉", "廉"),
-            (StarKey::TianFu, "府", "府"),
-            (StarKey::TaiYin, "阴", "陰"),
-            (StarKey::TanLang, "贪", "貪"),
-            (StarKey::JuMen, "巨", "巨"),
-            (StarKey::TianXiang, "相", "相"),
-            (StarKey::TianLiang, "梁", "梁"),
-            (StarKey::QiSha, "杀", "殺"),
-            (StarKey::PoJun, "破", "破"),
-            (StarKey::ZuoFu, "辅", "輔"),
-            (StarKey::YouBi, "弼", "弼"),
-            (StarKey::WenChang, "昌", "昌"),
-            (StarKey::WenQu, "曲", "曲"),
+            (StarName::ZiWei, "紫", "紫"),
+            (StarName::TianJi, "机", "機"),
+            (StarName::TaiYang, "阳", "陽"),
+            (StarName::WuQu, "武", "武"),
+            (StarName::TianTong, "同", "同"),
+            (StarName::LianZhen, "廉", "廉"),
+            (StarName::TianFu, "府", "府"),
+            (StarName::TaiYin, "阴", "陰"),
+            (StarName::TanLang, "贪", "貪"),
+            (StarName::JuMen, "巨", "巨"),
+            (StarName::TianXiang, "相", "相"),
+            (StarName::TianLiang, "梁", "梁"),
+            (StarName::QiSha, "杀", "殺"),
+            (StarName::PoJun, "破", "破"),
+            (StarName::ZuoFu, "辅", "輔"),
+            (StarName::YouBi, "弼", "弼"),
+            (StarName::WenChang, "昌", "昌"),
+            (StarName::WenQu, "曲", "曲"),
         ];
 
-        for (key, abbr_hans, abbr_hant) in expected {
+        for (name, abbr_hans, abbr_hant) in expected {
             let star = Star::new(
-                key,
+                name,
                 StarCategory::Major,
                 StarGalaxy::Central,
                 None,

@@ -1,3 +1,5 @@
+//! 出生资料领域值、输入与归一化上下文。
+
 use crate::{Branch, Gender, Stem, ZiweiError};
 
 /// 已归一化的阴阳历月份。

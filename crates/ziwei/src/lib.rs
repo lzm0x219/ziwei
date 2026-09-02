@@ -9,9 +9,9 @@ mod error;
 mod rules;
 
 pub use domain::{
-    BirthContext, BirthDay, BirthMonth, Branch, DecadeAge, DecadeIndex, DecadeYear, FiveElement,
-    FiveElementBureau, Gender, Natal, Palace, PalaceKey, PalaceScope, SelfTransformations, Star,
-    StarCategory, StarGalaxy, StarKey, Stem, Transformation, YearlyIndex, YinYang, ZiweiBirth,
-    ZiweiInput, Zodiac,
+    BirthContext, BirthDay, BirthMonth, Branch, Decade, DecadeAge, DecadeIndex, DecadeYear,
+    FiveElement, FiveElementBureau, Gender, Natal, Palace, PalaceName, SelfTransformations, Star,
+    StarCategory, StarGalaxy, StarName, Stem, Transformation, Yearly, YearlyIndex, YinYang,
+    ZiweiBirth, ZiweiInput, Zodiac,
 };
 pub use error::ZiweiError;
