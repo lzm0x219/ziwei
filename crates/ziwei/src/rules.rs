@@ -1,8 +1,9 @@
 use crate::{BirthMonth, Branch, PalaceName, Stem};
 
-/// 按出生月与时辰同时计算命宫地支与身宫地支。
+/// 按出生月与时辰同时计算命宫与身宫的寅起索引。
 ///
 /// 寅宫起正月，顺数至出生月；命宫逆数出生时辰，身宫顺数出生时辰。
+/// 返回值以寅为 `0`、丑为 `11`。
 #[must_use]
 #[cfg_attr(
     not(test),
@@ -11,24 +12,16 @@ use crate::{BirthMonth, Branch, PalaceName, Stem};
         reason = "由后续本命排盘构建切片调用，当前仅固定命宫与身宫规则"
     )
 )]
-pub(crate) const fn compute_ming_shen_branches(
+pub(crate) const fn compute_ming_shen_indices(
     birth_month: BirthMonth,
     birth_hour: Branch,
-) -> (Branch, Branch) {
-    let month_branch_index = Branch::Yin
-        .index()
-        .wrapping_add(birth_month.get().wrapping_sub(1))
-        % 12;
-    let hour_branch_index = birth_hour.index();
-    let ming_branch_index = month_branch_index
-        .wrapping_add(12)
-        .wrapping_sub(hour_branch_index)
-        % 12;
-    let shen_branch_index = month_branch_index.wrapping_add(hour_branch_index) % 12;
+) -> (u8, u8) {
+    let month_index = birth_month.get() as i8 - 1;
+    let hour_offset = birth_hour.index() as i8;
 
     (
-        Branch::ALL[ming_branch_index as usize],
-        Branch::ALL[shen_branch_index as usize],
+        (month_index - hour_offset).rem_euclid(12) as u8,
+        (month_index + hour_offset).rem_euclid(12) as u8,
     )
 }
 
@@ -72,24 +65,24 @@ pub(crate) const fn compute_palace_stems(birth_stem: Stem) -> [Stem; 12] {
 
 #[cfg(test)]
 mod tests {
-    use super::{compute_ming_shen_branches, compute_natal_palace_names, compute_palace_stems};
+    use super::{compute_ming_shen_indices, compute_natal_palace_names, compute_palace_stems};
     use crate::{BirthMonth, Branch, PalaceName, Stem};
 
     #[test]
-    fn ming_and_shen_palace_branches_follow_confirmed_counting_directions() {
+    fn ming_and_shen_indices_follow_confirmed_counting_directions() {
         let expected = [
-            (1, Branch::Zi, Branch::Yin, Branch::Yin),
-            (1, Branch::Chou, Branch::Chou, Branch::Mao),
-            (6, Branch::Wu, Branch::Chou, Branch::Chou),
-            (12, Branch::Hai, Branch::Yin, Branch::Zi),
+            (1, Branch::Zi, 0, 0),
+            (1, Branch::Chou, 11, 1),
+            (6, Branch::Wu, 11, 11),
+            (12, Branch::Hai, 0, 10),
         ];
 
-        for (month, birth_hour, ming_branch, shen_branch) in expected {
+        for (month, birth_hour, ming_index, shen_index) in expected {
             let birth_month = BirthMonth::try_from(month).expect("测试月份必须有效");
 
             assert_eq!(
-                compute_ming_shen_branches(birth_month, birth_hour),
-                (ming_branch, shen_branch)
+                compute_ming_shen_indices(birth_month, birth_hour),
+                (ming_index, shen_index)
             );
         }
     }
