@@ -67,7 +67,7 @@ ziwei-wasm ───────────────────────
 
 根 `Cargo.toml` 是 workspace 配置，不是一个虚假的业务包。它统一 edition、MSRV、许可证、仓库地址与 lint；所有排盘领域实现和固有双字名称均位于 `crates/ziwei`。
 
-`mise.toml` 是唯一的工具链入口。当前固定 Rust `1.98.0`，以避免本机默认 Rust 版本改变构建结果。
+`mise.toml` 是唯一的工具链入口。当前固定 Rust `1.98.1`，以避免本机默认 Rust 版本改变构建结果。
 
 ### 未来形状
 
