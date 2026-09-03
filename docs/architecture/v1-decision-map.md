@@ -28,12 +28,12 @@
 | D-004 | `Ziwei` 是公开创建入口，仅承载本命盘创建方法；`Natal` 是不可变本命盘结果。 | 已确认 |
 | D-005 | 农历换算、闰月、时区、晚子时与真太阳时均在内核外消解；内核仅接收已归一化的紫微斗数资料。 | 已确认 |
 | D-006 | 仅支持唯一项目规则；不支持流派参数、运行时规则版本或调用方注入规则表。规则变更通过新规格与库版本处理。 | 已确认 |
-| D-007 | 保留两种公开输入：`ZiweiBirth { gender, birth_year, birth_month, birth_day, birth_hour }` 与 `ZiweiInput { gender, birth_stem, birth_branch, birth_month, ziwei_branch, birth_hour }`。 | 已确认 |
+| D-007 | 保留两种公开输入：`Birth { gender, birth_year, birth_month, birth_day, birth_hour }` 与 `Parameters { gender, birth_stem, birth_branch, birth_month, ziwei_branch, birth_hour }`。 | 已确认 |
 | D-008 | 两种公开输入必须收敛到唯一归一化排盘路径；不预设或公开 `ZiweiSeed`。仅当私有实现确有独立不变量与复用价值时，才引入该类型。 | 已确认 |
 | D-009 | Rust 核心公开 interface 使用 `Gender`、`Stem`、`Branch` 等领域值；Node.js/TypeScript 与 WebAssembly adapter 负责数字转换与无效值处理。核心不重复公开裸数字构造器。 | 已确认 |
 | D-010 | `Natal` 是唯一、完整、不可变且自足的本命事实源；它保存后续期间、查询和跨语言输出所需的全部归一化事实，不保存原始输入、输入来源或仅为构建服务的临时值。归一化出生档案由其拥有的 `profile: Profile` 承载。 | 已确认 |
 | D-011 | `Natal` 仅预计算本命事实；大限与流年按需生成，核心不缓存，且期间不新增星曜、宫干四化、生年四化或其他本命事实。 | 已确认 |
-| D-012 | 已替换：`Natal` 不设置直接的 `lunar_year` 字段。数字年份由 `Profile::birth_year: Option<i32>` 承载：`ZiweiBirth` 有值，`ZiweiInput` 为 `None`；它仅为期间数字年份锚点。 | 已确认 |
+| D-012 | 已替换：`Natal` 不设置直接的 `lunar_year` 字段。数字年份由 `Profile::birth_year: Option<i32>` 承载：`Birth` 有值，`Parameters` 为 `None`；它仅为期间数字年份锚点。 | 已确认 |
 | D-013 | 十二个实际宫位以寅至丑为唯一稳定顺序保存；每个宫位自带地支，并支持按地支或宫名查询。 | 已确认 |
 | D-014 | 已替换：宫名、星曜、四化等事实仅保存稳定领域身份，并由 `ziwei_locale::ZiweiLabels` 派生标签。 | 已替换 |
 | D-015 | 实际宫位实体的地支、宫干、星曜与自化永远属于 `Natal`；宫干四化不作为持久字段，后续由函数按需计算。大限与流年仅返回某一期间的宫职重排视图，不复制或修改 `Natal`。 | 已确认 |
@@ -56,7 +56,7 @@
 | D-036 | `Profile` 使用 `birth_month: BirthMonth` 保存归一化出生月份；两种输入均有该值，不区分闰月。 | 已确认 |
 | D-037 | `Profile` 使用 `birth_hour` 保存归一化出生时辰；采用出生语义前缀，而不沿用输入字段名 `hour`。具体类型另行确认。 | 已确认 |
 | D-038 | `Profile::birth_hour` 使用 `Branch`；以字段文档明确其为十二时辰对应的地支，不引入 `Hour` 重复类型或裸数字。 | 已确认 |
-| D-039 | `Profile` 使用 `birth_day: Option<BirthDay>` 保存归一化农历日；`ZiweiBirth` 有值，`ZiweiInput` 为 `None`。 | 已确认 |
+| D-039 | `Profile` 使用 `birth_day: Option<BirthDay>` 保存归一化农历日；`Birth` 有值，`Parameters` 为 `None`。 | 已确认 |
 | D-040 | `Profile` 不设置 `ziwei_branch`；紫微星所在实际宫位由 `Natal` 顶层的 `ziwei_palace_name: PalaceName` 与 `ziwei_branch: Branch` 保存。 | 已替换 |
 | D-041 | `BirthMonth` 使用仅允许 `1..=12` 的 `u8` 新类型；它不记录闰月信息，也不承担历法换算。 | 已确认 |
 | D-042 | `BirthDay` 使用仅允许 `1..=30` 的 `u8` 新类型；它不承担具体月份天数或历法换算校验。 | 已确认 |
@@ -85,17 +85,17 @@
 | D-065 | `Natal` 使用顶层字段 `zodiac: Zodiac` 保存由生年地支确定的生肖；它不进入 `Profile`。 | 已确认 |
 | D-066 | `Natal` 使用顶层字段 `ziwei_palace_name: PalaceName` 与 `ziwei_branch: Branch` 保存紫微星所在实际宫位；二者必须指向同一宫位，且该宫包含紫微星。 | 已确认 |
 | D-067 | `Natal` 顶层字段暂时封闭为：`profile`、`zodiac`、`five_element_bureau`、`palaces`、`ming_palace_branch`、身宫定位、来因宫定位与紫微星宫位定位；新增字段须重新开启对象评审。 | 已确认 |
-| D-068 | `ZiweiBirth::gender` 使用 `Gender`；Node.js/TypeScript 与 WebAssembly adapter 负责 `0`、`1` 的外部转换。 | 已确认 |
-| D-069 | `ZiweiBirth` 使用 `birth_year: i32` 保存外部已归一化的数字年份；不使用 `year` 或额外年份值对象，也不引入年份范围或历法有效性校验。 | 已确认 |
-| D-070 | `ZiweiBirth` 使用 `birth_month: BirthMonth`；不使用 `month` 或裸数字。 | 已确认 |
-| D-071 | `ZiweiBirth` 使用 `birth_day: BirthDay`；不使用 `day` 或裸数字。 | 已确认 |
-| D-072 | `ZiweiBirth` 使用 `birth_hour: Branch` 表达出生时辰对应的地支；不使用 `hour` 或裸数字。 | 已确认 |
-| D-073 | `ZiweiInput::gender` 使用 `Gender`；不使用裸数字或布尔值。 | 已确认 |
-| D-074 | `ZiweiInput::birth_stem` 使用 `Stem`；不使用裸数字或字符串。 | 已确认 |
-| D-075 | `ZiweiInput::birth_branch` 使用 `Branch`；不使用裸数字或字符串。 | 已确认 |
-| D-076 | `ZiweiInput` 使用 `birth_month: BirthMonth`；不使用 `month` 或裸数字。 | 已确认 |
-| D-077 | `ZiweiInput` 使用 `ziwei_branch: Branch` 直接表达紫微星所在实际宫位地支；不使用 `ziwei_palace_branch` 或裸索引。 | 已确认 |
-| D-078 | `ZiweiInput` 使用 `birth_hour: Branch` 表达出生时辰对应的地支；不使用 `hour` 或裸数字。 | 已确认 |
+| D-068 | `Birth::gender` 使用 `Gender`；Node.js/TypeScript 与 WebAssembly adapter 负责 `0`、`1` 的外部转换。 | 已确认 |
+| D-069 | `Birth` 使用 `birth_year: i32` 保存外部已归一化的数字年份；不使用 `year` 或额外年份值对象，也不引入年份范围或历法有效性校验。 | 已确认 |
+| D-070 | `Birth` 使用 `birth_month: BirthMonth`；不使用 `month` 或裸数字。 | 已确认 |
+| D-071 | `Birth` 使用 `birth_day: BirthDay`；不使用 `day` 或裸数字。 | 已确认 |
+| D-072 | `Birth` 使用 `birth_hour: Branch` 表达出生时辰对应的地支；不使用 `hour` 或裸数字。 | 已确认 |
+| D-073 | `Parameters::gender` 使用 `Gender`；不使用裸数字或布尔值。 | 已确认 |
+| D-074 | `Parameters::birth_stem` 使用 `Stem`；不使用裸数字或字符串。 | 已确认 |
+| D-075 | `Parameters::birth_branch` 使用 `Branch`；不使用裸数字或字符串。 | 已确认 |
+| D-076 | `Parameters` 使用 `birth_month: BirthMonth`；不使用 `month` 或裸数字。 | 已确认 |
+| D-077 | `Parameters` 使用 `ziwei_branch: Branch` 直接表达紫微星所在实际宫位地支；不使用 `ziwei_palace_branch` 或裸索引。 | 已确认 |
+| D-078 | `Parameters` 使用 `birth_hour: Branch` 表达出生时辰对应的地支；不使用 `hour` 或裸数字。 | 已确认 |
 | D-079 | 大限按需视图的类型名为 `Decade`；不使用 `Daxian` 或 `MajorPeriod`。 | 已撤回；重新设计 |
 | D-080 | `Decade::index` 使用 `DecadeIndex`；该新类型仅允许大限零基序号 `0..=11`。 | 已撤回；重新设计 |
 | D-081 | `Decade` 保存 `start_virtual_age: VirtualAge`；它是已生成大限视图的起始虚岁事实。 | 已撤回；重新设计 |
@@ -117,7 +117,7 @@
 | D-097 | 已替换：不定义 `DecadeYears` 类型。十项年度摘要直接使用 `[DecadeYear; 10]`；不使用 `YearlyList`。 | 已替换 |
 | D-098 | 单个年度摘要条目类型命名为 `DecadeYear`；它不同于管理流年宫职的 `Yearly` 对象。 | 已确认 |
 | D-099 | `DecadeYear` 使用 `age: u8` 保存虚岁；不使用 `virtual_age` 字段名，也不引入 `VirtualAge` 新类型。 | 已确认 |
-| D-100 | `DecadeYear` 使用 `year: Option<i32>` 保存可用的数字年份。`ZiweiBirth` 可推导该值；缺少数字出生年份锚点的 `ZiweiInput` 为 `None`。 | 已确认 |
+| D-100 | `DecadeYear` 使用 `year: Option<i32>` 保存可用的数字年份。`Birth` 可推导该值；缺少数字出生年份锚点的 `Parameters` 为 `None`。 | 已确认 |
 | D-101 | `DecadeYear` 不保存流年序号。其在固定 `[DecadeYear; 10]` 中的位置即为零基流年序号；该类型只保存 `age` 与 `year`。 | 已确认 |
 | D-102 | `Natal::zodiac` 使用独立的 `Zodiac` 枚举保存十二生肖的稳定身份，不保存字符串或名称字段。 | 已确认 |
 | D-103 | `Zodiac` 的内部稳定变体为 `Rat`、`Ox`、`Tiger`、`Rabbit`、`Dragon`、`Snake`、`Horse`、`Goat`、`Monkey`、`Rooster`、`Dog`、`Pig`；它不提供名称字段或标签 API。 | 已确认 |
@@ -139,14 +139,14 @@
 | D-119 | `Star` 固定包含 `name: StarName`、`category: StarCategory`、`galaxy: StarGalaxy`、`birth_transformation: Option<Transformation>`、`self_transformations: SelfTransformations`；其中 `birth_transformation` 仅保存生年四化。 | 已确认 |
 | D-120 | `Palace` 固定包含本命宫职、地支、宫干、星曜和大限年龄区间；具体字段归属由 D-194 确认。 | 已由 D-194 恢复确认 |
 | D-121 | `SelfTransformations` 固定包含 `inward: Option<Transformation>` 与 `outward: Option<Transformation>`；`None` 表示对应方向不存在自化。 | 已确认 |
-| D-122 | `Profile` 固定包含 `birth_year: Option<i32>`、`gender: Gender`、`birth_stem: Stem`、`birth_branch: Branch`、`birth_month: BirthMonth`、`birth_hour: Branch`、`birth_day: Option<BirthDay>`。`ZiweiBirth` 的年份与日期有值，`ZiweiInput` 中二者为 `None`。 | 已确认 |
+| D-122 | `Profile` 固定包含 `birth_year: Option<i32>`、`gender: Gender`、`birth_stem: Stem`、`birth_branch: Branch`、`birth_month: BirthMonth`、`birth_hour: Branch`、`birth_day: Option<BirthDay>`。`Birth` 的年份与日期有值，`Parameters` 中二者为 `None`。 | 已确认 |
 | D-123 | `Natal` 固定包含 `profile: Profile`、`zodiac: Zodiac`、`five_element_bureau: FiveElementBureau`、`palaces: [Palace; 12]`、`ming_palace_branch: Branch`、身宫定位、来因宫定位及紫微星宫位定位字段；所有字段均为本命事实，不保存大限或流年状态。 | 已确认 |
-| D-124 | `ZiweiBirth` 固定包含 `gender: Gender`、`birth_year: i32`、`birth_month: BirthMonth`、`birth_day: BirthDay`、`birth_hour: Branch`；它不包含闰月、时区或历法换算信息。 | 已确认 |
-| D-125 | `ZiweiInput` 固定包含 `gender: Gender`、`birth_stem: Stem`、`birth_branch: Branch`、`birth_month: BirthMonth`、`ziwei_branch: Branch`、`birth_hour: Branch`；字段保持私有，只能经 `new` 构造。它不包含数字年份与农历日。 | 已确认 |
+| D-124 | `Birth` 固定包含 `gender: Gender`、`birth_year: i32`、`birth_month: BirthMonth`、`birth_day: BirthDay`、`birth_hour: Branch`；它不包含闰月、时区或历法换算信息。 | 已确认 |
+| D-125 | `Parameters` 固定包含 `gender: Gender`、`birth_stem: Stem`、`birth_branch: Branch`、`birth_month: BirthMonth`、`ziwei_branch: Branch`、`birth_hour: Branch`；字段保持私有，只能经 `new` 构造。它不包含数字年份与农历日。 | 已确认 |
 | D-126 | `Ziwei` 为无字段单元结构体，只作为顶层命盘创建入口；其具体创建方法在 API 设计阶段确认。 | 已确认 |
-| D-127 | `Ziwei::from_birth` 与 `Ziwei::from_input` 统一返回 `Result<Natal, ZiweiError>`，维持 Rust、Node.js/TypeScript 与 WebAssembly 的一致错误合同。 | 已确认 |
+| D-127 | `Ziwei::from_birth` 与 `Ziwei::from_parameters` 统一返回 `Result<Natal, ZiweiError>`，维持 Rust、Node.js/TypeScript 与 WebAssembly 的一致错误合同。 | 已确认 |
 | D-128 | 已替换：`ZiweiError` 的初始范围仅含 `InvalidSexagenaryYear`；范围型数字错误的统一错误合同由 D-146 与 D-170 确认。 | 已替换 |
-| D-129 | `Ziwei` 仅公开 `from_birth(birth: ZiweiBirth) -> Result<Natal, ZiweiError>` 与 `from_input(input: ZiweiInput) -> Result<Natal, ZiweiError>` 两个创建入口。 | 已确认 |
+| D-129 | `Ziwei` 仅公开 `from_birth(birth: Birth) -> Result<Natal, ZiweiError>` 与 `from_parameters(parameters: Parameters) -> Result<Natal, ZiweiError>` 两个创建入口。 | 已确认 |
 | D-130 | `Natal`、`Palace`、`Star` 等领域对象的字段保持私有；调用方通过只读方法或迭代器读取，不能构造或修改违反排盘不变量的对象。 | 已确认 |
 | D-131 | `Natal` 提供 `profile(&self) -> &Profile`、`zodiac(&self) -> Zodiac`、`five_element_bureau(&self) -> FiveElementBureau` 三个直接本命事实读取方法。 | 已确认 |
 | D-132 | `Natal` 提供 `palaces(&self) -> &[Palace; 12]`，以寅至丑稳定顺序零拷贝读取全部实际宫位。 | 已确认 |
@@ -163,7 +163,7 @@
 | D-143 | `Profile` 提供 `birth_year()`、`gender()`、`birth_stem()`、`birth_branch()`、`birth_month()`、`birth_hour()`、`birth_day()` 七个与字段同名的基础只读方法。 | 已确认 |
 | D-144 | `DecadeIndex` 与 `YearlyIndex` 为仅用于 API 入参的 `#[repr(transparent)]` `u8` 新类型，分别约束为 `0..=11` 与 `0..=9`；它们不进入 `PalaceName`。 | 已确认 |
 | D-145 | `DecadeIndex` 与 `YearlyIndex` 均通过标准 `TryFrom<u8>` 构造；越界构造返回明确错误而非 `Option`。 | 已确认 |
-| D-146 | `ZiweiError` 包含 `InvalidSexagenaryYear { stem, branch }`、`InvalidDecadeIndex { value }`、`InvalidYearlyIndex { value }` 三个公开变体；前者服务于 `ZiweiInput::new`，后两者服务于期间序号转换。月、日范围错误由 D-170 追加。 | 已确认 |
+| D-146 | `ZiweiError` 包含 `InvalidSexagenaryYear { stem, branch }`、`InvalidDecadeIndex { value }`、`InvalidYearlyIndex { value }` 三个公开变体；前者服务于 `Parameters::new`，后两者服务于期间序号转换。月、日范围错误由 D-170 追加。 | 已确认 |
 | D-147 | `Natal` 按需生成 `[Decade; 12]` 大限宫职结果且不缓存；具体方法名与签名仍待查询 interface 阶段确认。 | 返回方法待确认 |
 | D-148 | `Natal` 按需生成 `[Yearly; 12]` 流年宫职结果且不缓存；具体方法名与签名仍待查询 interface 阶段确认。 | 返回方法待确认 |
 | D-149 | `Natal` 提供 `decade_years(&self, decade: DecadeIndex) -> [DecadeYear; 10]`，按需返回大限内十项虚岁与可用数字年份摘要，不包含流年宫职。 | 已确认 |
@@ -196,7 +196,7 @@
 | D-177 | `ziwei_locale` 不保留为 workspace 包，核心不定义 `Lang`、运行时标签读取器或全局语言状态。`Palace`、`Star`、`Decade`、`Yearly` 自行管理对应简、繁名称；名称不参与排盘规则。具体字段与读取方法由各对象后续确认。 | 本地化边界保持确认；对象 interface 待确认 |
 | D-178 | 已替换：D-130 的私有字段约束不适用于 `Palace`、`Star`、`Decade`、`Yearly` 的名称字段。 | 已替换 |
 | D-179 | `Gender`、`Stem`、`Branch` 分别提供 `yin_yang() -> YinYang`，返回各自固定的阴阳归属；`Branch` 另提供 `zodiac() -> Zodiac`，返回一一对应的生肖。这些方法只表达基础领域事实，不提供名称或本地化；`Stem` 的五虎遁表归属由 D-206 补充。 | 已确认；天干数据归属由 D-206 补充 |
-| D-180 | 出生资料私有模块的辅助函数以甲子为数字年份同余 `4` 的基准，从任意 `i32` 数字农历年份导出 `(Stem, Branch)`；实现使用 `rem_euclid`，不以 `birth_year - 4` 直接相减。`ZiweiInput::new` 仅在生年干支阴阳相同时构造成功；十干与十二支的 120 种组合中恰有 60 种有效。 | 已确认；文件归属由 D-200 修订 |
+| D-180 | 出生资料私有模块的辅助函数以甲子为数字年份同余 `4` 的基准，从任意 `i32` 数字农历年份导出 `(Stem, Branch)`；实现使用 `rem_euclid`，不以 `birth_year - 4` 直接相减。`Parameters::new` 仅在生年干支阴阳相同时构造成功；十干与十二支的 120 种组合中恰有 60 种有效。 | 已确认；文件归属由 D-200 修订 |
 | D-181 | 五虎遁按甲己丙寅、乙庚戊寅、丙辛庚寅、丁壬壬寅、戊癸甲寅五组起干，并分别顺布十二宫干；规则空间固定为 `5 × 12`，不将十个生年干误建模为十种独立宫干排布。 | 已确认 |
 | D-182 | 宫职统一使用 `PalaceScope` 表达；枚举变体为 `Natal(PalaceName)`、`Decade(PalaceName)`、`Yearly(PalaceName)`。`PalaceScope` 提供 `palace_name()`、`name_hans()` 与 `name_hant()`，由作用域与宫位名称共同确定完整宫职身份及简、繁名称。 | 已被 D-188 替换 |
 | D-183 | `Palace` 私有持有 `scope: PalaceScope::Natal(PalaceName)`，提供 `scope() -> PalaceScope`；`name()` 从该作用域投影宫位名称。`Palace` 不再保存 `name_hans`、`name_hant`，也不再提供同名方法。 | 已被 D-188 替换 |
@@ -216,7 +216,7 @@
 | D-197 | `Decade` 是可复制、可比较的只读领域对象，直接提供 `name() -> PalaceName`、`name_hans() -> &'static str` 与 `name_hant() -> &'static str`；大限宫职简繁名称由其唯一字段 `name` 经限运私有模块映射派生。构造器保持 crate 私有，不提前公开独立构造入口。 | 已确认；文件归属由 D-199 修订 |
 | D-198 | `Yearly` 是可复制、可比较的只读领域对象，直接提供 `name() -> PalaceName`、`name_hans() -> &'static str` 与 `name_hant() -> &'static str`；流年宫职简繁名称由其唯一字段 `name` 经限运私有模块映射派生。构造器保持 crate 私有，不提前公开独立构造入口。 | 已确认；文件归属由 D-199 修订 |
 | D-199 | 完整限运领域的私有模块与文件统一命名为 `luck`、`domain/luck.rs`，不再使用 `period`、`domain/period.rs`。`Decade`、`Yearly`、期间索引、年龄区间和年度摘要继续由 crate 根扁平导出；不新增公开 `Luck` 类型，也不改变任何领域语义或公开导入路径。 | 已确认 |
-| D-200 | 完整出生资料领域的私有模块与文件统一命名为 `profile`、`domain/profile.rs`，不再使用 `birth`、`domain/birth.rs`。归一化出生档案类型统一命名为公开 `Profile`，与 `BirthMonth`、`BirthDay`、`ZiweiBirth`、`ZiweiInput` 一同由 crate 根扁平导出；不保留旧类型名称的兼容别名。 | 已确认 |
+| D-200 | 完整出生资料领域的私有模块与文件统一命名为 `profile`、`domain/profile.rs`，不再使用 `birth`、`domain/birth.rs`。归一化出生档案类型统一命名为公开 `Profile`，与 `BirthMonth`、`BirthDay`、`Birth`、`Parameters` 一同由 crate 根扁平导出；不保留旧类型名称的兼容别名。 | 已确认 |
 | D-201 | `FiveElementBureau` 的定义与单元测试归入 `domain/primitive.rs`，删除私有 `five_element_bureau` 模块与 `domain/five_element_bureau.rs`。`FiveElementBureau` 与 `FiveElement` 仍是相互独立的领域类型，前者继续由 crate 根扁平导出；不改变领域语义或公开导入路径。 | 已确认 |
 | D-202 | 五虎遁完整规则族归入私有 `rules/five_tiger_dun.rs`：`FIVE_TIGER_DUN_PALACE_STEMS`、宫干计算函数与表驱动测试必须共置；`rules.rs` 声明子模块，并通过 `pub(crate) use` 保留对应私有 interface。保留可审计的 `5 × 12` 常量表和已确认函数名，不改变 crate 的公开 interface。 | 已被 D-204 替换 |
 | D-203 | `FiveElementBureau` 提供 crate 私有的 `const fn from_ming_palace(stem: Stem, branch: Branch) -> Self`，按天干甲乙、丙丁、戊己、庚辛、壬癸五组及地支子丑、寅卯、辰巳、午未、申酉、戌亥六组查询固定五行局表。五行局表五行依次为“金水火金水火、水火土水火土、火土木火土木、土木金土木金、木金水木金水”。不实现语义含混的 `From<(Stem, Branch)>`，也不新增公开的五行或局数读取方法。 | 已确认 |

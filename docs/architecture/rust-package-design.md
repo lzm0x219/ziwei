@@ -4,7 +4,7 @@
 
 本文记录紫微斗数排盘引擎的 Rust 包设计。它是当前 workspace 的架构约束，不替代领域术语表 [`CONTEXT.md`](../../CONTEXT.md)，也不规定尚未确认的公开类型签名。
 
-目标是让 Rust 使用者得到一个小而深的核心模块：调用方只需提供已经归一化的出生资料，并从 crate 根调用 `Ziwei::from_birth` 或 `Ziwei::from_input`，即可得到不可变 `Natal`。`Ziwei` 是只承载这两条关联构造方法的公开入口；`Natal` 是命盘结果对象。调用方再在同一个内核中取得本命、大限、流年的只读结果。Node.js/TypeScript 与 WebAssembly 只在各自运行时把这一能力适配出去，不能复制或改变排盘规则。
+目标是让 Rust 使用者得到一个小而深的核心模块：调用方只需提供已经归一化的出生资料，并从 crate 根调用 `Ziwei::from_birth` 或 `Ziwei::from_parameters`，即可得到不可变 `Natal`。`Ziwei` 是只承载这两条关联构造方法的公开入口；`Natal` 是命盘结果对象。调用方再在同一个内核中取得本命、大限、流年的只读结果。Node.js/TypeScript 与 WebAssembly 只在各自运行时把这一能力适配出去，不能复制或改变排盘规则。
 
 ## 决策摘要
 
@@ -96,7 +96,7 @@ ziwei-wasm ───────────────────────
 
 它负责：
 
-- 接收 `ZiweiBirth` 与 `ZiweiInput`，并完成已确认的结构和范围校验。
+- 接收 `Birth` 与 `Parameters`，并完成已确认的结构和范围校验。
 - 将两类输入归一化为私有构建事实，构建不可变 `Natal`；不引入或导出 `ZiweiSeed` 一类中间领域对象。
 - 保存十二宫、十八星、生肖、五行局、命/身/来因宫、生年四化、宫位四化与自化等本命事实。
 - 按需计算大限与流年；不在构建 `Natal` 时预存完整期间序列，也不在核心中缓存。
@@ -151,14 +151,14 @@ src/
 
 ### `lib.rs`
 
-crate 根是 Rust 使用者的唯一外部 seam。它重导出已经稳定的输入、基础领域值、错误、`Ziwei` 创建入口与 `Natal` 结果类型；公开排盘入口仅有 `Ziwei::from_birth` 与 `Ziwei::from_input`。不暴露 `rules` 的文件布局或私有计算辅助类型。
+crate 根是 Rust 使用者的唯一外部 seam。它重导出已经稳定的输入、基础领域值、错误、`Ziwei` 创建入口与 `Natal` 结果类型；公开排盘入口仅有 `Ziwei::from_birth` 与 `Ziwei::from_parameters`。不暴露 `rules` 的文件布局或私有计算辅助类型。
 
-使用者应当可以在不理解星曜安置、数组存储次序或规则表位置的前提下使用核心库，也不需要进入子模块构造输入或标注结果类型。`Ziwei` 仅公开 `from_birth` 与 `from_input` 两条关联构造方法；`Natal` 提供命盘事实与查询。内部重构不得迫使调用方改 import 路径。
+使用者应当可以在不理解星曜安置、数组存储次序或规则表位置的前提下使用核心库，也不需要进入子模块构造输入或标注结果类型。`Ziwei` 仅公开 `from_birth` 与 `from_parameters` 两条关联构造方法；`Natal` 提供命盘事实与查询。内部重构不得迫使调用方改 import 路径。
 
 ```rust
-use ziwei::{Gender, Ziwei, ZiweiBirth};
+use ziwei::{Birth, Gender, Ziwei};
 
-let birth = ZiweiBirth::new(Gender::Male, 1984, 2, 1, 4).expect("valid normalized birth");
+let birth = Birth::new(Gender::Male, 1984, 2, 1, 4).expect("valid normalized birth");
 let natal = Ziwei::from_birth(birth);
 ```
 
@@ -176,11 +176,11 @@ let natal = Ziwei::from_birth(birth);
 
 ### `domain/profile.rs`
 
-此模块保存 `BirthMonth`、`BirthDay`、`ZiweiBirth`、`ZiweiInput` 与 `Profile`。它不进行历法换算，只校验核心已经承诺的输入不变量。
+此模块保存 `BirthMonth`、`BirthDay`、`Birth`、`Parameters` 与 `Profile`。它不进行历法换算，只校验核心已经承诺的输入不变量。
 
 `profile` 是 crate 私有的出生资料模块名；`Profile` 与上述出生资料值和输入类型继续由 crate 根扁平导出。
 
-`ZiweiBirth` 保留数字农历年、月、日、时和性别，用排盘规则导出年干支与紫微支。`ZiweiInput` 保留性别、组成有效六十甲子年柱的生年干支、月、紫微支和时；它没有 `birth_year` 与 `birth_day`。
+`Birth` 保留数字农历年、月、日、时和性别，用排盘规则导出年干支与紫微支。`Parameters` 保留性别、组成有效六十甲子年柱的生年干支、月、紫微支和时；它没有 `birth_year` 与 `birth_day`。
 
 ### `domain/natal.rs`
 
@@ -208,15 +208,15 @@ let natal = Ziwei::from_birth(birth);
 
 ### `ziwei.rs`（后续）
 
-当开始实现创建命盘的纵切片时再新增此模块。它只定义 `Ziwei`，并提供 `Ziwei::from_birth` 与 `Ziwei::from_input`；具体规则实现仍留在 `rules`，`Ziwei` 本身不保存命盘事实。尚未实现前不创建空壳文件或提前导出无行为类型。
+当开始实现创建命盘的纵切片时再新增此模块。它只定义 `Ziwei`，并提供 `Ziwei::from_birth` 与 `Ziwei::from_parameters`；具体规则实现仍留在 `rules`，`Ziwei` 本身不保存命盘事实。尚未实现前不创建空壳文件或提前导出无行为类型。
 
 ## 公共 interface 的规则
 
 在最终入口名称确认前，`ziwei` 的 public interface 必须遵守以下约束：
 
-- 公开输入只有 `ZiweiBirth` 与 `ZiweiInput`；不以带可选字段的联合输入替代它们。
-- crate 根重导出 `Ziwei` 与 `Natal`；公开排盘入口为 `Ziwei::from_birth(ZiweiBirth)` 与 `Ziwei::from_input(ZiweiInput)`，它们均返回 `Result<Natal, ZiweiError>`。
-- `ZiweiInput::new` 校验生年干、支必须组成有效六十甲子年柱；地支索引有效不代表任意干支组合有效。成功构造后，排盘入口不再重复校验该不变量。
+- 公开输入只有 `Birth` 与 `Parameters`；不以带可选字段的联合输入替代它们。
+- crate 根重导出 `Ziwei` 与 `Natal`；公开排盘入口为 `Ziwei::from_birth(Birth)` 与 `Ziwei::from_parameters(Parameters)`，它们均返回 `Result<Natal, ZiweiError>`。
+- `Parameters::new` 校验生年干、支必须组成有效六十甲子年柱；地支索引有效不代表任意干支组合有效。成功构造后，排盘入口不再重复校验该不变量。
 - 成功构建必须得到统一的 `Natal`；调用方不需要选择规则集或流派。
 - `Natal` 通过 `Profile` 保存可选的 `birth_year` 与 `birth_day`，不保留原始输入或输入来源。
 - 所有身份使用稳定 enum 或经过校验的值类型，不能让字符串承担干支、星曜、宫名或四化身份。
@@ -276,7 +276,7 @@ crates/ziwei/
 | --- | --- | --- |
 | `ziwei-napi` | 核心构建、查询、快照和错误合同已稳定，且开始交付 Node 包 | `ziwei-napi -> ziwei` |
 | `ziwei-wasm` | 核心合同已稳定，且开始交付浏览器/Wasm 产物 | `ziwei-wasm -> ziwei` |
-| `ziwei-calendar` | 项目明确纳入历法换算，并能作为向 `ZiweiBirth` 提供资料的独立能力 | 可依赖 `ziwei` 的输入类型；核心不得依赖它 |
+| `ziwei-calendar` | 项目明确纳入历法换算，并能作为向 `Birth` 提供资料的独立能力 | 可依赖 `ziwei` 的输入类型；核心不得依赖它 |
 | `ziwei-analysis` | 项目明确纳入解释/断语，并确认其独立语义与安全界限 | `ziwei-analysis -> ziwei` |
 
 ## 与归档 Rust 结构的关系

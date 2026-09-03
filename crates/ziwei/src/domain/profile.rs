@@ -60,7 +60,7 @@ impl TryFrom<u8> for BirthDay {
 ///
 /// 调用方负责在构造前完成历法换算、闰月辨识、时区及实际日期有效性校验。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ZiweiBirth {
+pub struct Birth {
     /// 出生性别。
     pub gender: Gender,
     /// 数字农历出生年份。
@@ -73,11 +73,11 @@ pub struct ZiweiBirth {
     pub birth_hour: Branch,
 }
 
-/// 直接排盘所需的出生资料。
+/// 已验证的直接排盘参数。
 ///
 /// 调用方负责提供正确的紫微星宫位地支。生年干支在构造时即校验为有效六十甲子。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ZiweiInput {
+pub struct Parameters {
     /// 出生性别。
     gender: Gender,
     /// 生年天干。
@@ -92,8 +92,8 @@ pub struct ZiweiInput {
     birth_hour: Branch,
 }
 
-impl ZiweiInput {
-    /// 创建已验证的直接排盘输入。
+impl Parameters {
+    /// 创建已验证的直接排盘参数。
     ///
     /// # Errors
     ///
@@ -245,7 +245,7 @@ impl Profile {
         self.birth_hour
     }
 
-    /// 返回归一化出生日；直接排盘输入为 `None`。
+    /// 返回归一化出生日；直接排盘参数为 `None`。
     #[must_use]
     pub const fn birth_day(&self) -> Option<BirthDay> {
         self.birth_day
@@ -259,7 +259,7 @@ impl Profile {
 #[must_use]
 #[cfg_attr(
     not(test),
-    expect(dead_code, reason = "由后续 ZiweiBirth 归一化路径导出生年干支")
+    expect(dead_code, reason = "由后续 Birth 归一化路径导出生年干支")
 )]
 pub(crate) fn sexagenary_from_birth_year(birth_year: i32) -> (Stem, Branch) {
     let stem = match birth_year.rem_euclid(10) {
@@ -302,9 +302,7 @@ pub(crate) fn is_valid_sexagenary_year(stem: Stem, branch: Branch) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        BirthDay, BirthMonth, Profile, ZiweiBirth, ZiweiInput, sexagenary_from_birth_year,
-    };
+    use super::{Birth, BirthDay, BirthMonth, Parameters, Profile, sexagenary_from_birth_year};
     use crate::{Branch, Gender, Stem, ZiweiError};
 
     #[test]
@@ -350,8 +348,8 @@ mod tests {
     }
 
     #[test]
-    fn ziwei_birth_holds_all_confirmed_input_facts() {
-        let birth = ZiweiBirth {
+    fn birth_holds_all_confirmed_input_facts() {
+        let birth = Birth {
             gender: Gender::Female,
             birth_year: 1992,
             birth_month: BirthMonth::try_from(8).expect("范围内月份必须有效"),
@@ -367,8 +365,8 @@ mod tests {
     }
 
     #[test]
-    fn ziwei_input_holds_all_confirmed_input_facts() {
-        let input = ZiweiInput::new(
+    fn parameters_hold_all_confirmed_direct_chart_facts() {
+        let parameters = Parameters::new(
             Gender::Male,
             Stem::Ren,
             Branch::Shen,
@@ -378,12 +376,12 @@ mod tests {
         )
         .expect("壬申必须是有效六十甲子");
 
-        assert_eq!(input.gender(), Gender::Male);
-        assert_eq!(input.birth_stem(), Stem::Ren);
-        assert_eq!(input.birth_branch(), Branch::Shen);
-        assert_eq!(input.birth_month().get(), 5);
-        assert_eq!(input.ziwei_branch(), Branch::Chen);
-        assert_eq!(input.birth_hour(), Branch::Hai);
+        assert_eq!(parameters.gender(), Gender::Male);
+        assert_eq!(parameters.birth_stem(), Stem::Ren);
+        assert_eq!(parameters.birth_branch(), Branch::Shen);
+        assert_eq!(parameters.birth_month().get(), 5);
+        assert_eq!(parameters.ziwei_branch(), Branch::Chen);
+        assert_eq!(parameters.birth_hour(), Branch::Hai);
     }
 
     #[test]
@@ -398,7 +396,7 @@ mod tests {
             Branch::Shen,
             Some(day),
         );
-        let from_input = Profile::new(
+        let from_parameters = Profile::new(
             None,
             Gender::Male,
             Stem::Jia,
@@ -415,8 +413,8 @@ mod tests {
         assert_eq!(from_birth.birth_month().get(), 8);
         assert_eq!(from_birth.birth_hour(), Branch::Shen);
         assert_eq!(from_birth.birth_day(), Some(day));
-        assert_eq!(from_input.birth_year(), None);
-        assert_eq!(from_input.birth_day(), None);
+        assert_eq!(from_parameters.birth_year(), None);
+        assert_eq!(from_parameters.birth_day(), None);
     }
 
     #[test]
@@ -437,7 +435,7 @@ mod tests {
     }
 
     #[test]
-    fn ziwei_input_new_accepts_exactly_sixty_sexagenary_years() {
+    fn parameters_new_accepts_exactly_sixty_sexagenary_years() {
         let stems = [
             Stem::Jia,
             Stem::Yi,
@@ -469,7 +467,7 @@ mod tests {
         for stem in stems {
             for branch in branches {
                 let expected = stem.index() % 2 == branch.index() % 2;
-                let result = ZiweiInput::new(
+                let result = Parameters::new(
                     Gender::Female,
                     stem,
                     branch,
